@@ -75,10 +75,9 @@ private:
    void solve ();
    void output_results () const;
    
-   int                  degree;
-   Triangulation<1>   triangulation;
-   FE_Q<1>            fe;
-   DoFHandler<1>      dof_handler;
+   Triangulation<1>     triangulation;
+   FE_Q<1>              fe;
+   DoFHandler<1>        dof_handler;
    
    SparsityPattern      sparsity_pattern;
    SparseMatrix<double> system_matrix;
@@ -90,7 +89,6 @@ private:
 
 //------------------------------------------------------------------------------
 LaplaceProblem::LaplaceProblem (int degree) :
-degree (degree),
 fe (degree),
 dof_handler (triangulation)
 {}
@@ -128,7 +126,7 @@ void LaplaceProblem::make_grid_and_dofs ()
 //------------------------------------------------------------------------------
 void LaplaceProblem::assemble_system ()
 {
-   QGauss<1>  quadrature_formula(2*degree);
+   QGauss<1>  quadrature_formula(2*fe.degree);
    
    const RightHandSide right_hand_side;
    
@@ -222,7 +220,7 @@ void LaplaceProblem::output_results () const
    
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
-   data_out.build_patches (degree);
+   data_out.build_patches (fe.degree);
    std::ofstream output ("solution.gnuplot");
    data_out.write_gnuplot (output);
 }
