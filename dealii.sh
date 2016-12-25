@@ -1,0 +1,4 @@
+cmake \
+   -DCMAKE_INSTALL_PREFIX=$HOME/deal.II \
+   -DDEAL_II_WITH_UMFPACK=ON \
+   ..
