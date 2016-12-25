@@ -97,7 +97,7 @@ dof_handler (triangulation)
 void LaplaceProblem::make_grid_and_dofs ()
 {
    GridGenerator::hyper_cube (triangulation, 0, 1);
-   triangulation.refine_global (8);
+   triangulation.refine_global (5);
    
    std::cout
    << "   Number of active cells: "
@@ -238,7 +238,7 @@ void LaplaceProblem::run ()
 int main ()
 {
    deallog.depth_console (0);
-   int degree = 2;
+   int degree = 1;
    LaplaceProblem laplace_problem_1d (degree);
    laplace_problem_1d.run ();
    
