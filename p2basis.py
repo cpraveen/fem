@@ -41,4 +41,4 @@ for i in range(M):
         xs2 += h
     t = '$\phi_{'+str(i)+'}$'
     plt.title(t)
-    plt.draw(); plt.pause(1.0)
+    plt.draw(); plt.pause(2.0)

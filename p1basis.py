@@ -35,4 +35,4 @@ for i in range(N+1):
     line2.set_ydata(y)
     t = '$\phi_'+str(i)+'$'
     plt.title(t)
-    plt.draw(); plt.pause(1.0)
+    plt.draw(); plt.pause(2.0)
