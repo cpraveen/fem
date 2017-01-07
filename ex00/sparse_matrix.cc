@@ -8,7 +8,7 @@
 #include "math_functions.h"
 
 //-----------------------------------------------------------------------------
-// Constructor
+// Constructor, fully initializes matrix.
 //-----------------------------------------------------------------------------
 template <class T>
 SparseMatrix<T>::SparseMatrix (std::vector<unsigned int>& row_ptr, 
@@ -27,10 +27,12 @@ SparseMatrix<T>::SparseMatrix (std::vector<unsigned int>& row_ptr,
 
    for(unsigned int i=0; i<col_ind.size(); ++i)
       assert (col_ind[i] >= 0 && col_ind[i] < nrow);
+   
+   state = CLOSED;
 }
 
 //------------------------------------------------------------------------------
-// Constructor
+// Constructor, only size if set, values are not set.
 //------------------------------------------------------------------------------
 template <class T>
 SparseMatrix<T>::SparseMatrix (unsigned int nrow)

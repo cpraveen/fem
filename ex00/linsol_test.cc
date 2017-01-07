@@ -70,8 +70,8 @@ int main ()
    A(1,0)     = 0;
    A(n-2,n-1) = 0;
 
-   cout << A << endl;
-   cout << f << endl;
+   cout << "A = \n" << A << endl;
+   cout << "f = \n" << f << endl;
 
    // Solution vector
    Vector<double> u(n);
@@ -79,14 +79,16 @@ int main ()
    u(0)   = u0;
    u(n-1) = u1;
 
+   // Create solver object
    unsigned int max_iter = 1000;
    double tol = 1.0e-6;
    //JacobiSolver<double> solver (max_iter, tol);
    //SORSolver<double> solver (max_iter, tol);
-   SSORSolver<double> solver (max_iter, tol);
+   SSORSolver<double> solver (max_iter, tol, 1.5);
    //CGSolver<double> solver (max_iter, tol);
-   unsigned int iter = solver.solve (A, u, f, 1.5);
-   //unsigned int iter = solver.solve (A, u, f);
+   
+   // Solve the matrix problem
+   unsigned int iter = solver.solve (A, u, f);
 
    cout << "Number of iterations = " << iter << endl;
 

@@ -9,16 +9,17 @@ class SSORSolver
 {
    public:
       SSORSolver (unsigned int max_iter,
-                  T            tol);
+                  T            tol,
+                  T            omg);
       ~SSORSolver () {};
       unsigned int solve (const SparseMatrix<T>& A,
                                       Vector<T>& x, 
-                          const       Vector<T>& f,
-                          const               T  omg = 1) const;
+                          const       Vector<T>& f) const;
 
    private:
       unsigned int max_iter;
       T            tol;
+      T            omg;
 };
 
 #endif

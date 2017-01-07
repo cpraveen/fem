@@ -9,13 +9,16 @@
 //-----------------------------------------------------------------------------
 template <class T>
 SSORSolver<T>::SSORSolver (unsigned int max_iter,
-                           T            tol)
+                           T            tol,
+                           T            omg)
    :
       max_iter (max_iter),
-      tol (tol)
+      tol (tol),
+      omg (omg)
 {
    assert (max_iter > 0);
    assert (tol > 0);
+   assert (omg >= 1.0 && omg <= 2.0);
 }
 
 //-----------------------------------------------------------------------------
@@ -25,8 +28,7 @@ SSORSolver<T>::SSORSolver (unsigned int max_iter,
 template <class T>
 unsigned int SSORSolver<T>::solve (const SparseMatrix<T>& A,
                                                Vector<T>& x,
-                                   const       Vector<T>& f,
-                                   const               T  omg) const
+                                   const       Vector<T>& f) const
 {
    const unsigned int n = x.size();
    assert (n == A.size());
