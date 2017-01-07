@@ -140,87 +140,30 @@ void SparseMatrix<T>::multiply(const Vector<T>& x,
 }
 
 //-----------------------------------------------------------------------------
+// Computes only i'th component of A*x, i.e., dot product between
+// i'th row of A and vector x.
+//-----------------------------------------------------------------------------
+template <class T>
+T SparseMatrix<T>::multiply(const Vector<T>&   x,
+                            const unsigned int i) const
+{
+   assert (x.size() == nrow);
+   
+   unsigned int row_beg = row_ptr[i];
+   unsigned int row_end = row_ptr[i+1];
+   T r = 0;
+   for(unsigned int j=row_beg; j<row_end; ++j)
+      r += val[j] * x(col_ind[j]);
+   return r;
+}
+
+//-----------------------------------------------------------------------------
 // Return i'th diagonal 
 //-----------------------------------------------------------------------------
 template <class T>
 T SparseMatrix<T>::diag (const unsigned int i) const
 {
    return val[ row_ptr[i] ];
-}
-
-//-----------------------------------------------------------------------------
-// Perform one step of Jacobi
-//-----------------------------------------------------------------------------
-template <class T>
-T SparseMatrix<T>::Jacobi_step(Vector<T>&       x, 
-                               const Vector<T>& rhs) const
-{
-   Vector<T> r(nrow);
-   multiply(x, r, -1); // r = -A*x
-   r += rhs;           // r = r + rhs
-
-   for(unsigned int i=0; i<nrow; ++i)
-      x(i) += r(i) / diag(i);
-
-   return std::sqrt( dot<T>(r,r) );
-}
-
-//-----------------------------------------------------------------------------
-// Perform one step of SOR
-//-----------------------------------------------------------------------------
-template <class T>
-T SparseMatrix<T>::SOR_step(Vector<T>&       x, 
-                            const Vector<T>& rhs,
-                            const T          omg) const
-{
-   T res = 0;
-   for(unsigned int i=0; i<nrow; ++i)
-   {
-      T r = rhs(i);
-      unsigned int row_beg = row_ptr[i];
-      unsigned int row_end = row_ptr[i+1];
-      for(unsigned int j=row_beg; j<row_end; ++j)
-         r -= val[j] * x(col_ind[j]);
-      x(i) += omg * r / diag(i);
-      res  += r * r;
-   }
-
-   return std::sqrt( res );
-}
-
-//-----------------------------------------------------------------------------
-// Perform one step of SSOR
-//-----------------------------------------------------------------------------
-template <class T>
-T SparseMatrix<T>::SSOR_step(Vector<T>&       x, 
-                             const Vector<T>& rhs,
-                             const T          omg) const
-{
-   // forward loop
-   for(unsigned int i=0; i<nrow; ++i)
-   {
-      T r = rhs(i);
-      unsigned int row_beg = row_ptr[i];
-      unsigned int row_end = row_ptr[i+1];
-      for(unsigned int j=row_beg; j<row_end; ++j)
-         r -= val[j] * x(col_ind[j]);
-      x(i) += omg * r / diag(i);
-   }
-
-   // backward loop
-   T res = 0;
-   for(int i=nrow-1; i>=0; --i)
-   {
-      T r = rhs(i);
-      unsigned int row_beg = row_ptr[i];
-      unsigned int row_end = row_ptr[i+1];
-      for(unsigned int j=row_beg; j<row_end; ++j)
-         r -= val[j] * x(col_ind[j]);
-      x(i) += omg * r / diag(i);
-      res  += r * r;
-   }
-
-   return std::sqrt( res );
 }
 
 //-----------------------------------------------------------------------------

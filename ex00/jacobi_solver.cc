@@ -31,19 +31,27 @@ unsigned int JacobiSolver<T>::solve (const SparseMatrix<T>& A,
    assert (n == A.size());
    assert (n == f.size());
 
+   Vector<T> r(n);
    T res, res0;
    res = res0 = 1;
    unsigned int iter = 0;
 
-   while ( res/res0 > tol && iter < max_iter)
+   while (res/res0 > tol && iter < max_iter)
    {
-      res = A.Jacobi_step (x, f);
+      A.multiply(x, r, -1); // r = -A*x
+      r += f;               // r = r + f = f - A*x
+      
+      for(unsigned int i=0; i<n; ++i)
+         x(i) += r(i) / A.diag(i);
+      
+      res = std::sqrt( dot<T>(r,r) );
+      
       if(iter==0) res0 = res;
 
       ++iter;
    }
 
-   if ( res/res0 > tol && iter == max_iter)
+   if (res/res0 > tol)
    {
       std::cout << "JacobiSolver did not converge !!!\n";
       std::cout << "   No. of iterations= " << iter << std::endl;

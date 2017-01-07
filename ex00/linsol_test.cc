@@ -83,7 +83,7 @@ int main ()
    unsigned int max_iter = 1000;
    double tol = 1.0e-6;
    //JacobiSolver<double> solver (max_iter, tol);
-   //SORSolver<double> solver (max_iter, tol);
+   //SORSolver<double> solver (max_iter, tol, 1.5);
    SSORSolver<double> solver (max_iter, tol, 1.5);
    //CGSolver<double> solver (max_iter, tol);
    

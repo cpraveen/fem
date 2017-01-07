@@ -28,19 +28,14 @@ class SparseMatrix
       void multiply(const Vector<T>& x, 
                           Vector<T>& y,
                     const T          scalar = 1) const;
-      T operator()(unsigned int i, 
+      T multiply(const Vector<T>&   x,
+                 const unsigned int i) const;
+      T operator()(unsigned int i,
                    unsigned int j) const;
       T& operator()(unsigned int i, 
                     unsigned int j);
       T diag (unsigned int i) const;
-      T Jacobi_step(Vector<T>&       x, 
-                    const Vector<T>& rhs) const;
-      T SOR_step(Vector<T>&       x, 
-                 const Vector<T>& rhs,
-                 const T          omg) const;
-      T SSOR_step(Vector<T>&       x, 
-                  const Vector<T>& rhs,
-                  const T          omg) const;
+
       friend std::ostream& operator<< (std::ostream&          os, 
                                        const SparseMatrix<T>& A)
       {

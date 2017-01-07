@@ -33,21 +33,35 @@ unsigned int SSORSolver<T>::solve (const SparseMatrix<T>& A,
    const unsigned int n = x.size();
    assert (n == A.size());
    assert (n == f.size());
-   assert (omg > 0 && omg < 2);
 
    T res, res0;
    res = res0 = 1;
    unsigned int iter = 0;
 
-   while ( res/res0 > tol && iter < max_iter)
+   while (res/res0 > tol && iter < max_iter)
    {
-      res = A.SSOR_step (x, f, omg);
+      // forward loop
+      for(unsigned int i=0; i<n; ++i)
+      {
+         T r = f(i) - A.multiply(x, i);
+         x(i) += omg * r / A.diag(i);
+      }
+      
+      // backward loop
+      res = 0;
+      for(int i=n-1; i>=0; --i)
+      {
+         T r = f(i) - A.multiply(x, i);
+         x(i) += omg * r / A.diag(i);
+         res  += r * r;
+      }
+      
+      res = std::sqrt( res );
       if(iter==0) res0 = res;
-
       ++iter;
    }
 
-   if ( res/res0 > tol && iter == max_iter)
+   if (res/res0 > tol)
    {
       std::cout << "SSORSolver did not converge !!!\n";
       std::cout << "   No. of iterations= " << iter << std::endl;
