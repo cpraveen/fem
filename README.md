@@ -3,10 +3,11 @@ These codes are prepared as material for teaching finite element method. Most of
 
 ## Examples
 
-1. bvp1d: 1-d BVP, Dirichlet bc
-2. bvp2d: 2-d Poisson equation on unit square, Dirichlet bc
-3. laplace: 2-d Poisson equation on unit square, Dirichlet bc, assembly using MatrixCreator
-4. poisson_conv: 2-d Poisson equation on unit square, Dirichlet bc, convergence under uniform grid refinement
+1. ex00: C++ introduction, classes, templates, Vector and SparseMatrix, linear solvers
+1. ex01: 1-d BVP, Dirichlet bc
+1. ex02: 2-d Poisson equation on unit square, Dirichlet bc
+1. ex03: 2-d Poisson equation on unit square, Dirichlet bc, assembly using MatrixCreator
+1. ex04: 2-d Poisson equation on unit square, Dirichlet bc, convergence under uniform grid refinement
 
 ## deal.II
 The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming v8.4.2 but change this to the actual version you are using.
