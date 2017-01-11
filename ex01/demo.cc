@@ -1,5 +1,5 @@
 /* 
- Solve 1d laplace equation
+ Solve 1d boundary value problem
  -u_xx = f(x)  for x in (0,1)
  Exact solution is u = x + sin(4 pi x)
  f is obtained from exact solution.
@@ -66,7 +66,7 @@ double BoundaryValues::value (const Point<1> &p,
 class LaplaceProblem
 {
 public:
-   LaplaceProblem (int degree);
+   LaplaceProblem (int degree, unsigned int nrefine);
    void run ();
    
 private:
@@ -84,20 +84,23 @@ private:
    
    Vector<double>       solution;
    Vector<double>       system_rhs;
+   
+   unsigned int         nrefine;
 };
 
 
 //------------------------------------------------------------------------------
-LaplaceProblem::LaplaceProblem (int degree) :
+LaplaceProblem::LaplaceProblem (int degree, unsigned int nrefine) :
 fe (degree),
-dof_handler (triangulation)
+dof_handler (triangulation),
+nrefine (nrefine)
 {}
 
 //------------------------------------------------------------------------------
 void LaplaceProblem::make_grid_and_dofs ()
 {
    GridGenerator::hyper_cube (triangulation, 0, 1);
-   triangulation.refine_global (5);
+   triangulation.refine_global (nrefine);
    
    std::cout
    << "   Number of active cells: "
@@ -127,12 +130,9 @@ void LaplaceProblem::make_grid_and_dofs ()
 void LaplaceProblem::assemble_system ()
 {
    QGauss<1>  quadrature_formula(2*fe.degree);
-   
-   const RightHandSide right_hand_side;
-   
    FEValues<1> fe_values (fe, quadrature_formula,
-                            update_values   | update_gradients |
-                            update_quadrature_points | update_JxW_values);
+                          update_values   | update_gradients |
+                          update_quadrature_points | update_JxW_values);
    
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    const unsigned int   n_q_points    = quadrature_formula.size();
@@ -140,6 +140,7 @@ void LaplaceProblem::assemble_system ()
    FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
    Vector<double>       cell_rhs (dofs_per_cell);
    std::vector<unsigned int> local_dof_indices (dofs_per_cell);
+   const RightHandSide right_hand_side;
    std::vector<double> rhs_values (n_q_points);
    
    typename DoFHandler<1>::active_cell_iterator
@@ -204,7 +205,9 @@ void LaplaceProblem::solve ()
 {
    SolverControl           solver_control (1000, 1e-12);
    SolverCG<>              cg (solver_control);
-   cg.solve (system_matrix, solution, system_rhs,
+   cg.solve (system_matrix,
+             solution,
+             system_rhs,
              PreconditionIdentity());
    
    std::cout
@@ -217,7 +220,6 @@ void LaplaceProblem::solve ()
 void LaplaceProblem::output_results () const
 {
    DataOut<1> data_out;
-   
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
    data_out.build_patches (fe.degree);
@@ -239,7 +241,8 @@ int main ()
 {
    deallog.depth_console (0);
    int degree = 1;
-   LaplaceProblem laplace_problem_1d (degree);
+   unsigned int nrefine = 5;
+   LaplaceProblem laplace_problem_1d (degree, nrefine);
    laplace_problem_1d.run ();
    
    return 0;
