@@ -99,6 +99,7 @@ nrefine (nrefine)
 //------------------------------------------------------------------------------
 void LaplaceProblem::make_grid_and_dofs ()
 {
+   std::cout << "Making grid, dofs, etc.\n";
    GridGenerator::hyper_cube (triangulation, 0, 1);
    triangulation.refine_global (nrefine);
    
@@ -129,6 +130,7 @@ void LaplaceProblem::make_grid_and_dofs ()
 //------------------------------------------------------------------------------
 void LaplaceProblem::assemble_system ()
 {
+   std::cout << "Assembling matrix, rhs\n";
    QGauss<1>  quadrature_formula(2*fe.degree);
    FEValues<1> fe_values (fe, quadrature_formula,
                           update_values   | update_gradients |
@@ -203,6 +205,7 @@ void LaplaceProblem::assemble_system ()
 //------------------------------------------------------------------------------
 void LaplaceProblem::solve ()
 {
+   std::cout << "Solving the matrix problem\n";
    SolverControl           solver_control (1000, 1e-12);
    SolverCG<>              cg (solver_control);
    cg.solve (system_matrix,
@@ -219,6 +222,7 @@ void LaplaceProblem::solve ()
 //------------------------------------------------------------------------------
 void LaplaceProblem::output_results () const
 {
+   std::cout << "Saving solution to file\n";
    DataOut<1> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
