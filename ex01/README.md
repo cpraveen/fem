@@ -26,7 +26,7 @@ $ gnuplot make_eps.gnu
 $ gv sol.eps
 ```
 
-## Excercise 1
+## Exercise 1
 
 Try to increase degree in the main function
 ```
@@ -38,7 +38,7 @@ In this case, there are just two elements. To get better solution visualization,
 data_out.build_patches (2*fe.degree);
 ```
 
-## Excercise 2
+## Exercise 2
 Try a direct solver. Remove the contents of `solve` function and put this
 ```
 SparseDirectUMFPACK solver;
@@ -51,7 +51,7 @@ You must include following file
 ```
 in order to use the sparse solver.
 
-## Excercise 3
+## Exercise 3
 Solve the more general problem
 
 -(a u')' + b u' + c u = f
