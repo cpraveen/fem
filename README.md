@@ -16,6 +16,12 @@ Suppose we install deal.II in `$HOME/deal.II` directory. Add following line in y
 ```
 export DEAL_II_DIR=$HOME/deal.II
 ```
+You may have to source the file
+```
+source $HOME/.bashrc
+```
+or open a new terminal window.
+
 To compile deal.II, follow these steps. A sample `dealii.sh` script is included in this repository.
 ```
 cd $HOME
@@ -36,7 +42,7 @@ rm dealii-8.4.2.tar.gz
 ```
 Also, download and install the offline documentation by following these steps.
 ```
-cd $HOME/deal.II
+cd $DEAL_II_DIR
 wget https://github.com/dealii/dealii/releases/download/v8.4.2/dealii-8.4.2-offline_documentation.tar.gz
 tar zxvf dealii-8.4.2-offline_documentation.tar.gz
 rm dealii-8.4.2-offline_documentation.tar.gz
