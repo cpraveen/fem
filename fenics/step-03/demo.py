@@ -9,6 +9,7 @@ from dolfin import *
 def Boundary(x, on_boundary):
    return on_boundary
 
+degree = 1
 np = [20, 40, 80, 160, 320]
 
 conv = []
@@ -16,7 +17,7 @@ file = File('sol.pvd')
 for n in np:
    mesh = UnitSquareMesh(n,n)
 
-   V = FunctionSpace(mesh, 'CG', 1)
+   V = FunctionSpace(mesh, 'CG', degree)
 
    u = TrialFunction(V)
    v = TestFunction(V)
@@ -25,11 +26,11 @@ for n in np:
    a = inner(grad(u), grad(v))*dx
 
    # Linear functional
-   f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])')
+   f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
    L = f*v*dx
 
    # Dirichlet bc
-   g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])')
+   g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
    bc= DirichletBC(V, g, Boundary)
 
    # Solution variable

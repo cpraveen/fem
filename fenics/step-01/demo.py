@@ -30,6 +30,4 @@ w = Function(V)
 
 solve(a == L, w, bc)
 
-plot(mesh)
-plot(w)
-interactive()
+File("sol.pvd") << w

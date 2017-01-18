@@ -23,15 +23,16 @@ class Top(SubDomain):
     def inside(self, x, on_boundary):
         return near(x[1], 1.0)
 
+degree = 1
 mesh = UnitSquareMesh(20,20)
 
 boundaries = FacetFunction("uint", mesh)
 boundaries.set_all(0)
 right = Right()
 right.mark(boundaries, 1)
-dsn = Measure("ds")[boundaries]
+dsn = ds(subdomain_data=boundaries)
 
-V = FunctionSpace(mesh, 'CG', 1)
+V = FunctionSpace(mesh, 'CG', degree)
 
 u = TrialFunction(V)
 v = TestFunction(V)
@@ -45,7 +46,7 @@ g = Constant(1.0)
 L = f*v*dx + g*v*dsn(1)
 
 # Dirichlet bc
-u_left   = Expression('x[1]*(1.0-x[1])')
+u_left   = Expression('x[1]*(1.0-x[1])',degree=degree)
 u_bottom = Constant(0.0)
 u_top    = Constant(0.0)
 
@@ -57,12 +58,5 @@ bc = [bc_left, bc_bottom, bc_top]
 
 # Solution variable
 w = Function(V)
-
 solve(a == L, w, bc)
-
-file = File('sol.pvd')
-file << w
-
-plot(mesh)
-plot(w)
-interactive()
+File('sol.pvd') << w
