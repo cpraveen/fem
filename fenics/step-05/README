@@ -1,0 +1,21 @@
+On terminal, type
+
+make
+
+This will run gmsh to generate the mesh and then runs dolfin-convert to convert msh file to xml file. See inside makefile for the commands.
+
+Try the following:
+
+1. Choose P1 basis functions and run demo.py program. The error data is saved to file conv.dat; copy this to different name on terminal
+
+mv conv.dat conv1.dat
+
+2. Choose P2 basis functions and run demo.py program. Copy error dat
+
+mv conv.dat conv2.dat
+
+3. Observe that convergence rate is same in both cases.
+
+4. Start matlab and type "conv"; this will run the conv.m file which plots the error against mesh diameter h and againts total no. of dofs. Observe that the two curves are parallel since convergence rate is same. But the absolute value of error is smaller with P2 finite elements. P2 case achieves any desired error level with smaller no. of dofs than P1 case; so it is still useful to higher degree polynomials even if convergence rate is not improved.
+
+5. Make the same study with step-03; you will have to modify the demo.py file and you can copy the conv.m file from here to step-03.
