@@ -280,7 +280,7 @@ void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) con
                                       exact_solution,
                                       difference_per_cell,
                                       QGauss<dim>(2*fe.degree+1),
-                                      VectorTools::H1_norm);
+                                      VectorTools::H1_seminorm);
    H1_error = difference_per_cell.l2_norm();
 }
 
