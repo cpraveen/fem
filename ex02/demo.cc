@@ -1,7 +1,7 @@
 /* 
- Solve 1d laplace equation
- -u_xx = f(x)  for x in (0,1)
- Exact solution is u = x + sin(4 pi x)
+ Solve 2d/3d laplace equation
+ -Laplace(u) = f(x) in (0,1)x(0,1)
+ Exact solution is u = sin(2*pi*x) * sin(2*pi*y)
  f is obtained from exact solution.
  Boundary condition is dirichlet and taken from exact solution.
 */

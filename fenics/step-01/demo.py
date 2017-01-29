@@ -26,8 +26,6 @@ g = Constant(0)
 bc= DirichletBC(V, g, Boundary)
 
 # Solution variable
-w = Function(V)
-
-solve(a == L, w, bc)
-
-File("sol.pvd") << w
+u = Function(V)
+solve(a == L, u, bc)
+File("sol.pvd") << u
