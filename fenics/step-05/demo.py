@@ -17,12 +17,13 @@ class uexact(Expression):
          theta = theta + 2*pi
       values[0] = r**(2.0/3.0) * sin(2.0*theta/3.0)
 
+degree = 1
 mesh = Mesh("Gamma.xml")
 
 conv = []
 file = File('sol.pvd')
 for j in range(5):
-   V = FunctionSpace(mesh, 'CG', 1)
+   V = FunctionSpace(mesh, 'CG', degree)
 
    u = TrialFunction(V)
    v = TestFunction(V)
@@ -35,7 +36,7 @@ for j in range(5):
    L = f*v*dx
 
    # Dirichlet bc
-   ue = uexact()
+   ue = uexact(degree=degree+3)
    bc = DirichletBC(V, ue, Boundary)
 
    # Solution variable

@@ -26,11 +26,11 @@ for n in np:
    a = inner(grad(u), grad(v))*dx
 
    # Linear functional
-   f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
+   f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
    L = f*v*dx
 
    # Dirichlet bc
-   g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
+   g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
    bc= DirichletBC(V, g, Boundary)
 
    # Solution variable
