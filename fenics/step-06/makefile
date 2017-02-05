@@ -1,13 +1,13 @@
 G=mesh
 
-TARGETS = $(G).msh $(G).xml
+TARGETS = msh xml
 
 all: $(TARGETS)
 
-$(G).msh: $(G).geo
+msh: $(G).geo
 	gmsh -2 -optimize $(G).geo
 
-$(G).xml: $(G).msh
+xml: $(G).msh
 	dolfin-convert -i gmsh -o xml $(G).msh $(G).xml
 
 clean:
