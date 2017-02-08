@@ -111,6 +111,7 @@ void LaplaceProblem<dim>::make_grid_and_dofs ()
    GridIn<dim> grid_in;
    grid_in.attach_triangulation (triangulation);
    std::ifstream gfile ("Gamma.msh");
+   AssertThrow(gfile.is_open(), ExcMessage("Grid file not found"));
    grid_in.read_msh(gfile);
    triangulation.refine_global (nrefine);
    
