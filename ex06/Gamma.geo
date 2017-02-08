@@ -39,5 +39,5 @@ Transfinite Line{1,2,3,4,5,6,7,8,9,10} = 10;
 
 Recombine Surface{1,2,3};
 
-Physical Surface(100000) = {1};
-Physical Line   (100001) = {1,2,3,4,5,6};
+Physical Line   (0) = {1,2,3,4,5,6,7,8};
+Physical Surface(1) = {1,2,3};
