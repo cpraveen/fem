@@ -130,6 +130,9 @@ void LaplaceProblem::make_grid_and_dofs ()
 //------------------------------------------------------------------------------
 void LaplaceProblem::assemble_system ()
 {
+   system_matrix = 0;
+   system_rhs    = 0;
+
    std::cout << "Assembling matrix, rhs\n";
    QGauss<1>  quadrature_formula(2*fe.degree);
    FEValues<1> fe_values (fe, quadrature_formula,

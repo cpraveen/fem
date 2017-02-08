@@ -150,6 +150,8 @@ void LaplaceProblem<dim>::make_grid_and_dofs ()
 template <int dim>
 void LaplaceProblem<dim>::assemble_system ()
 {
+   system_matrix = 0;
+   system_rhs = 0;
    QGauss<dim>    cell_quadrature_formula(2*fe.degree);
    QGauss<dim-1>  face_quadrature_formula(2*fe.degree);
    const RightHandSide<dim> right_hand_side;

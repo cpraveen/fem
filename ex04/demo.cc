@@ -167,10 +167,11 @@ void LaplaceProblem<dim>::make_grid_and_dofs ()
 template <int dim>
 void LaplaceProblem<dim>::assemble_system ()
 {
+   system_matrix = 0;
+   system_rhs = 0;
+
    QGauss<dim>  quadrature_formula(2*fe.degree);
-   
    const RightHandSide<dim> right_hand_side;
-   
    FEValues<dim> fe_values (fe, quadrature_formula,
                             update_values   | update_gradients |
                             update_quadrature_points | update_JxW_values);
