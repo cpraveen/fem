@@ -1,6 +1,6 @@
-# Error convergence under uniform refinement
+# Laplace equation in non-convex domain
 
-This code solves Poisson equation on unit square on succesively refined grids.
+This code solves Laplace equation in a Gamma shaped domain on succesively refined grids.
 ```
 cmake .
 make
