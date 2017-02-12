@@ -80,7 +80,7 @@ private:
    void make_grid_and_dofs ();
    void assemble_system ();
    void solve ();
-   void output_results () const;
+   void output_results ();
    void compute_error (double &L2_error, double &H1_error) const;
    
    unsigned int           nrefine;
@@ -215,14 +215,19 @@ void LaplaceProblem<dim>::solve ()
 
 //------------------------------------------------------------------------------
 template <int dim>
-void LaplaceProblem<dim>::output_results () const
+void LaplaceProblem<dim>::output_results ()
 {
-   DataOut<dim> data_out;
+   // compute error into system_rhs
+   VectorTools::interpolate(dof_handler, ExactSolution<dim>(), system_rhs);
+   system_rhs -= solution;
    
+   DataOut<dim> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
+   data_out.add_data_vector (system_rhs, "error");
    data_out.build_patches (fe.degree);
-   std::ofstream output ("solution.vtk");
+   std::string fname = "solution-" + Utilities::int_to_string(nrefine,2)+".vtk";
+   std::ofstream output (fname);
    data_out.write_vtk (output);
 }
 
