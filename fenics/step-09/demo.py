@@ -17,8 +17,10 @@ import numpy
 def Boundary(x, on_boundary):
    return on_boundary
 
+degree = 1
+
 # Exact solution
-ue = Expression('(1.0/pi) * atan2(x[1], x[0])')
+ue = Expression('(1.0/pi) * atan2(x[1], x[0])',degree=degree+3)
 
 # Initial mesh
 n = 10
@@ -37,7 +39,7 @@ conv = []
 file = File('sol.pvd')
 ferr = File('error.pvd')
 for j in range(nstep):
-   V = FunctionSpace(mesh, 'CG', 1)
+   V = FunctionSpace(mesh, 'CG', degree)
 
    u = TrialFunction(V)
    v = TestFunction(V)
@@ -54,14 +56,15 @@ for j in range(nstep):
 
    # Solution variable
    u = Function(V)
-
    solve(a == L, u, bc)
-
    file << u
-   err = project(u-ue, V); err.rename("Error","Error")
+
+   # Compute error in solution
+   err = interpolate(ue, V); err.rename("Error","Error")
+   err.vector()[:] -= u.vector().array()
    ferr << err
    error_L2 = errornorm(ue, u, norm_type='L2', degree_rise=3)
-   error_H1 = errornorm(ue, u, norm_type='H1', degree_rise=3)
+   error_H1 = errornorm(ue, u, norm_type='H10', degree_rise=3)
    conv.append([V.dim(), mesh.hmax(), error_L2, error_H1])
 
    n = FacetNormal(mesh)
@@ -69,7 +72,7 @@ for j in range(nstep):
    Z = FunctionSpace(mesh, 'DG', 0)
    z = TestFunction(Z)
    ETA = assemble(2*avg(z)*jump(dudn)**2*dS)
-   eta = numpy.array([0.5*numpy.sqrt(c.diameter()*ETA[c.index()]) \
+   eta = numpy.array([0.5*numpy.sqrt(c.h()*ETA[c.index()]) \
                       for c in cells(mesh)])
    gamma = sorted(eta, reverse=True)[int(len(eta)*REFINE_FRACTION)]
    flag = CellFunction("bool", mesh)
