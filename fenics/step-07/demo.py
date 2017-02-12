@@ -8,7 +8,7 @@ def Boundary(x, on_boundary):
    return on_boundary
 
 n = 50
-mesh = UnitSquare(n, n)
+mesh = UnitSquareMesh(n, n)
 
 V = FunctionSpace(mesh, 'CG', 1)
 
@@ -26,10 +26,6 @@ L = f*v*dx + g*v*ds
 bc= DirichletBC(V, 0, 'near(x[0],0) && near(x[1],0)', 'pointwise')
 
 # Solution variable
-w = Function(V)
-
-solve(a == L, w, bc)
-
-plot(mesh)
-plot(w)
-interactive()
+u = Function(V)
+solve(a == L, u, bc)
+File("sol.pvd") << u
