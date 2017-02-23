@@ -23,11 +23,12 @@ class Coefficient(Expression):
          values[0] = mu2
 
 # Initial mesh
+degree = 1
 n = 10
-mesh = Rectangle(-1.0, -1.0, +1.0, +1.0, n, n)
+mesh = RectangleMesh(Point(-1.0, -1.0), Point(+1.0, +1.0), n, n)
 
 # Number of refinement steps
-nstep= 20
+nstep= 10
 
 # Fraction of cells to refine
 REFINE_FRACTION=0.1
@@ -37,13 +38,13 @@ refine_type = 'adaptive'
 
 file = File('sol.pvd')
 for j in range(nstep):
-   V = FunctionSpace(mesh, 'CG', 1)
+   V = FunctionSpace(mesh, 'CG', degree)
 
    u = TrialFunction(V)
    v = TestFunction(V)
 
    # Bilinear form
-   mu = Coefficient()
+   mu = Coefficient(degree=degree+3)
    a = mu*inner(grad(u), grad(v))*dx
 
    # Linear functional
@@ -65,7 +66,7 @@ for j in range(nstep):
    Z = FunctionSpace(mesh, 'DG', 0)
    z = TestFunction(Z)
    ETA = assemble(2*avg(z)*jump(dudn)**2*dS)
-   eta = numpy.array([0.5*numpy.sqrt(c.diameter()*ETA[c.index()]) \
+   eta = numpy.array([0.5*numpy.sqrt(c.h()*ETA[c.index()]) \
                       for c in cells(mesh)])
    gamma = sorted(eta, reverse=True)[int(len(eta)*REFINE_FRACTION)]
    flag = CellFunction("bool", mesh)
