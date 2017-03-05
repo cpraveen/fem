@@ -20,19 +20,20 @@ class uinlet(Expression):
          value[0]=0.0
 
 np = 50
+degree = 1
 
-mesh = UnitSquare(np, np)
+mesh = UnitSquareMesh(np, np)
 h = CellSize(mesh)
 
-X = FunctionSpace(mesh, "CG", 1)
+X = FunctionSpace(mesh, "CG", degree)
 
 v = TestFunction(X)
 u = TrialFunction(X)
 
 # Note: moda = |a|
 # If you change "a", then change "moda" also.
-a    = Expression(("x[1]", "-x[0]"))
-moda = Expression("sqrt(x[0]*x[0] + x[1]*x[1])")
+a    = Expression(("x[1]", "-x[0]"),degree=degree+3)
+moda = Expression("sqrt(x[0]*x[0] + x[1]*x[1])",degree=degree+3)
 
 a_gal = inner(a, grad(u))*v*dx
 a_supg= (h/moda)*inner(a, grad(u))*inner(a, grad(v))*dx
@@ -40,13 +41,11 @@ a_supg= (h/moda)*inner(a, grad(u))*inner(a, grad(v))*dx
 A     = a_gal
 L     = Constant(0)*v*dx
 
-bc_in  = DirichletBC(X, uinlet(), Inlet)
+bc_in  = DirichletBC(X, uinlet(degree=degree+3), Inlet)
 bc_top = DirichletBC(X, 0, Top)
 bc = [bc_in, bc_top]
 
 u = Function(X)
 solve(A == L, u, bc)
+u.rename("u","u")
 File("sol.pvd") << u
-
-plot(u)
-interactive()
