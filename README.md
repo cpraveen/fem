@@ -13,6 +13,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. ex05: 2-d Poisson on unit square, mixed bc
 1. ex06: 2-d Laplace equation in non-convex (Gamma-shaped) domain, convergence under uniform refinement
 1. ex07: 2-d Laplace equation in non-convex (Gamma-shaped) domain, convergence under adaptive refinement
+1. ex08: 2-d unsteady heat equation
 
 ## Installing deal.II
 The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming v8.4.2 but change this to the actual version you are using.
