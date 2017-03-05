@@ -7,10 +7,11 @@ u(0,t) = u(2*pi,t) = 0
 """
 from dolfin import *
 
+degree = 1
 n = 20
-mesh = Interval(n, 0, 2*pi)
+mesh = IntervalMesh(n, 0, 2*pi)
 
-V = FunctionSpace(mesh, 'CG', 1)
+V = FunctionSpace(mesh, 'CG', degree)
 u = TrialFunction(V)
 v = TestFunction(V)
 
@@ -19,14 +20,17 @@ uold = Function(V)
 unew = Function(V)
 
 # Initial condition
-uinit= Expression('sin(x[0])')
+uinit= Expression('sin(x[0])',degree=degree+3)
 uold = interpolate(uinit, V)
+
+uold.rename("u","u")
+unew.rename("u","u")
 
 T = 4*pi # Final time
 nt=100   # Number of time steps
 dt= T/nt # Time step
 
-f = Expression('sin(x[0])*(cos(t) - sin(t))', t=0)
+f = Expression('sin(x[0])*(cos(t) - sin(t))', t=0, degree=degree+3)
 uavg = 0.5*(uold + u)
 form = (1.0/dt)*(u - uold)*v*dx + inner(grad(uavg), grad(v))*dx - f*v*dx
 a    = lhs(form)

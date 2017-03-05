@@ -6,8 +6,9 @@ u(0,t) = u(2*pi,t) = sin(t)
 """
 from dolfin import *
 
+degree = 1
 n = 20
-mesh = Interval(n, 0, 2*pi)
+mesh = IntervalMesh(n, 0, 2*pi)
 
 V = FunctionSpace(mesh, 'CG', 1)
 u = TrialFunction(V)
@@ -16,6 +17,9 @@ v = TestFunction(V)
 # Solution variable
 uold = Function(V)
 unew = Function(V)
+
+uold.rename("u","u")
+unew.rename("u","u")
 
 # Initial condition
 uold.vector()[:] = 0.0
@@ -31,7 +35,7 @@ L    = rhs(form) # linear functional, zero in this case
 A    = assemble(a)
 
 # Time dependent bc at x=0 and x=2*pi
-ubc  = Expression('sin(t)', t=0)
+ubc  = Expression('sin(t)', t=0, degree=degree+3)
 bc   = DirichletBC(V, ubc, "near(x[0],0) || near(x[0],2*pi)")
 
 fsol = File('sol.pvd')
