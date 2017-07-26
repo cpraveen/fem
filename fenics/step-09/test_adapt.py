@@ -2,6 +2,7 @@
 Test grid adaptation
 """
 from dolfin import *
+import matplotlib.pyplot as plt
 
 # Initial mesh
 n = 10
@@ -14,6 +15,14 @@ for c in cells(mesh):
    else:
       flag[c] = False
 
+# Refine the mesh
 mesh_new = refine(mesh, flag)
-File('mesh.pvd') << mesh
-File('mesh_new.pvd') << mesh_new
+
+# Plot initial mesh
+plot(mesh,interactive=False)
+plt.show()
+plt.savefig('mesh.png')
+# Plot refined initial mesh
+plot(mesh_new,interactive=False)
+plt.show()
+plt.savefig('mesh_new.png')
