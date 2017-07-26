@@ -5,7 +5,7 @@ from dolfin import *
 
 # Initial mesh
 n = 10
-mesh = UnitSquare(n,n)
+mesh = UnitSquareMesh(n,n)
 
 flag = CellFunction("bool", mesh)
 for c in cells(mesh):
@@ -15,6 +15,5 @@ for c in cells(mesh):
       flag[c] = False
 
 mesh_new = refine(mesh, flag)
-plot(mesh)
-plot(mesh_new)
-interactive()
+File('mesh.pvd') << mesh
+File('mesh_new.pvd') << mesh_new
