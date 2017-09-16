@@ -35,8 +35,9 @@ class SparseMatrix
       T& operator()(unsigned int i, 
                     unsigned int j);
       T diag (unsigned int i) const;
+      void zero_off_diag(const unsigned int i);
 
-      friend std::ostream& operator<< (std::ostream&          os, 
+      friend std::ostream& operator<< (std::ostream&          os,
                                        const SparseMatrix<T>& A)
       {
          for(unsigned int i=0; i<A.size(); ++i)

@@ -105,6 +105,20 @@ void SparseMatrix<T>::close ()
 }
 
 //-----------------------------------------------------------------------------
+// On i'th row,
+template <class T>
+void SparseMatrix<T>::zero_off_diag(const unsigned int i)
+{
+   unsigned int row_beg = row_ptr[i];
+   unsigned int row_end = row_ptr[i+1];
+   for(unsigned int d=row_beg+1; d<row_end; ++d)
+   {
+      val[d] = 0; // a(i,j)
+      (*this)(col_ind[d],i) = 0; // a(j,i)
+   }
+}
+
+//-----------------------------------------------------------------------------
 // Get element value of A(i,j)
 //-----------------------------------------------------------------------------
 template <class T>
