@@ -26,7 +26,7 @@ double ymin = 0, ymax = 1;
 
 double boundary_value(const double x, const double y)
 {
-   return sin(2*M_PI*x)*sin(2*M_PI*y);
+   return 1.0 + sin(2*M_PI*x)*sin(2*M_PI*y);
 }
 
 double rhs_value(const double x, const double y)
@@ -39,7 +39,7 @@ double rhs_value(const double x, const double y)
 //------------------------------------------------------------------------------
 int main ()
 {
-   const unsigned int nx = 10, ny = 10;
+   const unsigned int nx = 50, ny = 50;
    const double dx = (xmax - xmin) / (nx - 1);
    const double dy = (ymax - ymin) / (ny - 1);
    const unsigned int n = nx*ny;
