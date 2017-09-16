@@ -41,6 +41,8 @@ SparseMatrix<T>::SparseMatrix (unsigned int nrow)
 {
    assert (nrow > 0);
    row_ptr.resize (nrow+1, 0);
+   cols.resize(nrow);
+   vals.resize(nrow);
    state = OPEN;
 }
 
@@ -57,15 +59,8 @@ void SparseMatrix<T>::set (const unsigned int i,
    assert (i >= 0 && i < nrow);
    assert (j >= 0 && j < nrow);
 
-   static unsigned int count = 0;
-   
-   if(row_ptr[i+1] == 0) 
-      row_ptr[i+1] = count;
-   
-   ++count;
-   ++row_ptr[i+1];
-   col_ind.push_back (j);
-   val.push_back (value);
+   cols[i].push_back(j);
+   vals[i].push_back(value);
 }
 
 //------------------------------------------------------------------------------
@@ -74,16 +69,38 @@ void SparseMatrix<T>::set (const unsigned int i,
 template <class T>
 void SparseMatrix<T>::close ()
 {
-   // Take care of empty row
-   for(unsigned int i=1; i<nrow+1; ++i)
+   unsigned int nval = 0;
+   for(unsigned int i=0; i<nrow; ++i)
    {
-      if(row_ptr[i] == 0) 
-      {
-         row_ptr[i] = row_ptr[i-1];
-         std::cout << "Warning: Row " << i << " is empty\n";
-      }
+      nval += cols[i].size();
+      assert(cols[i].size() > 0); // i'th row is empty
+      assert(i == cols[i][0]); // set diagonal first
    }
-   
+   col_ind.resize(nval);
+   val.resize(nval);
+
+   unsigned int c = 0;
+   row_ptr[0] = 0;
+   for(unsigned int i=0; i<nrow; ++i)
+   {
+      for(unsigned int j=0; j<cols[i].size(); ++j)
+      {
+         col_ind[c] = cols[i][j];
+         val[c] = vals[i][j];
+         ++c;
+      }
+      row_ptr[i+1] = c;
+   }
+
+   // Free up memory
+   for(unsigned int i=0; i<nrow; ++i)
+   {
+      cols[i].resize(0);
+      vals[i].resize(0);
+   }
+   cols.resize(0);
+   vals.resize(0);
+
    state = CLOSED;
 }
 
