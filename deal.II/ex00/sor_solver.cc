@@ -19,6 +19,7 @@ SORSolver<T>::SORSolver (unsigned int max_iter,
    assert (max_iter > 0);
    assert (tol > 0);
    assert (omg >= 1 && omg <= 2);
+   std::cout << "Using SOR solver\n";
 }
 
 //-----------------------------------------------------------------------------

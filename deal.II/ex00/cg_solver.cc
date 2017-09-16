@@ -16,6 +16,7 @@ CGSolver<T>::CGSolver (unsigned int max_iter,
 {
    assert (max_iter > 0);
    assert (tol > 0);
+   std::cout << "Using CG solver\n";
 }
 
 //-----------------------------------------------------------------------------

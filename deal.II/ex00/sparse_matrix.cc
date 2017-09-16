@@ -105,7 +105,8 @@ void SparseMatrix<T>::close ()
 }
 
 //-----------------------------------------------------------------------------
-// On i'th row,
+// Zero all elements in i'th row and i'th column except diagonal
+//-----------------------------------------------------------------------------
 template <class T>
 void SparseMatrix<T>::zero_off_diag(const unsigned int i)
 {

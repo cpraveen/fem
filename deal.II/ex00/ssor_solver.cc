@@ -19,6 +19,7 @@ SSORSolver<T>::SSORSolver (unsigned int max_iter,
    assert (max_iter > 0);
    assert (tol > 0);
    assert (omg >= 1.0 && omg <= 2.0);
+   std::cout << "Using SSOR solver\n";
 }
 
 //-----------------------------------------------------------------------------

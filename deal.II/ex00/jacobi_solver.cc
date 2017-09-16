@@ -16,6 +16,7 @@ JacobiSolver<T>::JacobiSolver (unsigned int max_iter,
 {
    assert (max_iter > 0);
    assert (tol > 0);
+   std::cout << "Using Jacobi solver\n";
 }
 
 //-----------------------------------------------------------------------------
