@@ -19,10 +19,11 @@ for c in cells(mesh):
 mesh_new = refine(mesh, flag)
 
 # Plot initial mesh
+plt.figure()
 plot(mesh,interactive=False)
-plt.show()
 plt.savefig('mesh.png')
 # Plot refined initial mesh
+plt.figure()
 plot(mesh_new,interactive=False)
-plt.show()
 plt.savefig('mesh_new.png')
+plt.show()
