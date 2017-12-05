@@ -1,6 +1,6 @@
 # 1-D DG code for scalar conservation laws
 
-Solves linear advection and Burger's equation. To get help, type
+Solves linear advection and Burger's equation. The basis functions are Legendre polynomials and quadrature is performed using Gauss-Legendre points. To get help, type
 ```
 python dg.py -h
 ```

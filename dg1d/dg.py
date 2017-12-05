@@ -37,6 +37,7 @@ parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter',
 parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
 args = parser.parse_args()
 
+# Select PDE
 if args.pde == 'linear':
     from linadv import *
 elif args.pde == 'burger':
@@ -45,6 +46,7 @@ else:
     print('PDE not implemented')
     exit()
 
+# Select initial condition
 if args.ic == 'sine':
     from sine import *
 elif args.ic == 'hat':
@@ -63,7 +65,7 @@ Mdx2 = args.tvbM * dx**2
 
 # k+1 point gauss rule, integrates exactly upto degree 2*k+1
 xg, wg = np.polynomial.legendre.leggauss(k+1)
-wg *= 0.5 # normal weights so their sum is one
+wg *= 0.5 # normalize weights so their sum is one
 
 # Construct Vandermonde matrix for gauss points
 Vf = np.zeros((nd,nd))
@@ -180,4 +182,4 @@ while t < Tf:
     if it%args.save_freq == 0:
         update_plot(lines,t,u1)
 
-plt.show()
+plt.show() # Dont close window at end of program

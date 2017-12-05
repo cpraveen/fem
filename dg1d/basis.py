@@ -13,9 +13,9 @@ def shape_value(i, x):
     else:
         print("shape_value not implemented")
         exit()
-
     return value*sqrt(2*i+1)
 
+# Derivatives of Legendre polynomials
 def shape_grad(i, x):
     if i==0:
         value = 0.0
@@ -28,5 +28,4 @@ def shape_grad(i, x):
     else:
         print("shape_grad not implemented")
         exit()
-
     return value*sqrt(2*i+1)
