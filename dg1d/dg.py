@@ -7,6 +7,19 @@ from basis import *
 ark = np.array([0.0, 3.0/4.0, 1.0/3.0])
 brk = 1.0 - ark
 
+sqrt3 = np.sqrt(3.0)
+
+def minmod(a,b,c,Mdx2):
+    if np.abs(a) < Mdx2:
+        return a
+    sa = np.sign(a)
+    sb = np.sign(b)
+    sc = np.sign(c)
+    if sa==sb and sb==sc:
+        return sa * np.abs([a,b,c]).min()
+    else:
+        return 0.0
+
 # Get arguments
 parser = argparse.ArgumentParser()
 parser.add_argument('-pde', choices=('linear','burger'), help='PDE', 
@@ -21,6 +34,7 @@ parser.add_argument('-ic', choices=('sine','hat'), help='Initial condition',
                     default='sine')
 parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter', 
                     default='no')
+parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
 args = parser.parse_args()
 
 if args.pde == 'linear':
@@ -45,6 +59,7 @@ nc = args.ncell   # number of cells
 
 nd = k + 1 # dofs per cell
 dx = (xmax - xmin)/nc
+Mdx2 = args.tvbM * dx**2
 
 # k+1 point gauss rule, integrates exactly upto degree 2*k+1
 xg, wg = np.polynomial.legendre.leggauss(k+1)
@@ -119,7 +134,7 @@ Tf  = args.Tf
 lam = dt/dx
 while t < Tf:
     if t+dt > Tf:
-        dt = Tf - f
+        dt = Tf - t
         lam = dt/dx
     for rk in range(3):
         # Loop over cells and compute cell integral
@@ -145,9 +160,24 @@ while t < Tf:
         # Peform rk stage
         u1[:,:] = ark[rk]*u0 + brk[rk]*(u1 - lam*res)
         if args.limit == 'yes':
-            print('Limiter not implemented')
-            exit()
+            for i in range(nc):
+                if i==0:
+                    ul = u1[-1,0]
+                    ur = u1[ 1,0]
+                elif i==nc-1:
+                    ul = u1[nc-2,0]
+                    ur = u1[0   ,0]
+                else:
+                    ul = u1[i-1,0]
+                    ur = u1[i+1,0]
+                du = (1.0/sqrt3)*minmod(sqrt3*u1[i,1], (u1[i,0]-ul), (ur-u1[i,0]), 
+                                        Mdx2)
+                if np.abs(du-u1[i,1]) > 1.0e-6:
+                    u1[i,1] = du
+                    u1[i,2:]= 0.0
     u0[:,:] = u1
     t += dt; it += 1
     if it%args.save_freq == 0:
-        update_plot(lines,t,u1) 
+        update_plot(lines,t,u1)
+
+plt.show()
