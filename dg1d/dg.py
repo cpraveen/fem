@@ -114,10 +114,13 @@ lines = init_plot(ax,u0)
 wait = raw_input("Press enter to continue ")
 
 it, t = 0, 0.0
-dt  = cfl*dx/(2*k+1)
+dt  = cfl*dx/(2*k+1)/max_speed(u0)
 Tf  = args.Tf
 lam = dt/dx
 while t < Tf:
+    if t+dt > Tf:
+        dt = Tf - f
+        lam = dt/dx
     for rk in range(3):
         # Loop over cells and compute cell integral
         for i in range(nc):
@@ -129,8 +132,8 @@ while t < Tf:
         ul = u1[-1,:].dot(Vu[-1,:])
         ur = u1[ 0,:].dot(Vu[ 0,:])
         f  = numflux(ul, ur)
-        res[-1,:] += f*Vu[-1,:]
-        res[ 0,:] -= f*Vu[ 0,:]
+        res[-1,:] += f*Vu[-1,:] # Add to last cell
+        res[ 0,:] -= f*Vu[ 0,:] # Add to first cell
         # Loop over internal faces
         # Left cell = i-1, right cell = i
         for i in range(1,nc):

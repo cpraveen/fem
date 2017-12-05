@@ -5,3 +5,6 @@ def flux(u):
 # Upwind flux
 def numflux(ul, ur):
     return ul
+
+def max_speed(u):
+    return 1.0
