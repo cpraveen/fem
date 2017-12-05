@@ -1,26 +1,54 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 from basis import *
-from linadv import *
 
 # SSPRK3 coefficients
 ark = np.array([0.0, 3.0/4.0, 1.0/3.0])
 brk = 1.0 - ark
 
-def initial_condition(x):
-    return np.sin(2*np.pi*x)
+# Get arguments
+parser = argparse.ArgumentParser()
+parser.add_argument('-pde', choices=('linear','burger'), help='PDE', 
+                    default='linear')
+parser.add_argument('-ncell', type=int, help='Number of cells', default=50)
+parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
+parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
+parser.add_argument('-Tf', type=float, help='Final time', default=1.0)
+parser.add_argument('-save_freq', type=int, help='Frequency to save solution', 
+                    default=1)
+parser.add_argument('-ic', choices=('sine','hat'), help='Initial condition', 
+                    default='sine')
+parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter', 
+                    default='no')
+args = parser.parse_args()
 
-xmin, xmax = 0.0, 1.0
+if args.pde == 'linear':
+    from linadv import *
+elif args.pde == 'burger':
+    from burger import *
+else:
+    print('PDE not implemented')
+    exit()
 
-cfl= 0.8
-k  = 1     # polynomial degree
+if args.ic == 'sine':
+    from sine import *
+elif args.ic == 'hat':
+    from hat import *
+else:
+    print('Unknown initial condition')
+    exit()
+
+cfl= args.cfl     # cfl number
+k  = args.degree  # polynomial degree
+nc = args.ncell   # number of cells
+
 nd = k + 1 # dofs per cell
-nc = 50    # number of cells
 dx = (xmax - xmin)/nc
 
-# k+1 gauss rule, integrate exactly upto degree 2*k+1
+# k+1 point gauss rule, integrates exactly upto degree 2*k+1
 xg, wg = np.polynomial.legendre.leggauss(k+1)
-wg *= 0.5
+wg *= 0.5 # normal weights so their sum is one
 
 # Construct Vandermonde matrix for gauss points
 Vf = np.zeros((nd,nd))
@@ -55,12 +83,19 @@ u1[:,:] = u0
 
 def init_plot(ax,u0):
     lines = []
+    umin, umax = 1.0e20, -1.0e20
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
         f  = Vu.dot(u0[i,:])
         line, = ax.plot(x,f)
         lines.append(line)
+        umin = np.min([umin, f.min()])
+        umax = np.max([umax, f.max()])
+    plt.title('Initial condition')
+    plt.xlabel('x'); plt.ylabel('u'); plt.grid(True)
+    plt.axis([xmin,xmax,umin-0.1,umax+0.1])
+    plt.draw(); plt.pause(0.1)
     return lines
 
 def update_plot(lines,t,u1):
@@ -69,22 +104,18 @@ def update_plot(lines,t,u1):
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
         f  = Vu.dot(u1[i,:])
         lines[i].set_ydata(f)
-    plt.title('t = '+('%.3e'%t))
+    plt.title(str(nc)+' cells, CFL = '+str(cfl)+', t = '+('%.3e'%t))
+    plt.draw(); plt.pause(0.1)
 
 # plot initial condition
 fig = plt.figure()
 ax = fig.add_subplot(111)
 lines = init_plot(ax,u0)
-plt.title('Initial condition')
-plt.xlabel('x')
-plt.ylabel('u')
-plt.grid(True)
-plt.draw(); plt.pause(0.1)
 wait = raw_input("Press enter to continue ")
 
-t = 0.0
-dt= cfl*dx/(2*k+1)
-Tf= 1.0
+it, t = 0, 0.0
+dt  = cfl*dx/(2*k+1)
+Tf  = args.Tf
 lam = dt/dx
 while t < Tf:
     for rk in range(3):
@@ -110,6 +141,10 @@ while t < Tf:
             res[i  ,:] -= f*Vu[ 0,:]
         # Peform rk stage
         u1[:,:] = ark[rk]*u0 + brk[rk]*(u1 - lam*res)
+        if args.limit == 'yes':
+            print('Limiter not implemented')
+            exit()
     u0[:,:] = u1
-    t += dt
-    update_plot(lines,t,u1); plt.draw(); plt.pause(0.1)
+    t += dt; it += 1
+    if it%args.save_freq == 0:
+        update_plot(lines,t,u1) 
