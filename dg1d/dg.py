@@ -65,7 +65,6 @@ Mdx2 = args.tvbM * dx**2
 
 # k+1 point gauss rule, integrates exactly upto degree 2*k+1
 xg, wg = np.polynomial.legendre.leggauss(k+1)
-wg *= 0.5 # normalize weights so their sum is one
 
 # Construct Vandermonde matrix for gauss points
 Vf = np.zeros((nd,nd))
@@ -94,7 +93,7 @@ for i in range(nc):
     x  = xc + 0.5*dx*xg       # transform gauss points to cell
     val= initial_condition(x)
     for j in range(nd):
-        u0[i,j] = val.dot(Vf[:,j]*wg)
+        u0[i,j] = 0.5 * val.dot(Vf[:,j]*wg)
 
 u1[:,:] = u0
 
@@ -144,7 +143,7 @@ while t < Tf:
             u = Vf.dot(u1[i,:]) # solution at gauss points
             f = flux(u)        # flux at gauss points
             for j in range(nd):
-                res[i,j] = -2.0*f.dot(Vg[:,j]*wg)
+                res[i,j] = -f.dot(Vg[:,j]*wg)
         # First face: left cell = nc-1, right cell = 0
         ul = u1[-1,:].dot(Vu[-1,:])
         ur = u1[ 0,:].dot(Vu[ 0,:])
