@@ -85,20 +85,7 @@ for i in range(nu):
     for j in range(k+1):
         Vu[i,j] = shape_value(j, xu[i])
 
-u0 = np.zeros((nc,nd)) # solution at n
-u1 = np.zeros((nc,nd)) # solution at n+1
-res= np.zeros((nc,nd)) # solution at n+1
-
-# Set initial condition by L2 projection
-for i in range(nc):
-    xc = xmin + i*dx + 0.5*dx # cell center
-    x  = xc + 0.5*dx*xg       # transform gauss points to cell
-    val= initial_condition(x)
-    for j in range(nd):
-        u0[i,j] = 0.5 * val.dot(Vf[:,j]*wg)
-
-u1[:,:] = u0
-
+# Initialize plot
 def init_plot(ax,u0):
     lines = []
     umin, umax = 1.0e20, -1.0e20
@@ -116,6 +103,7 @@ def init_plot(ax,u0):
     plt.draw(); plt.pause(0.1)
     return lines
 
+# Update plot
 def update_plot(lines,t,u1):
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
@@ -125,10 +113,23 @@ def update_plot(lines,t,u1):
     plt.title(str(nc)+' cells, CFL = '+str(cfl)+', t = '+('%.3e'%t))
     plt.draw(); plt.pause(0.1)
 
+# Allocate solution variables
+u0 = np.zeros((nc,nd)) # solution at n
+u1 = np.zeros((nc,nd)) # solution at n+1
+res= np.zeros((nc,nd)) # residual
+
+# Set initial condition by L2 projection
+for i in range(nc):
+    xc = xmin + i*dx + 0.5*dx # cell center
+    x  = xc + 0.5*dx*xg       # transform gauss points to cell
+    val= initial_condition(x)
+    for j in range(nd):
+        u1[i,j] = 0.5 * val.dot(Vf[:,j]*wg)
+
 # plot initial condition
 fig = plt.figure()
 ax = fig.add_subplot(111)
-lines = init_plot(ax,u0)
+lines = init_plot(ax,u1)
 wait = raw_input("Press enter to continue ")
 
 it, t = 0, 0.0
@@ -139,6 +140,7 @@ while t < Tf:
     if t+dt > Tf:
         dt = Tf - t
         lam = dt/dx
+    u0[:,:] = u1
     for rk in range(3):
         # Loop over cells and compute cell integral
         for i in range(nc):
@@ -178,7 +180,6 @@ while t < Tf:
                 if np.abs(du-u1[i,1]) > 1.0e-6:
                     u1[i,1 ] = du   # Copy limited gradient
                     u1[i,2:] = 0.0  # Kill all higher modes
-    u0[:,:] = u1
     t += dt; it += 1
     if it%args.plot_freq == 0 or np.abs(Tf-t) < 1.0e-13:
         update_plot(lines,t,u1)
