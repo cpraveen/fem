@@ -38,3 +38,7 @@ Discontinuous initial condition with limiter
 ```
 python dg.py -pde burger -ic hat -degree 1 -ncell 52 -limit yes
 ```
+
+## Exercises
+
+* Use interpolation to set initial condition. You can use inverse of Vandermonde matrix to convert from nodal values to modal values.
