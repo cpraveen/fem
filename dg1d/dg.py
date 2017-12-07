@@ -28,13 +28,15 @@ parser.add_argument('-ncell', type=int, help='Number of cells', default=50)
 parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
 parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
 parser.add_argument('-Tf', type=float, help='Final time', default=1.0)
-parser.add_argument('-save_freq', type=int, help='Frequency to save solution', 
+parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
                     default=1)
 parser.add_argument('-ic', choices=('sine','hat'), help='Initial condition', 
                     default='sine')
 parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter', 
                     default='no')
 parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
+parser.add_argument('-compute_error', choices=('no','yes'), 
+                    help='Compute error norm', default='no')
 args = parser.parse_args()
 
 # Select PDE
@@ -141,7 +143,7 @@ while t < Tf:
         # Loop over cells and compute cell integral
         for i in range(nc):
             u = Vf.dot(u1[i,:]) # solution at gauss points
-            f = flux(u)        # flux at gauss points
+            f = flux(u)         # flux at gauss points
             for j in range(nd):
                 res[i,j] = -f.dot(Vg[:,j]*wg)
         # First face: left cell = nc-1, right cell = 0
@@ -174,11 +176,34 @@ while t < Tf:
                 du = (1.0/sqrt3)*minmod(sqrt3*u1[i,1], (u1[i,0]-ul), (ur-u1[i,0]), 
                                         Mdx2)
                 if np.abs(du-u1[i,1]) > 1.0e-6:
-                    u1[i,1] = du
-                    u1[i,2:]= 0.0
+                    u1[i,1 ] = du   # Copy limited gradient
+                    u1[i,2:] = 0.0  # Kill all higher modes
     u0[:,:] = u1
     t += dt; it += 1
-    if it%args.save_freq == 0:
+    if it%args.plot_freq == 0 or np.abs(Tf-t) < 1.0e-13:
         update_plot(lines,t,u1)
+
+if args.compute_error == 'yes':
+    # Compute error norm using ng-point quadrature
+    # We assume final solution = initial solution
+    ng = k + 3
+    xg, wg = np.polynomial.legendre.leggauss(ng)
+
+    Vf = np.zeros((ng,k+1))
+    for i in range(ng):
+        for j in range(k+1):
+            Vf[i,j] = shape_value(j, xg[i])
+
+    error_norm = 0.0
+    for i in range(nc):
+        # DG solution at gauss points
+        un = Vf.dot(u1[i,:])
+        # Exact solution at gauss points
+        xc = xmin + i*dx + 0.5*dx # cell center
+        x  = xc + 0.5*dx*xg       # transform gauss points to cell
+        ue = initial_condition(x)
+        error_norm += 0.5 * dx * np.sum( (un-ue)**2 * wg )
+
+    print('L2 error norm = %e\n' % np.sqrt(error_norm))
 
 plt.show() # Dont close window at end of program
