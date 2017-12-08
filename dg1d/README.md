@@ -23,6 +23,10 @@ To suppress the oscillations, we will use a limiter
 ```
 python dg.py -pde linear -ic hat -degree 1 -ncell 52 -limit yes
 ```
+The TVD limiter applied to linear advection will cause clipping of smooth extrema
+```
+python dg.py -pde linear -ic sine -degree 1 -ncell 50 -limit yes
+```
 
 ## Inviscid Burgers equation
 

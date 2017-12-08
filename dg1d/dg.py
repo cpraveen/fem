@@ -57,9 +57,9 @@ else:
     print('Unknown initial condition')
     exit()
 
-cfl= args.cfl     # cfl number
-k  = args.degree  # polynomial degree
-nc = args.ncell   # number of cells
+k  = args.degree      # polynomial degree
+cfl= args.cfl/(2*k+1) # cfl number
+nc = args.ncell       # number of cells
 
 nd = k + 1 # dofs per cell
 dx = (xmax - xmin)/nc
@@ -138,7 +138,7 @@ lines = init_plot(ax,u1)
 wait = raw_input("Press enter to continue ")
 
 it, t = 0, 0.0
-dt  = cfl*dx/(2*k+1)/max_speed(u1)
+dt  = cfl*dx/max_speed(u1)
 Tf  = args.Tf
 lam = dt/dx
 while t < Tf:
