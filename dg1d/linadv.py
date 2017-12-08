@@ -1,9 +1,9 @@
 # f = a*u with a = 1
-def flux(u):
+def flux(x,u):
     return u
 
 # Upwind flux
-def numflux(ul, ur):
+def numflux(x, ul, ur):
     return ul
 
 def max_speed(u):

@@ -133,7 +133,7 @@ lines = init_plot(ax,u1)
 wait = raw_input("Press enter to continue ")
 
 it, t = 0, 0.0
-dt  = cfl*dx/(2*k+1)/max_speed(u0)
+dt  = cfl*dx/(2*k+1)/max_speed(u1)
 Tf  = args.Tf
 lam = dt/dx
 while t < Tf:
@@ -144,14 +144,16 @@ while t < Tf:
     for rk in range(3):
         # Loop over cells and compute cell integral
         for i in range(nc):
-            u = Vf.dot(u1[i,:]) # solution at gauss points
-            f = flux(u)         # flux at gauss points
+            xc = xmin + i*dx + 0.5*dx # cell center
+            x  = xc + 0.5*dx*xg       # transform gauss points to cell
+            u = Vf.dot(u1[i,:])       # solution at gauss points
+            f = flux(x,u)             # flux at gauss points
             for j in range(nd):
                 res[i,j] = -f.dot(Vg[:,j]*wg)
         # First face: left cell = nc-1, right cell = 0
         ul = u1[-1,:].dot(Vu[-1,:])
         ur = u1[ 0,:].dot(Vu[ 0,:])
-        f  = numflux(ul, ur)
+        f  = numflux(xmin, ul, ur)
         res[-1,:] += f*Vu[-1,:] # Add to last cell
         res[ 0,:] -= f*Vu[ 0,:] # Add to first cell
         # Loop over internal faces
@@ -159,7 +161,7 @@ while t < Tf:
         for i in range(1,nc):
             ul = u1[i-1,:].dot(Vu[-1,:])
             ur = u1[i  ,:].dot(Vu[ 0,:])
-            f  = numflux(ul, ur)
+            f  = numflux(xmin+i*dx, ul, ur)
             res[i-1,:] += f*Vu[-1,:]
             res[i  ,:] -= f*Vu[ 0,:]
         # Peform rk stage
