@@ -1,31 +1,28 @@
 from numpy import sqrt
 
 # Legendre polynomials on [-1,+1]
-def shape_value(i, x):
-    if i==0:
+def Legendre(n, x):
+    if n==0:
         value = 1.0
-    elif i==1:
+    elif n==1:
         value = x
-    elif i==2:
-        value = 0.5*(3*x**2 - 1)
-    elif i==3:
-        value = 0.5*(5*x**3 - 3*x)
     else:
-        print("shape_value not implemented")
-        exit()
-    return value*sqrt(2*i+1)
+        value = (2.0*n-1.0)/n * x * Legendre(n-1,x) - (n-1.0)/n * Legendre(n-2,x)
+    return value
+
+# Derivative of Legendre
+def dLegendre(n, x):
+    if n==0:
+        value = 0.0
+    elif n==1:
+        value = 1.0
+    else:
+        value = n * Legendre(n-1,x) + x * dLegendre(n-1,x)
+    return value
+
+def shape_value(n, x):
+    return Legendre(n,x)*sqrt(2*n+1)
 
 # Derivatives of Legendre polynomials
-def shape_grad(i, x):
-    if i==0:
-        value = 0.0
-    elif i==1:
-        value = 1.0
-    elif i==2:
-        value = 3*x
-    elif i==3:
-        value = 0.5*(15*x**2 - 3)
-    else:
-        print("shape_grad not implemented")
-        exit()
-    return value*sqrt(2*i+1)
+def shape_grad(n, x):
+    return dLegendre(n,x)*sqrt(2*n+1)
