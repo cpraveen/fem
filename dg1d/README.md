@@ -42,3 +42,6 @@ python dg.py -pde burger -ic hat -degree 1 -ncell 52 -limit yes
 ## Exercises
 
 * Use interpolation to set initial condition. You can use inverse of Vandermonde matrix to convert from nodal values to modal values.
+* Try the test cases with a central flux and comment on the quality of the solutions.
+* Solve the linear advection equation on a sequence of meshes and compute the rate at which the error decreases with respect to the cell size dx.
+* Rewrite the Python code in any other language of your choice like Fortran, C or C++.
