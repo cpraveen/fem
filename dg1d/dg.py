@@ -105,12 +105,17 @@ def init_plot(ax,u0):
 
 # Update plot
 def update_plot(lines,t,u1):
+    umin, umax = 1.0e20, -1.0e20
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
         f  = Vu.dot(u1[i,:])
         lines[i].set_ydata(f)
-    plt.title(str(nc)+' cells, CFL = '+str(cfl)+', t = '+('%.3e'%t))
+        umin = np.min([umin, f.min()])
+        umax = np.max([umax, f.max()])
+    plt.axis([xmin,xmax,umin-0.1,umax+0.1])
+    plt.title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(cfl)+
+              ', t = '+('%.3e'%t))
     plt.draw(); plt.pause(0.1)
 
 # Allocate solution variables
