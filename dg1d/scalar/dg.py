@@ -83,7 +83,7 @@ def init_plot(ax,u0):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
         f  = Vu.dot(u0[i,:])
-        line, = ax.plot(x,f)
+        line, = ax.plot(x,f,linewidth=2)
         lines.append(line)
         umin = np.min([umin, f.min()])
         umax = np.max([umax, f.max()])

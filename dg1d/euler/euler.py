@@ -15,7 +15,7 @@ isqrt3 = 1.0/sqrt3
 parser = argparse.ArgumentParser()
 parser.add_argument('-ncell', type=int, help='Number of cells', default=100)
 parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
-parser.add_argument('-cfl', type=float, help='CFL number', default=0.8)
+parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
 parser.add_argument('-Tf', type=float, help='Final time', default=0.0)
 parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
                     default=5)
@@ -69,7 +69,7 @@ def init_plot(ax,rho,mom,ene):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
         f  = Vu.dot(rho[i,:])
-        line, = ax.plot(x,f)
+        line, = ax.plot(x,f,linewidth=2)
         lines.append(line)
         umin = np.min([umin, f.min()])
         umax = np.max([umax, f.max()])

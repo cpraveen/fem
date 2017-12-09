@@ -40,22 +40,22 @@ def EigMatrix(u):
     R, L = np.zeros((3,3)), np.zeros((3,3))
 
     # Inverse eigenvector-matrix
-    L[0,0] = 1.0 - g2 * v * v / c / c
-    L[1,0] = (g2 * v * v - v * c) / d / c
-    L[2,0] = -(g2 * v * v + v * c) / d / c
+    L[0,0] =  1.0 - g2 * v**2 / c**2
+    L[1,0] =  (g2 * v**2 - v * c) / (d * c)
+    L[2,0] = -(g2 * v**2 + v * c) / (d * c)
    
-    L[0,1] = g1 * v / c / c
-    L[1,1] = (c - g1 * v) / d / c
-    L[2,1] = (c + g1 * v) / d / c
+    L[0,1] = g1 * v / c**2
+    L[1,1] = (c - g1 * v) / (d * c)
+    L[2,1] = (c + g1 * v) / (d * c)
    
-    L[0,2] = -g1 / c / c
-    L[1,2] =  g1 / d / c
-    L[2,2] = -g1 / d / c
+    L[0,2] = -g1 / c**2
+    L[1,2] =  g1 / (d * c)
+    L[2,2] = -g1 / (d * c)
    
     # Eigenvector matrix
     R[0,0] = 1.0
     R[1,0] = v
-    R[2,0] = v * v / 2.0
+    R[2,0] = 0.5 * v**2
    
     R[0,1] = f
     R[1,1] = (v + c) * f
