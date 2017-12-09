@@ -62,36 +62,77 @@ for i in range(nu):
         Vu[i,j] = shape_value(j, xu[i])
 
 # Initialize plot
-def init_plot(ax,rho,mom,ene):
-    lines = []
-    umin, umax = 1.0e20, -1.0e20
+def init_plot(fig,ax,rho,mom,ene):
+    lines0,lines1,lines2 = [], [], []
+    umin0, umax0 = 1.0e20, -1.0e20
+    umin1, umax1 = 1.0e20, -1.0e20
+    umin2, umax2 = 1.0e20, -1.0e20
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
-        f  = Vu.dot(rho[i,:])
-        line, = ax.plot(x,f,linewidth=2)
-        lines.append(line)
-        umin = np.min([umin, f.min()])
-        umax = np.max([umax, f.max()])
-    plt.title('Initial condition')
-    plt.xlabel('x'); plt.ylabel('u'); plt.grid(True)
-    plt.axis([xmin,xmax,umin-0.1,umax+0.1])
+        # Density
+        r  = Vu.dot(rho[i,:])
+        line, = ax[0].plot(x,r,linewidth=2)
+        lines0.append(line)
+        umin0 = np.min([umin0, r.min()])
+        umax0 = np.max([umax0, r.max()])
+        # Velocity
+        m  = Vu.dot(mom[i,:])
+        v  = m / r
+        line, = ax[1].plot(x,v,linewidth=2)
+        lines1.append(line)
+        umin1 = np.min([umin1, v.min()])
+        umax1 = np.max([umax1, v.max()])
+        # Pressure
+        E  = Vu.dot(ene[i,:])
+        pre= pressure(r, m, E)
+        line, = ax[2].plot(x,pre,linewidth=2)
+        lines2.append(line)
+        umin2 = np.min([umin2, pre.min()])
+        umax2 = np.max([umax2, pre.max()])
+    fig.canvas.set_window_title('Initial condition')
+    ax[0].set_xlabel('x'); ax[0].set_title('Density'); ax[0].grid(True)
+    ax[0].set_xlim([xmin,xmax])
+    ax[0].set_ylim([umin0-0.1,umax0+0.1])
+    ax[1].set_xlabel('x'); ax[1].set_title('Velocity'); ax[1].grid(True)
+    ax[1].set_xlim([xmin,xmax])
+    ax[1].set_ylim([umin1-0.1,umax1+0.1])
+    ax[2].set_xlabel('x'); ax[2].set_title('Pressure'); ax[2].grid(True)
+    ax[2].set_xlim([xmin,xmax])
+    ax[2].set_ylim([umin2-0.1,umax2+0.1])
     plt.draw(); plt.pause(0.1)
-    return lines
+    return lines0,lines1,lines2
 
 # Update plot
-def update_plot(lines,t,rho):
-    umin, umax = 1.0e20, -1.0e20
+def update_plot(fig,ax,lines0,lines1,lines2,t,rho,mom,ene):
+    umin0, umax0 = 1.0e20, -1.0e20
+    umin1, umax1 = 1.0e20, -1.0e20
+    umin2, umax2 = 1.0e20, -1.0e20
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
-        f  = Vu.dot(rho[i,:])
-        lines[i].set_ydata(f)
-        umin = np.min([umin, f.min()])
-        umax = np.max([umax, f.max()])
-    plt.axis([xmin,xmax,umin-0.1,umax+0.1])
-    plt.title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(cfl)+
+        # Density
+        r  = Vu.dot(rho[i,:])
+        lines0[i].set_ydata(r)
+        umin0 = np.min([umin0, r.min()])
+        umax0 = np.max([umax0, r.max()])
+        # Velocity
+        m  = Vu.dot(mom[i,:])
+        v  = m / r
+        lines1[i].set_ydata(v)
+        umin1 = np.min([umin1, v.min()])
+        umax1 = np.max([umax1, v.max()])
+        # Pressure
+        E  = Vu.dot(ene[i,:])
+        pre= pressure(r, m, E)
+        lines2[i].set_ydata(pre)
+        umin2 = np.min([umin2, pre.min()])
+        umax2 = np.max([umax2, pre.max()])
+    fig.canvas.set_window_title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(cfl)+
               ', t = '+('%.3e'%t))
+    ax[0].set_ylim([umin0-0.1,umax0+0.1])
+    ax[1].set_ylim([umin1-0.1,umax1+0.1])
+    ax[2].set_ylim([umin2-0.1,umax2+0.1])
     plt.draw(); plt.pause(0.1)
 
 # Allocate solution variables
@@ -116,9 +157,8 @@ for i in range(nc):
         ene1[i,j] = 0.5 * ene.dot(Vf[:,j]*wg)
 
 # plot initial condition
-fig = plt.figure()
-ax = fig.add_subplot(111)
-lines = init_plot(ax,rho1,mom1,ene1)
+fig,ax = plt.subplots(nrows=1,ncols=3,figsize=(15,5))
+lines0,lines1,lines2 = init_plot(fig,ax,rho1,mom1,ene1)
 wait = raw_input("Press enter to continue ")
 
 # If final time given on command line, use that
@@ -227,6 +267,6 @@ while t < Tf:
                     ene1[i,1] = dun[2]; ene1[i,2:] = 0.0
     t += dt; it += 1
     if it%args.plot_freq == 0 or np.abs(Tf-t) < 1.0e-13:
-        update_plot(lines,t,rho1)
+        update_plot(fig,ax,lines0,lines1,lines2,t,rho1,mom1,ene1)
 
 plt.show() # Dont close window at end of program
