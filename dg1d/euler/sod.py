@@ -2,6 +2,7 @@ import numpy as np
 from gas import *
 
 xmin, xmax = 0.0, 1.0
+Tf = 0.2
 
 def initial_condition(x):
     rhol, rhor = 1.0, 0.125

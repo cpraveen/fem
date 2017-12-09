@@ -8,20 +8,19 @@ from limiter import *
 ark = np.array([0.0, 3.0/4.0, 1.0/3.0])
 brk = 1.0 - ark
 
-sqrt3 = np.sqrt(3.0)
+sqrt3  = np.sqrt(3.0)
+isqrt3 = 1.0/sqrt3
 
 # Get arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-ncell', type=int, help='Number of cells', default=50)
+parser.add_argument('-ncell', type=int, help='Number of cells', default=100)
 parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
-parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
-parser.add_argument('-Tf', type=float, help='Final time', default=1.0)
+parser.add_argument('-cfl', type=float, help='CFL number', default=0.8)
+parser.add_argument('-Tf', type=float, help='Final time', default=0.0)
 parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
                     default=1)
 parser.add_argument('-ic', choices=('sod'), help='Initial condition', 
                     default='sod')
-parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter', 
-                    default='no')
 parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
 args = parser.parse_args()
 
@@ -120,11 +119,14 @@ ax = fig.add_subplot(111)
 lines = init_plot(ax,rho1,mom1,ene1)
 wait = raw_input("Press enter to continue ")
 
+# If final time given on command line, use that
+if args.Tf > 0.0:
+    Tf  = args.Tf
+
 it, t = 0, 0.0
-dt  = cfl*dx/max_speed(rho1,mom1,ene1)
-Tf  = args.Tf
-lam = dt/dx
 while t < Tf:
+    dt  = cfl*dx/max_speed(rho1,mom1,ene1)
+    lam = dt/dx
     if t+dt > Tf:
         dt = Tf - t
         lam = dt/dx
@@ -172,20 +174,45 @@ while t < Tf:
             rese[i-1,:] += f[2]*Vu[-1,:]
             rese[i  ,:] -= f[2]*Vu[ 0,:]
         # last face
-        rhol = rho1[-1,:].dot(Vu[0,:])
-        rhor = rho1[-1,:].dot(Vu[0,:])
-        moml = mom1[-1,:].dot(Vu[0,:])
-        momr = mom1[-1,:].dot(Vu[0,:])
-        enel = ene1[-1,:].dot(Vu[0,:])
-        ener = ene1[-1,:].dot(Vu[0,:])
+        rhol = rho1[-1,:].dot(Vu[-1,:])
+        rhor = rho1[-1,:].dot(Vu[-1,:])
+        moml = mom1[-1,:].dot(Vu[-1,:])
+        momr = mom1[-1,:].dot(Vu[-1,:])
+        enel = ene1[-1,:].dot(Vu[-1,:])
+        ener = ene1[-1,:].dot(Vu[-1,:])
         f  = numflux([rhol,moml,enel],[rhor,momr,ener])
-        resr[-1,:] += f[0]*Vu[0,:] # Add to first cell
-        resm[-1,:] += f[1]*Vu[0,:] # Add to first cell
-        rese[-1,:] += f[2]*Vu[0,:] # Add to first cell
+        resr[-1,:] += f[0]*Vu[-1,:] # Add to first cell
+        resm[-1,:] += f[1]*Vu[-1,:] # Add to first cell
+        rese[-1,:] += f[2]*Vu[-1,:] # Add to first cell
         # Peform rk stage
         rho1[:,:] = ark[rk]*rho0 + brk[rk]*(rho1 - lam*resr)
         mom1[:,:] = ark[rk]*mom0 + brk[rk]*(mom1 - lam*resm)
         ene1[:,:] = ark[rk]*ene0 + brk[rk]*(ene1 - lam*rese)
+        # Apply limiter
+        if k > 0:
+            ul,uc,ur,du,dun = np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3)
+            for i in range(1,nc-1):
+                ul[0] = rho1[i-1,0] # density
+                uc[0] = rho1[i  ,0]
+                ur[0] = rho1[i+1,0]
+                du[0] = rho1[i  ,1]
+                ul[1] = mom1[i-1,0] # momentum
+                uc[1] = mom1[i  ,0]
+                ur[1] = mom1[i+1,0]
+                du[1] = mom1[i  ,1]
+                ul[2] = ene1[i-1,0] # energy
+                uc[2] = ene1[i  ,0]
+                ur[2] = ene1[i+1,0]
+                du[2] = ene1[i  ,1]
+                lim   = 0
+                for j in range(3):
+                    dun[j] = isqrt3*minmod(sqrt3*du[j],uc[j]-ul[j],ur[j]-uc[j],Mdx2)
+                    if np.abs(dun[j]-du[j]) > 1.0e-6:
+                        lim = 1
+                if lim == 1:
+                    rho1[i,1] = dun[0]; rho1[i,2:] = 0.0
+                    mom1[i,1] = dun[1]; mom1[i,2:] = 0.0
+                    ene1[i,1] = dun[2]; ene1[i,2:] = 0.0
     t += dt; it += 1
     if it%args.plot_freq == 0 or np.abs(Tf-t) < 1.0e-13:
         update_plot(lines,t,rho1)
