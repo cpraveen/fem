@@ -2,23 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 from basis import *
+from limiter import *
 
 # SSPRK3 coefficients
 ark = np.array([0.0, 3.0/4.0, 1.0/3.0])
 brk = 1.0 - ark
 
 sqrt3 = np.sqrt(3.0)
-
-def minmod(a,b,c,Mdx2):
-    if np.abs(a) < Mdx2:
-        return a
-    sa = np.sign(a)
-    sb = np.sign(b)
-    sc = np.sign(c)
-    if sa==sb and sb==sc:
-        return sa * np.abs([a,b,c]).min()
-    else:
-        return 0.0
 
 # Get arguments
 parser = argparse.ArgumentParser()
