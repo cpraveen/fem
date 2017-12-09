@@ -3,9 +3,11 @@ import numpy as np
 gasGam = 1.4
 gasR   = 1.0
 
+# Compute pressure given density, momentum and energy
 def pressure(rho,mom,ene):
     return (gasGam-1.0)*(ene - 0.5*mom**2/rho)
 
+# Compute Euler flux given density, momentum, energy
 def flux(rho,mom,ene):
     pre  = pressure(rho,mom,ene)
     frho = mom
@@ -13,19 +15,25 @@ def flux(rho,mom,ene):
     fene = (ene + pre)*mom/rho
     return frho,fmom,fene
 
+# Compute maximum wave speed
+# u = conserved variables
 def max_eig(u):
     vel = u[1]/u[0]
     pre = pressure(u[0],u[1],u[2])
     lam = np.abs(vel) + np.sqrt(gasGam * pre / u[0])
     return lam
 
-# Based on cell average value
+# Compute maximum wave speed in each cell based on cell average value
 def max_speed(rho,mom,ene):
     vel = mom[:,0] / rho[:,0]
     pre = pressure(rho[:,0], mom[:,0], ene[:,0])
     lam = np.abs(vel) + np.sqrt(gasGam * pre / rho[:,0])
     return lam.max()
 
+# Compute matrix of right and left eigenvectors from u = conserved variables
+# R = matrix of right eigenvectors
+# L = matrix of left eigenvectors
+# L = R^{-1} so that R*L = I
 def EigMatrix(u):
     g1 = gasGam - 1.0
     g2 = 0.5*g1
@@ -67,6 +75,7 @@ def EigMatrix(u):
 
     return R, L
 
+# Rusanov flux
 def numflux(ul,ur):
     fl0,fl1,fl2 = flux(ul[0],ul[1],ul[2])
     fr0,fr1,fr2 = flux(ur[0],ur[1],ur[2])
