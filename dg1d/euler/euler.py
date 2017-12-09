@@ -93,13 +93,13 @@ def init_plot(fig,ax,rho,mom,ene):
     fig.canvas.set_window_title('Initial condition')
     ax[0].set_xlabel('x'); ax[0].set_title('Density'); ax[0].grid(True)
     ax[0].set_xlim([xmin,xmax])
-    ax[0].set_ylim([umin0-0.1,umax0+0.1])
+    ax[0].set_ylim([umin0-0.05,umax0+0.05])
     ax[1].set_xlabel('x'); ax[1].set_title('Velocity'); ax[1].grid(True)
     ax[1].set_xlim([xmin,xmax])
-    ax[1].set_ylim([umin1-0.1,umax1+0.1])
+    ax[1].set_ylim([umin1-0.05,umax1+0.05])
     ax[2].set_xlabel('x'); ax[2].set_title('Pressure'); ax[2].grid(True)
     ax[2].set_xlim([xmin,xmax])
-    ax[2].set_ylim([umin2-0.1,umax2+0.1])
+    ax[2].set_ylim([umin2-0.05,umax2+0.05])
     plt.draw(); plt.pause(0.1)
     return lines0,lines1,lines2
 
@@ -130,9 +130,9 @@ def update_plot(fig,ax,lines0,lines1,lines2,t,rho,mom,ene):
         umax2 = np.max([umax2, pre.max()])
     fig.canvas.set_window_title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(cfl)+
               ', t = '+('%.3e'%t))
-    ax[0].set_ylim([umin0-0.1,umax0+0.1])
-    ax[1].set_ylim([umin1-0.1,umax1+0.1])
-    ax[2].set_ylim([umin2-0.1,umax2+0.1])
+    ax[0].set_ylim([umin0-0.05,umax0+0.05])
+    ax[1].set_ylim([umin1-0.05,umax1+0.05])
+    ax[2].set_ylim([umin2-0.05,umax2+0.05])
     plt.draw(); plt.pause(0.1)
 
 # Allocate solution variables
