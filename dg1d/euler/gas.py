@@ -26,6 +26,47 @@ def max_speed(rho,mom,ene):
     lam = np.abs(vel) + np.sqrt(gasGam * pre / rho[:,0])
     return lam.max()
 
+def EigMatrix(u):
+    g1 = gasGam - 1.0
+    g2 = 0.5*g1
+
+    d = u[0]
+    v = u[1] / d
+    p = pressure(u[0],u[1],u[2])
+    c = np.sqrt(gasGam * p / d)
+    h = c**2 / g1 + 0.5 * v**2
+    f = 0.5 * d / c 
+   
+    R, L = np.zeros((3,3)), np.zeros((3,3))
+
+    # Inverse eigenvector-matrix
+    L[0,0] = 1.0 - g2 * v * v / c / c
+    L[1,0] = (g2 * v * v - v * c) / d / c
+    L[2,0] = -(g2 * v * v + v * c) / d / c
+   
+    L[0,1] = g1 * v / c / c
+    L[1,1] = (c - g1 * v) / d / c
+    L[2,1] = (c + g1 * v) / d / c
+   
+    L[0,2] = -g1 / c / c
+    L[1,2] =  g1 / d / c
+    L[2,2] = -g1 / d / c
+   
+    # Eigenvector matrix
+    R[0,0] = 1.0
+    R[1,0] = v
+    R[2,0] = v * v / 2.0
+   
+    R[0,1] = f
+    R[1,1] = (v + c) * f
+    R[2,1] = (h + v * c) * f
+   
+    R[0,2] = -f
+    R[1,2] = -(v - c) * f
+    R[2,2] = -(h - v * c) * f
+
+    return R, L
+
 def numflux(ul,ur):
     fl0,fl1,fl2 = flux(ul[0],ul[1],ul[2])
     fr0,fr1,fr2 = flux(ur[0],ur[1],ur[2])

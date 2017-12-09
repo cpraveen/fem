@@ -18,9 +18,11 @@ parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
 parser.add_argument('-cfl', type=float, help='CFL number', default=0.8)
 parser.add_argument('-Tf', type=float, help='Final time', default=0.0)
 parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
-                    default=1)
+                    default=5)
 parser.add_argument('-ic', choices=('sod'), help='Initial condition', 
                     default='sod')
+parser.add_argument('-char_lim', type=int, help='Characteristic limiter', 
+                    default=0)
 parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
 args = parser.parse_args()
 
@@ -190,26 +192,36 @@ while t < Tf:
         ene1[:,:] = ark[rk]*ene0 + brk[rk]*(ene1 - lam*rese)
         # Apply limiter
         if k > 0:
-            ul,uc,ur,du,dun = np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3)
+            dul,uc,dur,du,dun = np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3)
             for i in range(1,nc-1):
-                ul[0] = rho1[i-1,0] # density
-                uc[0] = rho1[i  ,0]
-                ur[0] = rho1[i+1,0]
-                du[0] = rho1[i  ,1]
-                ul[1] = mom1[i-1,0] # momentum
-                uc[1] = mom1[i  ,0]
-                ur[1] = mom1[i+1,0]
-                du[1] = mom1[i  ,1]
-                ul[2] = ene1[i-1,0] # energy
-                uc[2] = ene1[i  ,0]
-                ur[2] = ene1[i+1,0]
-                du[2] = ene1[i  ,1]
+                dul[0] = rho1[i  ,0] - rho1[i-1,0] # density
+                dur[0] = rho1[i+1,0] - rho1[i  ,0]
+                uc[0]  = rho1[i  ,0]
+                du[0]  = rho1[i  ,1]
+                dul[1] = mom1[i  ,0] - mom1[i-1,0] # momentum
+                dur[1] = mom1[i+1,0] - mom1[i  ,0]
+                uc[1]  = mom1[i  ,0]
+                du[1]  = mom1[i  ,1]
+                dul[2] = ene1[i  ,0] - ene1[i-1,0] # energy
+                dur[2] = ene1[i+1,0] - ene1[i  ,0]
+                uc[2]  = ene1[i  ,0]
+                du[2]  = ene1[i  ,1]
+                # Convert to characteristic variables
+                if args.char_lim == 1:
+                    R, L = EigMatrix(uc)
+                    du   = L.dot(du)
+                    dul  = L.dot(dul)
+                    dur  = L.dot(dur)
+                # Check if any slope has changed
                 lim   = 0
                 for j in range(3):
-                    dun[j] = isqrt3*minmod(sqrt3*du[j],uc[j]-ul[j],ur[j]-uc[j],Mdx2)
+                    dun[j] = isqrt3*minmod(sqrt3*du[j],dul[j],dur[j],Mdx2)
                     if np.abs(dun[j]-du[j]) > 1.0e-6:
                         lim = 1
                 if lim == 1:
+                    # Convert back to conserved
+                    if args.char_lim == 1:
+                        dun = R.dot(dun)
                     rho1[i,1] = dun[0]; rho1[i,2:] = 0.0
                     mom1[i,1] = dun[1]; mom1[i,2:] = 0.0
                     ene1[i,1] = dun[2]; ene1[i,2:] = 0.0
