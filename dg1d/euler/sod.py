@@ -1,5 +1,3 @@
-import numpy as np
-from gas import *
 from riemann import *
 
 xmin, xmax = 0.0, 1.0
