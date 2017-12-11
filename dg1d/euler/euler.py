@@ -129,8 +129,8 @@ def update_plot(fig,ax,lines0,lines1,lines2,t,rho,mom,ene):
         lines2[i].set_ydata(pre)
         umin2 = np.min([umin2, pre.min()])
         umax2 = np.max([umax2, pre.max()])
-    fig.canvas.set_window_title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(cfl)+
-              ', t = '+('%.3e'%t))
+    fig.canvas.set_window_title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+
+                                str(cfl)+', t = '+('%.3e'%t))
     ax[0].set_ylim([umin0-0.05,umax0+0.05])
     ax[1].set_ylim([umin1-0.05,umax1+0.05])
     ax[2].set_ylim([umin2-0.05,umax2+0.05])
@@ -233,7 +233,8 @@ while t < Tf:
         ene1[:,:] = ark[rk]*ene0 + brk[rk]*(ene1 - lam*rese)
         # Apply limiter
         if k > 0:
-            dul,uc,dur,du,dun = np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3),np.zeros(3)
+            dul,uc,dur,du,dun = np.zeros(3),np.zeros(3),np.zeros(3),\
+                                np.zeros(3),np.zeros(3)
             for i in range(1,nc-1):
                 dul[0] = rho1[i  ,0] - rho1[i-1,0] # density
                 dur[0] = rho1[i+1,0] - rho1[i  ,0]
