@@ -9,11 +9,11 @@ python dg.py -h
 
 Try a smooth initial condition
 ```
-python dg.py -pde linear -ic sine -degree 1 -ncell 50
+python dg.py -pde linear -ic sin2pi -degree 1 -ncell 50
 ```
 After any multiple of time period, the solution is equal to initial condition and we can compute the L2 error norm
 ```
-python dg.py -pde linear -ic sine -degree 1 -ncell 50 -compute_error yes
+python dg.py -pde linear -ic sin2pi -degree 1 -ncell 50 -compute_error yes
 ```
 Now try with a discontinuous initial condition
 ```
@@ -25,14 +25,14 @@ python dg.py -pde linear -ic hat -degree 1 -ncell 52 -limit yes
 ```
 The TVD limiter applied to linear advection will cause clipping of smooth extrema
 ```
-python dg.py -pde linear -ic sine -degree 1 -ncell 50 -limit yes
+python dg.py -pde linear -ic sin2pi -degree 1 -ncell 50 -limit yes
 ```
 
 ## Inviscid Burgers equation
 
 Try a smooth initial condition
 ```
-python dg.py -pde burger -ic sine -degree 1 -ncell 50
+python dg.py -pde burger -ic sin2pi -degree 1 -ncell 50
 ```
 Discontinuous initial condition
 ```
