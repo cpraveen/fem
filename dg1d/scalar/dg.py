@@ -20,8 +20,8 @@ parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
 parser.add_argument('-Tf', type=float, help='Final time', default=1.0)
 parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
                     default=1)
-parser.add_argument('-ic', choices=('sine','hat'), help='Initial condition', 
-                    default='sine')
+parser.add_argument('-ic', choices=('sin2pi','hat'), help='Initial condition', 
+                    default='sin2pi')
 parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter', 
                     default='no')
 parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
@@ -39,8 +39,8 @@ else:
     exit()
 
 # Select initial condition
-if args.ic == 'sine':
-    from sine import *
+if args.ic == 'sin2pi':
+    from sin2pi import *
 elif args.ic == 'hat':
     from hat import *
 else:
@@ -56,12 +56,13 @@ dx = (xmax - xmin)/nc
 Mdx2 = args.tvbM * dx**2
 
 # k+1 point gauss rule, integrates exactly upto degree 2*k+1
-xg, wg = np.polynomial.legendre.leggauss(k+1)
+Nq     = k+1
+xg, wg = np.polynomial.legendre.leggauss(Nq)
 
 # Construct Vandermonde matrix for gauss points
-Vf = np.zeros((nd,nd))
-Vg = np.zeros((nd,nd))
-for i in range(nd):
+Vf = np.zeros((Nq,nd))
+Vg = np.zeros((Nq,nd))
+for i in range(Nq):
     for j in range(nd):
         Vf[i,j] = shape_value(j, xg[i])
         Vg[i,j] = shape_grad (j, xg[i])

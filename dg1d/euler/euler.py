@@ -42,12 +42,13 @@ dx = (xmax - xmin)/nc
 Mdx2 = args.tvbM * dx**2
 
 # k+1 point gauss rule, integrates exactly upto degree 2*k+1
-xg, wg = np.polynomial.legendre.leggauss(k+1)
+Nq     = k+1
+xg, wg = np.polynomial.legendre.leggauss(Nq)
 
 # Construct Vandermonde matrix for gauss points
-Vf = np.zeros((nd,nd))
-Vg = np.zeros((nd,nd))
-for i in range(nd):
+Vf = np.zeros((Nq,nd))
+Vg = np.zeros((Nq,nd))
+for i in range(Nq):
     for j in range(nd):
         Vf[i,j] = shape_value(j, xg[i])
         Vg[i,j] = shape_grad (j, xg[i])
