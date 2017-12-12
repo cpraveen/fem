@@ -173,8 +173,8 @@ while t < Tf:
                 else:
                     ul = u1[i-1,0]
                     ur = u1[i+1,0]
-                du = (1.0/sqrt3)*minmod(sqrt3*u1[i,1], (u1[i,0]-ul), (ur-u1[i,0]), 
-                                        Mdx2)
+                du = (1.0/sqrt3)*minmod(sqrt3*u1[i,1], (u1[i,0]-ul),
+                                        (ur-u1[i,0]), Mdx2)
                 if np.abs(du-u1[i,1]) > 1.0e-6:
                     u1[i,1 ] = du   # Copy limited gradient
                     u1[i,2:] = 0.0  # Kill all higher modes
