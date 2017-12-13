@@ -1,5 +1,5 @@
 # Set deal.II version
-V=8.4.2
+V=8.5.1
 
 # Where do you want to install deal.II
 DEAL_II_DIR=$HOME/deal.II
@@ -15,7 +15,7 @@ cd $HOME
 mkdir -p dealii-build
 cd dealii-build
 echo "==> Download deal.II cmake script"
-wget -c https://raw.githubusercontent.com/cpraveen/fembook/master/dealii.sh
+wget -c https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 
 echo "==> Downloading deal.II sources"
 wget -c https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}.tar.gz
