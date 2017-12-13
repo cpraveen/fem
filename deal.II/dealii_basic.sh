@@ -27,6 +27,8 @@ cd build
 echo "==> Run cmake"
 sh $HOME/dealii-build/dealii.sh
 echo "==> Compiling"
+# If you have a multicore machine, set a larger value here. 
+# The compilation will be faster.
 make -j 2
 echo "==> Install"
 make install
