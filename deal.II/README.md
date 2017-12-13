@@ -51,3 +51,13 @@ tar zxvf dealii-8.5.1-offline_documentation.tar.gz
 rm dealii-8.5.1-offline_documentation.tar.gz
 ```
 Now you can open `$HOME/deal.II/doc/index.html` in your web browser and view the documentation.
+
+## Automated installation
+
+A bash script that can automate the above installation process is also included. Do the following steps
+```
+cd $HOME
+wget https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii_basic.sh
+sh ./dealii_basic.sh
+```
+This will install deal.II into the directory ```$HOME/deal.II```.
