@@ -8,12 +8,13 @@ These codes are prepared as material for teaching finite element method.
 
 ## How to get the code ?
 
-* The easiest way is by using git which will download the code in directory ```fembook```
+(1) The easiest way is by using git which will download the code in directory ```fembook```
 ```
 git clone https://github.com/cpraveen/fembook.git
 ```
-* Download a zip file by clicking on the green button called "Clone or download" and then "Download ZIP".
-* Or use wget
+(2) Download a zip file by clicking on the green button called "Clone or download" and then "Download ZIP".
+
+(3) Or use wget
 ```
 wget https://github.com/cpraveen/fembook/archive/master.zip
 ```
