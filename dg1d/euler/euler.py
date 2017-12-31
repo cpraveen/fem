@@ -162,7 +162,7 @@ for i in range(nc):
 # plot initial condition
 fig,ax = plt.subplots(nrows=1,ncols=3,figsize=(15,5))
 lines0,lines1,lines2 = init_plot(fig,ax,rho1,mom1,ene1)
-wait = raw_input("Press enter to continue ")
+wait = input("Press enter to continue ")
 
 # If final time given on command line, use that
 if args.Tf > 0.0:

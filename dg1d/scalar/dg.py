@@ -131,7 +131,7 @@ for i in range(nc):
 fig = plt.figure()
 ax = fig.add_subplot(111)
 lines = init_plot(ax,u1)
-wait = raw_input("Press enter to continue ")
+wait = input("Press enter to continue ")
 
 it, t = 0, 0.0
 dt  = cfl*dx/max_speed(u1)
