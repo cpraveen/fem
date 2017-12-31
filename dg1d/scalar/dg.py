@@ -1,3 +1,8 @@
+"""
+Solve scalar conservation law with periodic bc
+To get help, type
+    python dg.py -h
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -146,9 +151,10 @@ while t < Tf:
             f = flux(x,u)             # flux at gauss points
             for j in range(nd):
                 res[i,j] = -f.dot(Vg[:,j]*wg)
-        # First face: left cell = nc-1, right cell = 0
-        ul = u1[-1,:].dot(Vu[-1,:])
-        ur = u1[ 0,:].dot(Vu[ 0,:])
+        # Now we compute the inter-cell fluxes
+        # First face: left cell = last cell, right cell = 0'th cell
+        ul = u1[-1,:].dot(Vu[-1,:]) # get ul from last cell
+        ur = u1[ 0,:].dot(Vu[ 0,:]) # get ur from 0'th cell
         f  = numflux(xmin, ul, ur)
         res[-1,:] += f*Vu[-1,:] # Add to last cell
         res[ 0,:] -= f*Vu[ 0,:] # Add to first cell
