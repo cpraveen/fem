@@ -1,6 +1,6 @@
 # 1-D DG code for scalar conservation laws
 
-Solves linear advection and Burger's equation with periodic boundary condition. The basis functions are Legendre polynomials and quadrature is performed using Gauss-Legendre points. To get help, type
+This is a Python code which solves linear advection and Burger's equation with periodic boundary condition and requires Python3, Numpy and Matplotlib.. The basis functions are Legendre polynomials and quadrature is performed using Gauss-Legendre points. To get help, type
 ```
 python dg.py -h
 ```
