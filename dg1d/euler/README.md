@@ -1,6 +1,6 @@
 # 1-D DG code for Euler equations
 
-This code solves 1-D Euler equations using a DG scheme.
+This code solves 1-D Euler equations using a DG scheme and requires Python3, Numpy and Matplotlib.
 
 * Basis functions: Legendre polynomials
 * Numerical flux: Rusanov scheme
