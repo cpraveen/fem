@@ -17,7 +17,7 @@ sqrt3 = np.sqrt(3.0)
 
 # Get arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('-pde', choices=('linear','burger'), help='PDE', 
+parser.add_argument('-pde', choices=('linear','varadv','burger'), help='PDE', 
                     default='linear')
 parser.add_argument('-ncell', type=int, help='Number of cells', default=50)
 parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
@@ -25,7 +25,7 @@ parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
 parser.add_argument('-Tf', type=float, help='Final time', default=1.0)
 parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
                     default=1)
-parser.add_argument('-ic', choices=('sin2pi','hat'), help='Initial condition', 
+parser.add_argument('-ic', choices=('sin2pi','sin4pi','hat'), help='Initial condition', 
                     default='sin2pi')
 parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter', 
                     default='no')
@@ -37,6 +37,8 @@ args = parser.parse_args()
 # Select PDE
 if args.pde == 'linear':
     from linadv import *
+elif args.pde == 'varadv':
+    from varadv import *
 elif args.pde == 'burger':
     from burger import *
 else:
@@ -46,6 +48,8 @@ else:
 # Select initial condition
 if args.ic == 'sin2pi':
     from sin2pi import *
+elif args.ic == 'sin4pi':
+    from sin4pi import *
 elif args.ic == 'hat':
     from hat import *
 else:
