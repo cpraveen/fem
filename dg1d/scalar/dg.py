@@ -25,8 +25,8 @@ parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
 parser.add_argument('-Tf', type=float, help='Final time', default=1.0)
 parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
                     default=1)
-parser.add_argument('-ic', choices=('sin2pi','sin4pi','hat'), help='Initial condition', 
-                    default='sin2pi')
+parser.add_argument('-ic', choices=('sin2pi','sin4pi','gauss','hat'), 
+                    help='Initial condition', default='sin2pi')
 parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter', 
                     default='no')
 parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
@@ -50,6 +50,8 @@ if args.ic == 'sin2pi':
     from sin2pi import *
 elif args.ic == 'sin4pi':
     from sin4pi import *
+elif args.ic == 'gauss':
+    from gauss import *
 elif args.ic == 'hat':
     from hat import *
 else:
