@@ -9,7 +9,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-degree', type=int, help='Degree', required=True)
 parser.add_argument('-cfl_min', type=float, help='Min cfl', default=0.0)
 parser.add_argument('-cfl_max', type=float, help='Max cfl', default=1.0)
-parser.add_argument('-scheme', choices=('ssprk22','ssprk33','ssprk43'),
+parser.add_argument('-scheme', choices=('fe','ssprk22','ssprk33','ssprk43'),
                     help='Time scheme', required=True)
 args = parser.parse_args()
 
@@ -32,7 +32,9 @@ for i in range(Nq):
 I   = np.eye(nd)
 
 def amplification_matrix(scheme, nu, C):
-    if scheme == 'ssprk22':
+    if scheme == 'fe':
+        H = I + nu*C
+    elif scheme == 'ssprk22':
         G = I + nu*C
         H = 0.5*(I + G@G)
     elif scheme == 'ssprk33':
@@ -72,5 +74,5 @@ for nu in cfls:
         if eig > maxeig:
             maxeig = eig
     print(nu,maxeig)
-    if maxeig > 1.0:
+    if maxeig - 1.0 > 1.0e-12:
         break
