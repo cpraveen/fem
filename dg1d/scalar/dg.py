@@ -128,7 +128,7 @@ res= np.zeros((nc,nd)) # residual
 # Set initial condition by L2 projection
 for i in range(nc):
     xc = xmin + i*dx + 0.5*dx # cell center
-    x  = xc + 0.5*dx*xg       # transform gauss points to cell
+    x  = xc + 0.5*dx*xg       # transform gauss points to real cell
     val= initial_condition(x)
     for j in range(nd):
         u1[i,j] = 0.5 * val.dot(Vf[:,j]*wg)

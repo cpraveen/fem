@@ -20,9 +20,10 @@ def dLegendre(n, x):
         value = n * Legendre(n-1,x) + x * dLegendre(n-1,x)
     return value
 
+# Returns n'th basis function evaluated at x in [-1,+1]
 def shape_value(n, x):
     return Legendre(n,x)*sqrt(2*n+1)
 
-# Derivatives of Legendre polynomials
+# Returns derivative of n'th basis function evaluated at x in [-1,+1]
 def shape_grad(n, x):
     return dLegendre(n,x)*sqrt(2*n+1)
