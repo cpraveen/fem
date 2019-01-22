@@ -58,4 +58,4 @@ ue = interpolate(g, V)
 # Get numpy arrays
 u_array = u.vector().array()
 ue_array= ue.vector().array()
-print "Max error =", numpy.abs(u_array - ue_array).max()
+print("Max error =", numpy.abs(u_array - ue_array).max())

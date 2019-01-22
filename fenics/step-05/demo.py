@@ -52,16 +52,16 @@ for j in range(5):
    mesh = refine(mesh)
 
 
-print "---------------------------------------"
+print("---------------------------------------")
 f = open('conv.dat','w')
 for j in range(5):
    if j==0:
       fmt='{0:6d} {1:14.6e} {2:14.6e}'
-      print fmt.format(conv[j][0], conv[j][1], conv[j][2])
+      print(fmt.format(conv[j][0], conv[j][1], conv[j][2]))
    else:
       rate_L2 = log(conv[j-1][2]/conv[j][2])/log(2)
       fmt='{0:6d} {1:14.6e} {2:14.6e} {3:10.3f}'
-      print fmt.format(conv[j][0], conv[j][1], conv[j][2], rate_L2)
+      print(fmt.format(conv[j][0], conv[j][1], conv[j][2], rate_L2))
    f.write(str(conv[j][0])+' '+str(conv[j][1])+' '+str(conv[j][2])+'\n')
-print "---------------------------------------"
+print("---------------------------------------")
 f.close()

@@ -60,13 +60,13 @@ for j in range(nstep):
    mesh = refine(mesh)
 
 # Compute convergence rate
-print "----------------------------------------------------------------------"
+print("----------------------------------------------------------------------")
 fmt='{0:14.6e} {1:14.6e} {2:10.3f} {3:14.6e} {4:10.3f}'
 for j in range(nstep):
    if j==0:
-      print fmt.format(conv[j][0], conv[j][1], 0, conv[j][2], 0)
+      print(fmt.format(conv[j][0], conv[j][1], 0, conv[j][2], 0))
    else:
       rate_L2 = log(conv[j-1][1]/conv[j][1])/log(2)
       rate_H1 = log(conv[j-1][2]/conv[j][2])/log(2)
-      print fmt.format(conv[j][0], conv[j][1], rate_L2, conv[j][2], rate_H1)
-print "----------------------------------------------------------------------"
+      print(fmt.format(conv[j][0], conv[j][1], rate_L2, conv[j][2], rate_H1))
+print("----------------------------------------------------------------------")

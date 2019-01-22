@@ -49,5 +49,5 @@ while t < T:
    solve(A, unew.vector(), b)
    uold.assign(unew)
    t = t + dt
-   print "t = ", t
+   print("t = ", t)
    fsol << unew

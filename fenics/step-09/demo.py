@@ -87,12 +87,12 @@ for j in range(nstep):
          mesh = refine(mesh)
 
 
-print "---------------------------------------"
+print("---------------------------------------")
 f = open('conv.dat','w')
 for j in range(nstep):
    fmt='{0:6d} {1:14.6e} {2:14.6e} {3:14.6e}'
-   print fmt.format(conv[j][0], conv[j][1], conv[j][2], conv[j][3])
+   print(fmt.format(conv[j][0], conv[j][1], conv[j][2], conv[j][3]))
    f.write(str(conv[j][0])+' '+str(conv[j][1])+' '+str(conv[j][2]))
    f.write(' '+str(conv[j][3])+'\n')
-print "---------------------------------------"
+print("---------------------------------------")
 f.close()

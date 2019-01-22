@@ -41,19 +41,19 @@ for n in np:
 
    error_L2 = errornorm(g, w, norm_type='L2', degree_rise=3)
    error_H1 = errornorm(g, w, norm_type='H1', degree_rise=3)
-   print "n = ", n, " h =", mesh.hmax(), " error = ", error_L2, error_H1
+   print("n = ", n, " h =", mesh.hmax(), " error = ", error_L2, error_H1)
    conv.append([n, mesh.hmax(), error_L2, error_H1])
 
 # Compute convergence rate
 from math import log
-print "---------------------------------------"
+print("---------------------------------------")
 for j in range(5):
    if j==0:
       fmt='{0:4d} {1:14.6e} {2:14.6e} {3:14.6e}'
-      print fmt.format(conv[j][0], conv[j][1], conv[j][2], conv[j][3])
+      print(fmt.format(conv[j][0], conv[j][1], conv[j][2], conv[j][3]))
    else:
       rate_L2 = log(conv[j-1][2]/conv[j][2])/log(2)
       rate_H1 = log(conv[j-1][3]/conv[j][3])/log(2)
       fmt='{0:4d} {1:14.6e} {2:14.6e} {3:14.6e} {4:10.3f} {5:10.3f}'
-      print fmt.format(conv[j][0], conv[j][1], conv[j][2], conv[j][3], rate_L2, rate_H1)
-print "---------------------------------------"
+      print(fmt.format(conv[j][0], conv[j][1], conv[j][2], conv[j][3], rate_L2, rate_H1))
+print("---------------------------------------")
