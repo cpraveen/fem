@@ -53,7 +53,7 @@ Vg = np.zeros((Nq,nd))
 for i in range(Nq):
     for j in range(nd):
         Vf[i,j] = shape_value(j, xg[i])
-        Vg[i,j] = shape_grad (j, xg[i])
+        Vg[i,j] = shape_grad (i, xg[j]) * wg[j]
 
 # Construct Vandermonde matrix for uniform points
 # uniform points in cell for plotting
@@ -63,6 +63,12 @@ Vu = np.zeros((nu,k+1))
 for i in range(nu):
     for j in range(k+1):
         Vu[i,j] = shape_value(j, xu[i])
+
+# Required to evaluate solution at face
+bm, bp = np.zeros(nd), np.zeros(nd)
+for i in range(nd):
+    bm[i] = shape_value(i,-1.0)
+    bp[i] = shape_value(i,+1.0)
 
 # Initialize plot
 def init_plot(fig,ax,rho,mom,ene):
@@ -187,48 +193,41 @@ while t < Tf:
             mom = Vf.dot(mom1[i,:])   # solution at gauss points
             ene = Vf.dot(ene1[i,:])   # solution at gauss points
             frho,fmom,fene = flux(rho,mom,ene) # flux at gauss points
-            for j in range(nd):
-                resr[i,j] = -frho.dot(Vg[:,j]*wg)
-                resm[i,j] = -fmom.dot(Vg[:,j]*wg)
-                rese[i,j] = -fene.dot(Vg[:,j]*wg)
-        # First face
-        rhol = rho1[0,:].dot(Vu[0,:])
-        rhor = rho1[0,:].dot(Vu[0,:])
-        moml = mom1[0,:].dot(Vu[0,:])
-        momr = mom1[0,:].dot(Vu[0,:])
-        enel = ene1[0,:].dot(Vu[0,:])
-        ener = ene1[0,:].dot(Vu[0,:])
+            resr[i,:] = -Vg.dot(frho)
+            resm[i,:] = -Vg.dot(fmom)
+            rese[i,:] = -Vg.dot(fene)
+        # First face: neumann bc
+        rhol = rhor = rho1[0,:].dot(bm)
+        moml = momr = mom1[0,:].dot(bm)
+        enel = ener = ene1[0,:].dot(bm)
         f  = numflux([rhol,moml,enel],[rhor,momr,ener])
-        resr[0,:] -= f[0]*Vu[0,:] # Add to first cell
-        resm[0,:] -= f[1]*Vu[0,:] # Add to first cell
-        rese[0,:] -= f[2]*Vu[0,:] # Add to first cell
+        resr[0,:] -= f[0]*bm # Add to first cell
+        resm[0,:] -= f[1]*bm # Add to first cell
+        rese[0,:] -= f[2]*bm # Add to first cell
         # Loop over internal faces
         # Left cell = i-1, right cell = i
         for i in range(1,nc):
-            rhol = rho1[i-1,:].dot(Vu[-1,:])
-            rhor = rho1[i  ,:].dot(Vu[ 0,:])
-            moml = mom1[i-1,:].dot(Vu[-1,:])
-            momr = mom1[i  ,:].dot(Vu[ 0,:])
-            enel = ene1[i-1,:].dot(Vu[-1,:])
-            ener = ene1[i  ,:].dot(Vu[ 0,:])
+            rhol = rho1[i-1,:].dot(bp)
+            rhor = rho1[i  ,:].dot(bm)
+            moml = mom1[i-1,:].dot(bp)
+            momr = mom1[i  ,:].dot(bm)
+            enel = ene1[i-1,:].dot(bp)
+            ener = ene1[i  ,:].dot(bm)
             f  = numflux([rhol,moml,enel], [rhor,momr,ener])
-            resr[i-1,:] += f[0]*Vu[-1,:]
-            resr[i  ,:] -= f[0]*Vu[ 0,:]
-            resm[i-1,:] += f[1]*Vu[-1,:]
-            resm[i  ,:] -= f[1]*Vu[ 0,:]
-            rese[i-1,:] += f[2]*Vu[-1,:]
-            rese[i  ,:] -= f[2]*Vu[ 0,:]
-        # last face
-        rhol = rho1[-1,:].dot(Vu[-1,:])
-        rhor = rho1[-1,:].dot(Vu[-1,:])
-        moml = mom1[-1,:].dot(Vu[-1,:])
-        momr = mom1[-1,:].dot(Vu[-1,:])
-        enel = ene1[-1,:].dot(Vu[-1,:])
-        ener = ene1[-1,:].dot(Vu[-1,:])
+            resr[i-1,:] += f[0]*bp # to left cell
+            resr[i  ,:] -= f[0]*bm # to right cell
+            resm[i-1,:] += f[1]*bp # to left cell
+            resm[i  ,:] -= f[1]*bm # to right cell
+            rese[i-1,:] += f[2]*bp # to left cell
+            rese[i  ,:] -= f[2]*bm # to right cell
+        # last face: neumann bc
+        rhol = rhor = rho1[-1,:].dot(bp)
+        moml = momr = mom1[-1,:].dot(bp)
+        enel = ener = ene1[-1,:].dot(bp)
         f  = numflux([rhol,moml,enel],[rhor,momr,ener])
-        resr[-1,:] += f[0]*Vu[-1,:] # Add to first cell
-        resm[-1,:] += f[1]*Vu[-1,:] # Add to first cell
-        rese[-1,:] += f[2]*Vu[-1,:] # Add to first cell
+        resr[-1,:] += f[0]*bp # Add to last cell
+        resm[-1,:] += f[1]*bp # Add to last cell
+        rese[-1,:] += f[2]*bp # Add to last cell
         # Peform rk stage
         rho1[:,:] = ark[rk]*rho0 + brk[rk]*(rho1 - lam*resr)
         mom1[:,:] = ark[rk]*mom0 + brk[rk]*(mom1 - lam*resm)

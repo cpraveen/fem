@@ -76,7 +76,7 @@ Vg = np.zeros((Nq,nd))
 for i in range(Nq):
     for j in range(nd):
         Vf[i,j] = shape_value(j, xg[i])
-        Vg[i,j] = shape_grad (j, xg[i])
+        Vg[i,j] = shape_grad (i, xg[j]) * wg[j]
 
 # Construct Vandermonde matrix for uniform points
 # uniform points in cell for plotting
@@ -86,6 +86,12 @@ Vu = np.zeros((nu,k+1))
 for i in range(nu):
     for j in range(k+1):
         Vu[i,j] = shape_value(j, xu[i])
+
+# Required to evaluate solution at face
+bm, bp = np.zeros(nd), np.zeros(nd)
+for i in range(nd):
+    bm[i] = shape_value(i,-1.0)
+    bp[i] = shape_value(i,+1.0)
 
 # Initialize plot
 def init_plot(ax,u0):
@@ -116,8 +122,8 @@ def update_plot(lines,t,u1):
         umin = np.min([umin, f.min()])
         umax = np.max([umax, f.max()])
     plt.axis([xmin,xmax,umin-0.1,umax+0.1])
-    plt.title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(cfl)+
-              ', t = '+('%.3e'%t))
+    plt.title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(round(cfl,3))+
+              ', t = '+str(round(t,3)))
     plt.draw(); plt.pause(0.1)
 
 # Allocate solution variables
@@ -155,25 +161,25 @@ while t < Tf:
             x  = xc + 0.5*dx*xg       # transform gauss points to cell
             u = Vf.dot(u1[i,:])       # solution at gauss points
             f = flux(x,u)             # flux at gauss points
-            for j in range(nd):
-                res[i,j] = -f.dot(Vg[:,j]*wg)
+            res[i,:] = -Vg.dot(f)     # flux integral over cell
         # Now we compute the inter-cell fluxes
         # First face: left cell = last cell, right cell = 0'th cell
-        ul = u1[-1,:].dot(Vu[-1,:]) # get ul from last cell
-        ur = u1[ 0,:].dot(Vu[ 0,:]) # get ur from 0'th cell
+        ul = u1[-1,:].dot(bp) # get ul from last cell
+        ur = u1[ 0,:].dot(bm) # get ur from 0'th cell
         f  = numflux(xmin, ul, ur)
-        res[-1,:] += f*Vu[-1,:] # Add to last cell
-        res[ 0,:] -= f*Vu[ 0,:] # Add to first cell
+        res[-1,:] += f*bp # Add to last cell
+        res[ 0,:] -= f*bm # Add to first cell
         # Loop over internal faces
         # Left cell = i-1, right cell = i
         for i in range(1,nc):
-            ul = u1[i-1,:].dot(Vu[-1,:])
-            ur = u1[i  ,:].dot(Vu[ 0,:])
+            ul = u1[i-1,:].dot(bp)
+            ur = u1[i  ,:].dot(bm)
             f  = numflux(xmin+i*dx, ul, ur)
-            res[i-1,:] += f*Vu[-1,:]
-            res[i  ,:] -= f*Vu[ 0,:]
+            res[i-1,:] += f*bp
+            res[i  ,:] -= f*bm
         # Peform rk stage
         u1[:,:] = ark[rk]*u0 + brk[rk]*(u1 - lam*res)
+        # Apply TVB limiter
         if args.limit == 'yes':
             for i in range(nc):
                 if i==0:
