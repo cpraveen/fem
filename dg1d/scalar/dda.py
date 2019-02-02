@@ -62,41 +62,43 @@ def get_eig(degree):
                 eigr[i,j] = np.real(eig[jj])
                 eigi[i,j] = np.imag(eig[jj])
 
-    L = wavenums/nd/np.pi
+    K = wavenums/nd/np.pi
     eigr = eigr/nd
     eigi = eigi/nd
-    return L,eigr,eigi
+    return K,eigr,eigi
 
 for degree in range(1,7):
-    L,eigr,eigi = get_eig(degree)
+    K,eigr,eigi = get_eig(degree)
 
     # Physical mode: seems to be last
     plt.figure(1)
     if degree == 1: # first is physical
-        plt.plot(L, eigr[:,0],lw=2)
+        plt.plot(K, eigr[:,0],lw=2)
     else: # last is physical
-        plt.plot(L, eigr[:,-1],lw=2)
+        plt.plot(K, eigr[:,-1],lw=2)
 
     # Physical mode: seems to be last
     plt.figure(2)
     if degree == 1: # first is physical
-        plt.plot(L, eigi[:,0],lw=2)
+        plt.plot(K, eigi[:,0],lw=2)
     else: # last is physical
-        plt.plot(L, eigi[:,-1],lw=2)
+        plt.plot(K, eigi[:,-1],lw=2)
 
 
 plt.figure(1)
-L = np.linspace(0,1,100)
-plt.plot(L,L*np.pi,'--')
-plt.ylabel('$\Omega_r/(k+1)$')
-plt.xlabel('$(k+1)\kappa\Delta x/\pi$')
+K = np.linspace(0,1,100)
+plt.plot(K,K*np.pi,'k--')
+plt.ylabel('$\Omega_r/(N+1)$')
+plt.xlabel('$K/\pi$')
 plt.grid(True)
-plt.legend(('Degree=1','Degree=2','Degree=3','Degree=4','Degree=5','Degree=6'))
+plt.legend(('N=1','N=2','N=3','N=4','N=5','N=6'))
+plt.savefig('omegar_phy.pdf')
 
 plt.figure(2)
-plt.ylabel('$\Omega_i/(k+1)$')
-plt.xlabel('$(k+1)\kappa\Delta x/\pi$')
+plt.ylabel('$\Omega_i/(N+1)$')
+plt.xlabel('$K/\pi$')
 plt.grid(True)
-plt.legend(('Degree=1','Degree=2','Degree=3','Degree=4','Degree=5','Degree=6'))
+plt.legend(('N=1','N=2','N=3','N=4','N=5','N=6'))
+plt.savefig('omegai_phy.pdf')
 
 plt.show()

@@ -62,40 +62,42 @@ for i,kdx in enumerate(wavenums):
             eigr[i,j] = np.real(eig[jj])
             eigi[i,j] = np.imag(eig[jj])
 
-L = wavenums/nd/np.pi
+K = wavenums/nd/np.pi
 eigr = eigr/nd
 eigi = eigi/nd
 
 # Physical mode: seems to be last
 plt.figure()
-plt.plot(L, eigr[:,-1],lw=2)
-plt.plot(L, L*np.pi, 'k--')
-plt.ylabel('$\Omega_r$')
-plt.xlabel('$k\Delta x/\pi$')
+plt.plot(K, eigr[:,-1],lw=2)
+plt.plot(K, K*np.pi, 'k--')
+plt.ylabel('$\Omega_r/(N+1)$')
+plt.xlabel('$K/\pi$')
 plt.grid(True)
 
 # Physical mode: seems to be last
 plt.figure()
-plt.plot(L, eigi[:,-1],lw=2)
-plt.ylabel('$\Omega_i$')
-plt.xlabel('$k\Delta x/\pi$')
+plt.plot(K, eigi[:,-1],lw=2)
+plt.ylabel('$\Omega_i/(N+1)$')
+plt.xlabel('$K/\pi$')
 plt.grid(True)
 
 # all modes: real
 plt.figure()
 for i in range(nd):
-    plt.plot(L, eigr[:,i],lw=2)
-plt.plot(L, L*np.pi, 'k--')
-plt.ylabel('$\Omega_r$')
-plt.xlabel('$k\Delta x/\pi$')
+    plt.plot(K, eigr[:,i],lw=2)
+plt.plot(K, K*np.pi, 'k--')
+plt.ylabel('$\Omega_r/(N+1)$')
+plt.xlabel('$K/\pi$')
 plt.grid(True)
+plt.savefig('omegar_all.pdf')
 
 # all modes: imag
 plt.figure()
 for i in range(nd):
-    plt.plot(L, eigi[:,i],lw=2)
-plt.ylabel('$\Omega_i$')
-plt.xlabel('$k\Delta x/\pi$')
+    plt.plot(K, eigi[:,i],lw=2)
+plt.ylabel('$\Omega_i/(N+1)$')
+plt.xlabel('$K/\pi$')
 plt.grid(True)
+plt.savefig('omegai_all.pdf')
 
 plt.show()
