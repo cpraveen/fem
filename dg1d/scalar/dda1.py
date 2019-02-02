@@ -43,7 +43,7 @@ for i in range(nd):
 print("M=",M)
 print("A=",A)
 
-nwave = 500
+nwave = nd*500
 wavenums = np.linspace(0,nd*np.pi,nwave)
 eigr = np.zeros((nwave,nd))
 eigi = np.zeros((nwave,nd))
@@ -72,6 +72,7 @@ plt.plot(K, eigr[:,-1],lw=2)
 plt.plot(K, K*np.pi, 'k--')
 plt.ylabel('$\Omega_r/(N+1)$')
 plt.xlabel('$K/\pi$')
+plt.title('Degree, N = '+str(k))
 plt.grid(True)
 
 # Physical mode: seems to be last
@@ -79,6 +80,7 @@ plt.figure()
 plt.plot(K, eigi[:,-1],lw=2)
 plt.ylabel('$\Omega_i/(N+1)$')
 plt.xlabel('$K/\pi$')
+plt.title('Degree, N = '+str(k))
 plt.grid(True)
 
 # all modes: real
@@ -88,6 +90,7 @@ for i in range(nd):
 plt.plot(K, K*np.pi, 'k--')
 plt.ylabel('$\Omega_r/(N+1)$')
 plt.xlabel('$K/\pi$')
+plt.title('Degree, N = '+str(k))
 plt.grid(True)
 plt.savefig('omegar_all.pdf')
 
@@ -97,6 +100,7 @@ for i in range(nd):
     plt.plot(K, eigi[:,i],lw=2)
 plt.ylabel('$\Omega_i/(N+1)$')
 plt.xlabel('$K/\pi$')
+plt.title('Degree, N = '+str(k))
 plt.grid(True)
 plt.savefig('omegai_all.pdf')
 

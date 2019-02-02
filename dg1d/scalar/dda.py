@@ -43,7 +43,7 @@ def get_eig(degree):
     print("M=",M)
     print("A=",A)
 
-    nwave = 500
+    nwave = nd*500
     wavenums = np.linspace(0,nd*np.pi,nwave)
     eigr = np.zeros((nwave,nd))
     eigi = np.zeros((nwave,nd))
