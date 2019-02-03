@@ -138,7 +138,6 @@ nwave    = nd*500
 wavenums = np.linspace(0,nd*np.pi,nwave)
 eigr = np.zeros((nwave,nd))
 eigi = np.zeros((nwave,nd))
-eiga = np.zeros(nwave)
 
 for i,kdx in enumerate(wavenums):
     if args.scheme == 'ts2':
@@ -149,10 +148,11 @@ for i,kdx in enumerate(wavenums):
         C= A_1 + np.exp(-1j*kdx)*B1m - B1p
         H = amplification_matrix(args.scheme, nu, C)
     eig = eigvals(H)
-    eiga[i]   = np.abs(eig).max()
     if i == 0:
         eigr[i,:] = np.real(eig)
         eigi[i,:] = np.imag(eig)
+        # Physical has least dissipation at zero wavenumber
+        pmode = np.argmax( np.abs(eig) )
     else:
         # Find closest eigenvalue to previous one
         eig_old = eigr[i-1,:] + 1j * eigi[i-1,:]
@@ -171,7 +171,7 @@ K    = wavenums/np.pi/nd
 
 # physical mode: usually last one, but check
 plt.figure()
-plt.plot(K, diss[:,-1], lw=2)
+plt.plot(K, diss[:,pmode], lw=2)
 plt.ylabel('Magnitude of eigenvalue')
 plt.xlabel('$K/\pi$')
 plt.title('Dissipation: Physical mode'+tstr)
@@ -179,7 +179,7 @@ plt.grid(True)
 plt.savefig('diss_phy_deg'+str(k)+'_'+args.scheme+'_cfl'+str(round(nu,3))+'.pdf')
 
 plt.figure()
-plt.plot(K, disp[:,-1],lw=2)
+plt.plot(K, disp[:,pmode],lw=2)
 plt.plot(K, wavenums*nu/np.pi, 'k--', lw=2)
 plt.ylabel('Angle/$\pi$ of eigenvalue')
 plt.xlabel('$K/\pi$')

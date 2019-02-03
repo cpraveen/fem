@@ -6,7 +6,14 @@ from numpy.linalg import eigvals
 import matplotlib.pyplot as plt
 import argparse
 from basis import *
-
+from matplotlib import rcParams
+rcParams['font.size'] = 12
+rcParams['font.family'] = 'serif'
+rcParams['figure.autolayout'] = True
+rcParams['lines.linewidth'] = 2
+rcParams['lines.markersize'] = 2
+rcParams['axes.titlesize'] = 12
+rcParams['axes.labelsize'] = 12
 
 def get_eig(degree):
     print('Degree = ', degree)
@@ -54,6 +61,8 @@ def get_eig(degree):
         if i == 0:
             eigr[i,:] = np.real(eig)
             eigi[i,:] = np.imag(eig)
+            # Physical mode is one with max dissipation
+            pmode = np.argmax(eigi[i,:])
         else:
             # Find closest eigenvalue to previous one
             eig_old = eigr[i-1,:] + 1j * eigi[i-1,:]
@@ -65,24 +74,18 @@ def get_eig(degree):
     K = wavenums/nd/np.pi
     eigr = eigr/nd
     eigi = eigi/nd
-    return K,eigr,eigi
+    return pmode,K,eigr,eigi
 
 for degree in range(1,7):
-    K,eigr,eigi = get_eig(degree)
+    pmode,K,eigr,eigi = get_eig(degree)
 
     # Physical mode: seems to be last
     plt.figure(1)
-    if degree == 1: # first is physical
-        plt.plot(K, eigr[:,0],lw=2)
-    else: # last is physical
-        plt.plot(K, eigr[:,-1],lw=2)
+    plt.plot(K, eigr[:,pmode],lw=2)
 
     # Physical mode: seems to be last
     plt.figure(2)
-    if degree == 1: # first is physical
-        plt.plot(K, eigi[:,0],lw=2)
-    else: # last is physical
-        plt.plot(K, eigi[:,-1],lw=2)
+    plt.plot(K, eigi[:,pmode],lw=2)
 
 
 plt.figure(1)

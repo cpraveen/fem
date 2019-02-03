@@ -4,6 +4,14 @@ from numpy.linalg import eigvals
 import matplotlib.pyplot as plt
 import argparse
 from basis import *
+from matplotlib import rcParams
+rcParams['font.size'] = 12
+rcParams['font.family'] = 'serif'
+rcParams['figure.autolayout'] = True
+rcParams['lines.linewidth'] = 2
+rcParams['lines.markersize'] = 2
+rcParams['axes.titlesize'] = 12
+rcParams['axes.labelsize'] = 12
 
 # Get arguments
 parser = argparse.ArgumentParser()
@@ -54,6 +62,8 @@ for i,kdx in enumerate(wavenums):
     if i == 0:
         eigr[i,:] = np.real(eig)
         eigi[i,:] = np.imag(eig)
+        # Physical mode has zero dissipation
+        pmode = np.argmax(eigi[i,:])
     else:
         # Find closest eigenvalue to previous one
         eig_old = eigr[i-1,:] + 1j * eigi[i-1,:]
@@ -66,21 +76,21 @@ K = wavenums/nd/np.pi
 eigr = eigr/nd
 eigi = eigi/nd
 
-# Physical mode: seems to be last
+# Physical mode
 plt.figure()
-plt.plot(K, eigr[:,-1],lw=2)
+plt.plot(K, eigr[:,pmode],lw=2)
 plt.plot(K, K*np.pi, 'k--')
 plt.ylabel('$\Omega_r/(N+1)$')
 plt.xlabel('$K/\pi$')
-plt.title('Degree, N = '+str(k))
+plt.title('Dispersion: Physical mode, Degree, N = '+str(k))
 plt.grid(True)
 
-# Physical mode: seems to be last
+# Physical mode
 plt.figure()
-plt.plot(K, eigi[:,-1],lw=2)
+plt.plot(K, eigi[:,pmode],lw=2)
 plt.ylabel('$\Omega_i/(N+1)$')
 plt.xlabel('$K/\pi$')
-plt.title('Degree, N = '+str(k))
+plt.title('Dissipation: Physical mode, Degree, N = '+str(k))
 plt.grid(True)
 
 # all modes: real
@@ -90,7 +100,7 @@ for i in range(nd):
 plt.plot(K, K*np.pi, 'k--')
 plt.ylabel('$\Omega_r/(N+1)$')
 plt.xlabel('$K/\pi$')
-plt.title('Degree, N = '+str(k))
+plt.title('Dispersion: All modes, Degree, N = '+str(k))
 plt.grid(True)
 plt.savefig('omegar_all.pdf')
 
@@ -100,7 +110,7 @@ for i in range(nd):
     plt.plot(K, eigi[:,i],lw=2)
 plt.ylabel('$\Omega_i/(N+1)$')
 plt.xlabel('$K/\pi$')
-plt.title('Degree, N = '+str(k))
+plt.title('Dissipation: All modes, Degree, N = '+str(k))
 plt.grid(True)
 plt.savefig('omegai_all.pdf')
 
