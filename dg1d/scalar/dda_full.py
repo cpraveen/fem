@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-degree', type=int, help='Degree', required=True)
 parser.add_argument('-cfl', type=float, help='CFL', required=True)
 parser.add_argument('-scheme',
-                choices=('fe','ssprk22','ssprk33','ssprk43','ssprk54','rk4','ts2'),
+                choices=('fe','ssprk22','ssprk33','ssprk43','ssprk54','rk4','lw24'),
                 help='Time scheme', required=True)
 args = parser.parse_args()
 
@@ -93,7 +93,7 @@ def amplification_matrix(scheme, nu, C):
     return H
 
 def amplification_matrix_two_stage(scheme, nu, C1, C2):
-    if scheme == 'ts2':
+    if scheme == 'lw24':
         a21 = 0.50
         A21 = 1.0/8.0
 
@@ -140,7 +140,7 @@ eigr = np.zeros((nwave,nd))
 eigi = np.zeros((nwave,nd))
 
 for i,kdx in enumerate(wavenums):
-    if args.scheme == 'ts2':
+    if args.scheme == 'lw24':
         C1 = A_1 + np.exp(-1j*kdx)*B1m - B1p
         C2 = A_2 + np.exp(-1j*kdx)*B2m - B2p
         H = amplification_matrix_two_stage(args.scheme, nu, C1, C2)
@@ -162,7 +162,7 @@ for i,kdx in enumerate(wavenums):
             eigi[i,j] = np.imag(eig[jj])
 
 # String for plot title
-tstr = ', N = '+str(k)+', scheme = '+args.scheme
+tstr = ', N = '+str(k)+', scheme = '+args.scheme+', CFL = '+str(round(nu,3))
 
 eigv = eigr + 1j * eigi
 diss =  np.abs  (eigv)
@@ -183,7 +183,7 @@ plt.plot(K, disp[:,pmode],lw=2)
 plt.plot(K, wavenums*nu/np.pi, 'k--', lw=2)
 plt.ylabel('Angle/$\pi$ of eigenvalue')
 plt.xlabel('$K/\pi$')
-plt.title('Dissipation: Physical mode'+tstr)
+plt.title('Dispersion: Physical mode'+tstr)
 plt.grid(True)
 plt.savefig('disp_phy_deg'+str(k)+'_'+args.scheme+'_cfl'+str(round(nu,3))+'.pdf')
 
