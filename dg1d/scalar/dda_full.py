@@ -169,6 +169,11 @@ diss =  np.abs  (eigv)
 disp = -np.angle(eigv)/np.pi
 K    = wavenums/np.pi/nd
 
+# Save physical mode to file
+fname = 'phy_deg' + str(k) + '_' + args.scheme + '_cfl' + str(round(nu,3)) + '.txt'
+np.savetxt(fname, np.transpose([K,diss[:,pmode]**(1/nu),disp[:,pmode]/nu,wavenums/np.pi]),
+           fmt=['%18.8e','%18.8e','%18.8e','%18.8e'])
+
 # physical mode: usually last one, but check
 plt.figure()
 plt.plot(K, diss[:,pmode], lw=2)
