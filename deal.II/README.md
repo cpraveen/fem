@@ -2,7 +2,6 @@
 
 The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) library.
 
-1. ex00: C++ introduction, classes, templates, Vector and SparseMatrix, linear solvers
 1. ex01: 1-d BVP, Dirichlet bc
 1. ex02: 2-d Poisson equation on unit square, Dirichlet bc
 1. ex03: 2-d Poisson equation on unit square, Dirichlet bc, assembly using MatrixCreator
