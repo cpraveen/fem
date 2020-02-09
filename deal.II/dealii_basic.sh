@@ -4,6 +4,9 @@ V=9.1.1
 # Where do you want to install deal.II
 DEAL_II_DIR=$HOME/deal.II
 
+# For parallel compiling, set this to number of cores in your cpu
+NPROC=2
+
 # Needed if you are behind proxy
 # If not, then comment/remove following two lines.
 #http_proxy=http://192.168.1.1:3128
@@ -31,7 +34,7 @@ sh $DEAL_II_DIR/dealii-build/dealii.sh
 echo "==> Compiling"
 # If you have a multicore machine, set a larger value here. 
 # The compilation will be faster.
-make -j 2
+make -j $NPROC
 echo "==> Install"
 make install
 
