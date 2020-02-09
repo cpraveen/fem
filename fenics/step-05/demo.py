@@ -5,17 +5,16 @@
 from dolfin import *
 from math import atan2, sqrt, sin, log
 
-def Boundary(x, on_boundary):
-   return on_boundary
-
 # Exact solution
-class uexact(Expression):
+class uexact(UserExpression):
    def eval(self, values, x):
       r = sqrt(x[0]**2 + x[1]**2)
       theta = atan2(x[1], x[0])
       if theta < 0:
          theta = theta + 2*pi
       values[0] = r**(2.0/3.0) * sin(2.0*theta/3.0)
+   def value_shape(self):
+      return ()
 
 degree = 1
 mesh = Mesh("Gamma.xml")
@@ -37,7 +36,7 @@ for j in range(5):
 
    # Dirichlet bc
    ue = uexact(degree=degree+3)
-   bc = DirichletBC(V, ue, Boundary)
+   bc = DirichletBC(V, ue, 'on_boundary')
 
    # Solution variable
    w = Function(V)

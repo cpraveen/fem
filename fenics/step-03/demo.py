@@ -6,9 +6,6 @@ is given by f(x,y) = 2(2*pi)^2 u(x,y). The BC g is obtained from exact solution.
 """
 from dolfin import *
 
-def Boundary(x, on_boundary):
-   return on_boundary
-
 degree = 1
 np = [20, 40, 80, 160, 320]
 
@@ -31,7 +28,7 @@ for n in np:
 
    # Dirichlet bc
    g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
-   bc= DirichletBC(V, g, Boundary)
+   bc= DirichletBC(V, g, 'on_boundary')
 
    # Solution variable
    w = Function(V)

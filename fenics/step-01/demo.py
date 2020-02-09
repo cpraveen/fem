@@ -4,9 +4,6 @@
 """
 from dolfin import *
 
-def Boundary(x, on_boundary):
-   return on_boundary
-
 mesh = UnitSquareMesh(20,20)
 
 V = FunctionSpace(mesh, 'CG', 1)
@@ -23,7 +20,7 @@ L = f*v*dx
 
 # Dirichlet bc
 g = Constant(0)
-bc= DirichletBC(V, g, Boundary)
+bc= DirichletBC(V, g, 'on_boundary')
 
 # Solution variable
 u = Function(V)

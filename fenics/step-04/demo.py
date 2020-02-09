@@ -26,7 +26,7 @@ class Top(SubDomain):
 degree = 1
 mesh = UnitSquareMesh(20,20)
 
-boundaries = FacetFunction("uint", mesh)
+boundaries = MeshFunction("size_t", mesh, mesh.topology().dim()-1)
 boundaries.set_all(0)
 right = Right()
 right.mark(boundaries, 1)
