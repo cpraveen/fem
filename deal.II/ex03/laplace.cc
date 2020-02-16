@@ -24,17 +24,18 @@
 #include <fstream>
 
 using namespace dealii;
+const int dim = 2;
 
 int main()
 {
    const unsigned int degree = 1;
-   Triangulation<2> triangulation;
+   Triangulation<dim> triangulation;
    GridGenerator::hyper_cube (triangulation);
    triangulation.refine_global (4);
 
-   const FE_Q<2> fe(degree);
+   const FE_Q<dim> fe(degree);
 
-   DoFHandler<2> dof_handler (triangulation);
+   DoFHandler<dim> dof_handler (triangulation);
    dof_handler.distribute_dofs (fe);
 
    DynamicSparsityPattern dsp(dof_handler.n_dofs());
@@ -45,20 +46,20 @@ int main()
    SparseMatrix<double> system_matrix;
    system_matrix.reinit (sparsity_pattern);
    MatrixCreator::create_laplace_matrix (dof_handler, 
-                                         QGauss<2>(2*degree), 
+                                         QGauss<dim>(2*degree),
                                          system_matrix);
 
    Vector<double> system_rhs;
    system_rhs.reinit (dof_handler.n_dofs());
    VectorTools::create_right_hand_side (dof_handler,
-                                        QGauss<2>(2*degree),
-                                        ConstantFunction<2>(1.0),
+                                        QGauss<dim>(2*degree),
+                                        ConstantFunction<dim>(1.0),
                                         system_rhs);
 
    std::map<unsigned int,double> boundary_values;
    VectorTools::interpolate_boundary_values (dof_handler,
                                              0,
-                                             ZeroFunction<2>(),
+                                             ZeroFunction<dim>(),
                                              boundary_values);
 
    Vector<double> solution;
@@ -76,7 +77,7 @@ int main()
                  system_rhs,
                  PreconditionIdentity());
 
-   DataOut<2> data_out;
+   DataOut<dim> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
    data_out.build_patches (degree);
