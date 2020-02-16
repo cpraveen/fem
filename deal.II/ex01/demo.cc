@@ -27,7 +27,6 @@
 #include <fstream>
 #include <iostream>
 
-
 using namespace dealii;
 
 //------------------------------------------------------------------------------
@@ -144,14 +143,11 @@ void LaplaceProblem::assemble_system ()
    
    FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
    Vector<double>       cell_rhs (dofs_per_cell);
-   std::vector<unsigned int> local_dof_indices (dofs_per_cell);
+   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
    const RightHandSide right_hand_side;
    std::vector<double> rhs_values (n_q_points);
-   
-   typename DoFHandler<1>::active_cell_iterator
-      cell = dof_handler.begin_active(),
-      endc = dof_handler.end();
-   for (; cell!=endc; ++cell)
+
+   for(auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
       cell_matrix = 0;

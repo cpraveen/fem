@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# See section on "Gauss-Lobattto rules" here
+#    https://en.wikipedia.org/wiki/Gaussian_quadrature
 def gauss_lobatto_points(n):
     if n == 2:
         x = [-1,1]
