@@ -21,6 +21,7 @@ h = 1.0/N
 M = 2*N + 1 # no of dofs
 xd = np.linspace(0.0, 1.0, M)
 
+
 x1 = np.linspace(-h,h,500)
 x2 = np.linspace(0.0,h,500)
 y1 = basis1(h,x1)
@@ -39,6 +40,9 @@ for i in range(M):
     else:
         plt.plot(x2+xs2,y2,linewidth=2)
         xs2 += h
+    # Print global dof numbers
+    for j in range(M):
+        plt.text(xd[j],-0.15,str(j))
     t = '$\phi_{'+str(i)+'}$'
     plt.title(t)
     plt.draw(); plt.pause(2.0)
