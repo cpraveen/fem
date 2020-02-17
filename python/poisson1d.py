@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import lagrange
-from scipy.linalg import solve
+from scipy.sparse import lil_matrix, csc_matrix
+from scipy.sparse.linalg import spsolve
 import argparse
 
 # See section on "Gauss-Lobattto rules" here
@@ -98,8 +99,8 @@ for i in range(k+1):
     shape_value[:,i] = shape_funs[i](xq)
     shape_grad [:,i] = shape_grads[i](xq)
 
-b = np.zeros((M,1)) # rhs vector
-A = np.zeros((M,M)) # system matrix
+b = np.zeros((M,1))   # rhs vector
+A = lil_matrix((M,M)) # system matrix
 
 # Assemble matrix and rhs
 print('Assembling ...')
@@ -131,9 +132,10 @@ A[0,1:] = 0.0 # first row
 A[1:,0] = 0.0 # first column
 A[-1,0:-1] = 0.0  # last row
 A[0:-1,-1] = 0.0  # last column
+A = csc_matrix(A) # convert to csc since spsolve needs this
 
 print('Solving Ax=b ...')
-u = solve(A,b)
+u = spsolve(A,b)
 
 # plot solution
 if k == 1:
