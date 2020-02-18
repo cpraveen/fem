@@ -89,8 +89,6 @@ xq,wq = np.polynomial.legendre.leggauss(Nq)
 xq = 0.5*(1 + xq) # transform to [0,1]
 wq = 0.5*wq       # transform to [0,1]
 print('Number of quadrature points =', Nq)
-print('Quadrature points  = ', xq)
-print('Quadrature weights = ', wq)
 
 # Evaluate basis function/gradient at quadrature points
 shape_value = np.zeros((Nq,k+1))
@@ -123,7 +121,7 @@ for n in range(N):
             A[ig,jg] += Aloc[i,j]
 
 # Apply bc
-print('Appkying bcs ...')
+print('Applying bcs ...')
 u = np.zeros((M,1))
 u[0] = uexact(xgrid[0]); u[-1] = uexact(xgrid[-1])
 b -= A@u
@@ -157,7 +155,9 @@ else:
         xloc = xgrid[n] + xu * hgrid[n]
         plt.plot(xloc,values,'r-')
 
+plt.plot(xgrid,0*xgrid,'+-')
 plt.legend(('Exact','FEM'))
 plt.xlabel('x'); plt.ylabel('u')
 plt.title('Degree = '+str(k)+', elements = '+str(N))
+plt.grid(True)
 plt.show()
