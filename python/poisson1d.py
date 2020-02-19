@@ -41,8 +41,12 @@ def f(x):
     return (kw)**2 * np.sin(kw*x)
 
 # exact solution, use for bc
-def uexact(x):
+def exact_solution(x):
     return x + np.sin(kw*x)
+
+# Returns boundary condition
+def boundary_value(x):
+    return exact_solution(x)
 #------------------------------------------------------------------------------
 parser = argparse.ArgumentParser()
 parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
@@ -123,9 +127,11 @@ for n in range(N):
 # Apply bc
 print('Applying bcs ...')
 u = np.zeros((M,1))
-u[0] = uexact(xgrid[0]); u[-1] = uexact(xgrid[-1])
+u[0] = boundary_value(xgrid[0])
+u[-1] = boundary_value(xgrid[-1])
 b -= A@u
-b[0] = A[0,0]*u[0]; b[-1] = A[-1,-1]*u[-1]
+b[0] = A[0,0]*u[0]
+b[-1] = A[-1,-1]*u[-1]
 A[0,1:] = 0.0 # first row
 A[1:,0] = 0.0 # first column
 A[-1,0:-1] = 0.0  # last row
@@ -138,10 +144,10 @@ u = spsolve(A,b)
 # plot solution
 if k == 1:
     xfine = np.linspace(xmin,xmax,1000)
-    plt.plot(xfine,uexact(xfine),'k--',xgrid,u,'ro-')
+    plt.plot(xfine,exact_solution(xfine),'k--',xgrid,u,'ro-')
 else:
     xfine = np.linspace(xmin,xmax,1000)
-    plt.plot(xfine,uexact(xfine),'k--')
+    plt.plot(xfine,exact_solution(xfine),'k--')
     # Sample fem solution on nu uniform points in each element
     nu = 20
     xu = np.linspace(0,1,nu)
