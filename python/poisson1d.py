@@ -30,19 +30,19 @@ def gauss_lobatto_points(n):
                   np.sqrt(5.0/11.0 + (2.0/11)*np.sqrt(5.0/3.0)),
               1]
     else:
-        print('Not implemented')
+        print('Not implemented for n>7 points')
         exit()
     return np.array(x)
 #------------------------------------------------------------------------------
-kw = 10
+kw = 20
 
 # rhs function
 def f(x):
-    return (kw*np.pi)**2 * np.sin(kw*np.pi*x)
+    return (kw)**2 * np.sin(kw*x)
 
 # exact solution, use for bc
 def uexact(x):
-    return x + np.sin(kw*np.pi*x)
+    return x + np.sin(kw*x)
 #------------------------------------------------------------------------------
 parser = argparse.ArgumentParser()
 parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
