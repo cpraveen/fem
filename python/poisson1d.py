@@ -51,6 +51,8 @@ def boundary_value(x):
 parser = argparse.ArgumentParser()
 parser.add_argument('-degree', type=int, help='Polynomial degree', default=1)
 parser.add_argument('-nelem', type=int, help='No. of elements', default=10)
+parser.add_argument('-plot_grid', type=int,
+                    help='No. of points for plotting solution', default=20)
 args = parser.parse_args()
 
 xmin, xmax = 0.0, 1.0
@@ -149,7 +151,7 @@ else:
     xfine = np.linspace(xmin,xmax,1000)
     plt.plot(xfine,exact_solution(xfine),'k--')
     # Sample fem solution on nu uniform points in each element
-    nu = 20
+    nu = args.plot_grid
     xu = np.linspace(0,1,nu)
     # Create Vandermonde matrix for uniform points
     shape_value = np.zeros((nu,k+1))
