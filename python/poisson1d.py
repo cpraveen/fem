@@ -108,14 +108,14 @@ A = lil_matrix((M,M)) # system matrix
 
 # Assemble matrix and rhs
 print('Assembling ...')
-for n in range(N):
+for n in range(N): # Loop over elements
     Aloc = np.zeros((k+1,k+1))
     bloc = np.zeros((k+1,1))
     xphy = xgrid[n] + xq * hgrid[n]
     rhs_values = f(xphy) # rhs function values
-    for i in range(k+1):
+    for i in range(k+1): # Loop over basis functions
         bloc[i] = hgrid[n] * np.sum(rhs_values * shape_value[:,i] * wq)
-        for j in range(k+1):
+        for j in range(k+1): # Loop over basis functions
             Aloc[i,j] = np.sum(shape_grad[:,i] * shape_grad[:,j] * wq)/hgrid[n]
 
     # Add to global matrix and vector

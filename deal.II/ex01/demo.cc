@@ -221,7 +221,7 @@ void LaplaceProblem::solve ()
 //------------------------------------------------------------------------------
 void LaplaceProblem::output_results () const
 {
-   std::cout << "Saving solution to file\n";
+   std::cout << "Saving solution to file: solution.gnuplot\n";
    DataOut<1> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
