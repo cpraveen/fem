@@ -1,5 +1,12 @@
 # Solve Poisson equation in 2d/3d
+Steps to run this example
+```
+cmake .
+make
+./demo
+```
 
+## Run the problem in 3d
 To run in 3-d, change the problem in main function as
 ```
    LaplaceProblem<3> problem (degree);

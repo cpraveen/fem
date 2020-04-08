@@ -3,7 +3,7 @@
 The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) library.
 
 1. ex01: 1-d BVP, Dirichlet bc
-1. ex02: 2-d Poisson equation on unit square, Dirichlet bc
+1. ex02: 2-d Poisson equation on unit square, Dirichlet bc, 2d/3d
 1. ex03: 2-d Poisson equation on unit square, Dirichlet bc, assembly using MatrixCreator
 1. ex04: 2-d Poisson equation on unit square, Dirichlet bc, convergence under uniform grid refinement
 1. ex05: 2-d Poisson on unit square, mixed bc

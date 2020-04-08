@@ -49,7 +49,7 @@ template <>
 double ExactSolution<2>::value (const Point<2> &p,
                                 const unsigned int /*component*/) const
 {
-   return sin(2*M_PI*p[0])*sin(2*M_PI*p[1]);
+   return sin(2*M_PI*p[0]) * sin(2*M_PI*p[1]);
 }
 
 template<>
@@ -57,8 +57,8 @@ Tensor<1,2> ExactSolution<2>::gradient (const Point<2>   &p,
                                         const unsigned int) const
 {
    Tensor<1,2> values;
-   values[0] = 2*M_PI*cos(2*M_PI*p[0])*sin(2*M_PI*p[1]);
-   values[1] = 2*M_PI*sin(2*M_PI*p[0])*cos(2*M_PI*p[1]);
+   values[0] = 2 * M_PI * cos(2*M_PI*p[0]) * sin(2*M_PI*p[1]);
+   values[1] = 2 * M_PI * sin(2*M_PI*p[0]) * cos(2*M_PI*p[1]);
    return values;
 }
 
@@ -77,7 +77,7 @@ template <>
 double RightHandSide<2>::value (const Point<2> &p,
                                   const unsigned int /*component*/) const
 {
-   return 8*M_PI*M_PI*sin(2*M_PI*p[0])*sin(2*M_PI*p[1]);
+   return 8 * M_PI * M_PI * sin(2*M_PI*p[0]) * sin(2*M_PI*p[1]);
 }
 
 

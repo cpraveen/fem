@@ -31,6 +31,7 @@
 using namespace dealii;
 
 //------------------------------------------------------------------------------
+// RHS function f in Poisson equation
 template <int dim>
 class RightHandSide : public Function<dim>
 {
@@ -41,21 +42,24 @@ public:
                          const unsigned int  component = 0) const;
 };
 
+// RHS in 2-D
 template <>
 double RightHandSide<2>::value (const Point<2> &p,
-                                  const unsigned int /*component*/) const
+                                const unsigned int /*component*/) const
 {
    return 8*M_PI*M_PI*sin(2*M_PI*p[0])*sin(2*M_PI*p[1]);
 }
 
+// RHS in 3-D
 template <>
 double RightHandSide<3>::value (const Point<3> &p,
-                                  const unsigned int /*component*/) const
+                                const unsigned int /*component*/) const
 {
    return 12*M_PI*M_PI*sin(2*M_PI*p[0])*sin(2*M_PI*p[1])*sin(2*M_PI*p[2]);
 }
 
 //------------------------------------------------------------------------------
+// Boundary condition
 template <int dim>
 class BoundaryValues : public Function<dim>
 {
@@ -173,13 +177,13 @@ void LaplaceProblem<dim>::assemble_system ()
          for (unsigned int i=0; i<dofs_per_cell; ++i)
          {
             for (unsigned int j=0; j<dofs_per_cell; ++j)
-               cell_matrix(i,j) += (fe_values.shape_grad (i, q_point) *
-                                    fe_values.shape_grad (j, q_point) *
-                                    fe_values.JxW (q_point));
+               cell_matrix(i,j) += (fe_values.shape_grad (i, q_point) *  // grad(phi_i)
+                                    fe_values.shape_grad (j, q_point) *  // grad(phi_j)
+                                    fe_values.JxW (q_point));            // det(J) * w
             
-            cell_rhs(i) += (fe_values.shape_value (i, q_point) *
-                            rhs_values[q_point] *
-                            fe_values.JxW (q_point));
+            cell_rhs(i) += (fe_values.shape_value (i, q_point) *  // phi_i
+                            rhs_values[q_point] *                 // f
+                            fe_values.JxW (q_point));             // det(J) * w
          }
       
       cell->get_dof_indices (local_dof_indices);

@@ -29,26 +29,33 @@ const int dim = 2;
 int main()
 {
    const unsigned int degree = 1;
+
+   // Create mesh
    Triangulation<dim> triangulation;
    GridGenerator::hyper_cube (triangulation);
    triangulation.refine_global (4);
 
+   // Declare FE space
    const FE_Q<dim> fe(degree);
 
+   // Number the dofs
    DoFHandler<dim> dof_handler (triangulation);
    dof_handler.distribute_dofs (fe);
 
+   // Create sparsity pattern
    DynamicSparsityPattern dsp(dof_handler.n_dofs());
    DoFTools::make_sparsity_pattern (dof_handler, dsp);
    SparsityPattern sparsity_pattern;
    sparsity_pattern.copy_from(dsp);
 
+   // Compute matrix
    SparseMatrix<double> system_matrix;
    system_matrix.reinit (sparsity_pattern);
    MatrixCreator::create_laplace_matrix (dof_handler, 
                                          QGauss<dim>(2*degree),
                                          system_matrix);
 
+   // Compute rhs vector
    Vector<double> system_rhs;
    system_rhs.reinit (dof_handler.n_dofs());
    VectorTools::create_right_hand_side (dof_handler,
@@ -56,20 +63,22 @@ int main()
                                         ConstantFunction<dim>(1.0),
                                         system_rhs);
 
+   // Solution vector
+   Vector<double> solution;
+   solution.reinit (dof_handler.n_dofs());
+
+   // Apply boundary conditions
    std::map<unsigned int,double> boundary_values;
    VectorTools::interpolate_boundary_values (dof_handler,
                                              0,
                                              ZeroFunction<dim>(),
                                              boundary_values);
-
-   Vector<double> solution;
-   solution.reinit (dof_handler.n_dofs());
-
    MatrixTools::apply_boundary_values (boundary_values,
                                        system_matrix,
                                        solution,
                                        system_rhs);
 
+   // Solve the problem
    SolverControl solver_control (1000, 1.0e-12);
    SolverCG<>    solver (solver_control);
    solver.solve (system_matrix,
@@ -77,6 +86,7 @@ int main()
                  system_rhs,
                  PreconditionIdentity());
 
+   // Save solution to file
    DataOut<dim> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");

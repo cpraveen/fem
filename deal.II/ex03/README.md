@@ -12,7 +12,7 @@ u = 0 on boundary
 
 We use `ZeroFunction` for the boundary values and `ConstantFunction` for the right hand side function.
 
-## FunctionParser for more general functions
+## Exercise: FunctionParser for more general functions
 
 `FunctionParser` is an easy way to define more general functions whose expression is not too complicated. To use this, include
 ```
@@ -35,3 +35,11 @@ and use `rhs_function` in `VectorTools::create_right_hand_side`. Define the exac
                              constants);
 ```
 and use `exact_solution` in `VectorTools::interpolate_boundary_values` to apply Dirichlet boundary conditions.
+
+## Exercise: Laplace with coefficient function
+
+See the different versions of `MatrixCreator::create_laplace_matrix` function.
+
+## Exercise: Neumann bc
+
+If we have Neumann bc, then the weak formulation has additional terms in the linear functional. These can be assembled using `VectorTools::create_boundary_right_hand_side` function.
