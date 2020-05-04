@@ -4,9 +4,6 @@
 """
 from dolfin import *
 
-def Boundary(x, on_boundary):
-   return on_boundary
-
 n = 50
 mesh = UnitSquareMesh(n, n)
 

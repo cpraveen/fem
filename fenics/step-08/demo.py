@@ -7,9 +7,6 @@ is given by f(x,y) = (2*pi)^2 u(x,y). The BC g is obtained from exact solution.
 from dolfin import *
 import numpy
 
-def Boundary(x, on_boundary):
-   return on_boundary
-
 degree = 1
 mesh = UnitSquareMesh(20,20)
 
@@ -29,13 +26,12 @@ b = assemble(L)
 
 # Dirichlet bc
 g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
-bc= DirichletBC(V, g, Boundary)
+bc= DirichletBC(V, g, 'on_boundary')
 bc.apply(A, b)
 
 # Solution variable
 u = Function(V)
 solve(A, u.vector(), b)
-
 File('u.pvd') << u
 
 # project gradient
