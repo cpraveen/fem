@@ -89,7 +89,8 @@ private:
 
 
 //------------------------------------------------------------------------------
-LaplaceProblem::LaplaceProblem (int degree, unsigned int nrefine) :
+LaplaceProblem::LaplaceProblem (int degree, unsigned int nrefine) 
+:
 fe (degree),
 dof_handler (triangulation),
 nrefine (nrefine)
@@ -147,7 +148,7 @@ void LaplaceProblem::assemble_system ()
    const RightHandSide right_hand_side;
    std::vector<double> rhs_values (n_q_points);
 
-   for(auto &cell : dof_handler.active_cell_iterators())
+   for(const auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
       cell_matrix = 0;
@@ -181,7 +182,7 @@ void LaplaceProblem::assemble_system ()
    }
    
    // left boundary condition
-   std::map<unsigned int,double> boundary_values;
+   std::map<types::global_dof_index,double> boundary_values;
    VectorTools::interpolate_boundary_values (dof_handler,
                                              0,
                                              BoundaryValues(),

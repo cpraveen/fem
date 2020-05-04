@@ -89,7 +89,7 @@ public:
 };
 
 template <int dim>
-double BoundaryValues<dim>::value (const Point<dim> &p,
+double BoundaryValues<dim>::value (const Point<dim>& /*p*/,
                                    const unsigned int /*component*/) const
 {
    return 0.0;
@@ -126,7 +126,8 @@ private:
 
 //------------------------------------------------------------------------------
 template <int dim>
-LaplaceProblem<dim>::LaplaceProblem (int degree, unsigned int nrefine) :
+LaplaceProblem<dim>::LaplaceProblem (int degree, unsigned int nrefine)
+:
 nrefine (nrefine),
 fe (degree),
 dof_handler (triangulation)
@@ -181,13 +182,10 @@ void LaplaceProblem<dim>::assemble_system ()
    
    FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
    Vector<double>       cell_rhs (dofs_per_cell);
-   std::vector<unsigned int> local_dof_indices (dofs_per_cell);
+   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
    std::vector<double>  rhs_values (n_q_points);
    
-   typename DoFHandler<dim>::active_cell_iterator
-      cell = dof_handler.begin_active(),
-      endc = dof_handler.end();
-   for (; cell!=endc; ++cell)
+   for (const auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
       cell_matrix = 0;
@@ -221,7 +219,7 @@ void LaplaceProblem<dim>::assemble_system ()
    }
    
    // boundary condition
-   std::map<unsigned int,double> boundary_values;
+   std::map<types::global_dof_index,double> boundary_values;
    VectorTools::interpolate_boundary_values (dof_handler,
                                              0,
                                              BoundaryValues<dim>(),
