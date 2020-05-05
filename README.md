@@ -22,3 +22,10 @@ and unzip it
 unzip master.zip
 ```
 which creates the directory ```fembook-master```.
+
+## Additional software
+Some of the examples require additional software.
+
+* [Gmsh](http://gmsh.info): used for generating unstructured grids
+* [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/executables): used to visualize solutions 
+* [ParaView](https://www.paraview.org): another software to visualize solutions
