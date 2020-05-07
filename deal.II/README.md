@@ -1,6 +1,11 @@
-# Examples in deal.II
+# FEM examples using deal.II
 
-The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) library.
+The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) library. This is a C++ library for FEM in 1/2/3 dimensions. The examples here do not have detailed explanations and will not be sufficient to learn deal.II by themselves. Please study the superbly documented examples on the deal.II [website](https://www.dealii.org/developer/doxygen/deal.II/Tutorial.html). This is also a great resource to learn C++. You can also consult the following books for more on C++:
+
+1. [B. Stroustrup: Tour of C++](http://www.stroustrup.com/tour2.html)
+1. P. Gottschling: Discovering Modern C++
+
+## Examples
 
 1. ex01: 1-d BVP, Dirichlet bc
 1. ex02: 2-d Poisson equation on unit square, Dirichlet bc, 2d/3d
