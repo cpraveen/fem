@@ -249,13 +249,21 @@ void LaplaceProblem<dim>::solve ()
 template <int dim>
 void LaplaceProblem<dim>::output_results () const
 {
+   Vector<double> solution_error;
+   solution_error.reinit(dof_handler.n_dofs());
+   VectorTools::interpolate(dof_handler,
+                            ExactSolution<dim>(),
+                            solution_error);
+   solution_error -= solution;
+
    DataOut<dim> data_out;
-   
    data_out.attach_dof_handler (dof_handler);
-   data_out.add_data_vector (solution, "solution");
+   data_out.add_data_vector (solution_error, "error");
    data_out.build_patches (fe.degree);
-   std::ofstream output ("solution.vtk");
+   std::string fname = "error-" + Utilities::int_to_string(nrefine,2)+".vtk";
+   std::ofstream output (fname);
    data_out.write_vtk (output);
+   std::cout << "   Wrote to file " << fname << std::endl;
 }
 
 //------------------------------------------------------------------------------
