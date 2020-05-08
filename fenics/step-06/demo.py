@@ -52,8 +52,8 @@ for j in range(nstep):
 
    w.rename("sol","sol")
    file << w
-   error_L2 = errornorm(ue, w, norm_type='L2', degree_rise=3)
-   error_H1 = errornorm(ue, w, norm_type='H10', degree_rise=3)
+   error_L2 = errornorm(ue, w, norm_type='L2')
+   error_H1 = errornorm(ue, w, norm_type='H10')
    conv.append([mesh.hmax(), error_L2, error_H1])
 
    # refine the mesh

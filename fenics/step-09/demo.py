@@ -63,8 +63,8 @@ for j in range(nstep):
    err = interpolate(ue, V); err.rename("Error","Error")
    err.vector()[:] -= u.vector().array()
    ferr << err
-   error_L2 = errornorm(ue, u, norm_type='L2', degree_rise=3)
-   error_H1 = errornorm(ue, u, norm_type='H10', degree_rise=3)
+   error_L2 = errornorm(ue, u, norm_type='L2')
+   error_H1 = errornorm(ue, u, norm_type='H10')
    conv.append([V.dim(), mesh.hmax(), error_L2, error_H1])
 
    n = FacetNormal(mesh)
