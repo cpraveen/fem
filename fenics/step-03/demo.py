@@ -15,7 +15,6 @@ for n in np:
    mesh = UnitSquareMesh(n,n)
 
    V = FunctionSpace(mesh, 'CG', degree)
-
    u = TrialFunction(V)
    v = TestFunction(V)
 
@@ -31,10 +30,10 @@ for n in np:
    bc= DirichletBC(V, g, 'on_boundary')
 
    # Solution variable
-   w = Function(V)
-
-   solve(a == L, w, bc)
-   file << w
+   u = Function(V)
+   solve(a == L, u, bc)
+   u.rename('u','u')
+   file << u
 
    error_L2 = errornorm(g, w, norm_type='L2', degree_rise=3)
    error_H1 = errornorm(g, w, norm_type='H1', degree_rise=3)

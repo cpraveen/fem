@@ -7,7 +7,6 @@ from dolfin import *
 mesh = UnitSquareMesh(20,20)
 
 V = FunctionSpace(mesh, 'CG', 1)
-
 u = TrialFunction(V)
 v = TestFunction(V)
 
@@ -25,4 +24,5 @@ bc= DirichletBC(V, g, 'on_boundary')
 # Solution variable
 u = Function(V)
 solve(a == L, u, bc)
+u.rename('u','u')
 File("sol.pvd") << u

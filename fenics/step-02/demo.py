@@ -9,7 +9,6 @@ from dolfin import *
 degree = 1
 mesh = UnitSquareMesh(20,20)
 V = FunctionSpace(mesh, 'CG', degree)
-
 u = TrialFunction(V)
 v = TestFunction(V)
 
@@ -17,14 +16,15 @@ v = TestFunction(V)
 a = inner(grad(u), grad(v))*dx
 
 # Linear functional
-f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
+f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+1)
 L = f*v*dx
 
 # Dirichlet bc
-g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
+g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+1)
 bc= DirichletBC(V, g, 'on_boundary')
 
 # Solution variable
-w = Function(V)
-solve(a == L, w, bc)
-File('sol.pvd') << w
+u = Function(V)
+solve(a == L, u, bc)
+u.rename('u','u')
+File('sol.pvd') << u
