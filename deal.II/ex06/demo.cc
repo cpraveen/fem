@@ -271,6 +271,7 @@ void LaplaceProblem<dim>::run (unsigned int &ncell,
 
    ncell = triangulation.n_active_cells ();
    ndofs = dof_handler.n_dofs ();
+   std::cout << "-----------------------------------------------------\n";
 }
 
 //------------------------------------------------------------------------------

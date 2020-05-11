@@ -52,6 +52,6 @@ File('gradu.pvd') << gradu
 ue = Function(V)
 ue = interpolate(g, V)
 # Get numpy arrays
-u_array = u.vector().array()
-ue_array= ue.vector().array()
+u_array = u.vector().get_local()
+ue_array= ue.vector().get_local()
 print("Max error =", numpy.abs(u_array - ue_array).max())

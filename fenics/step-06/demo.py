@@ -46,14 +46,13 @@ for j in range(nstep):
    bc  = [bc1, bc2, bc3]
 
    # Solution variable
-   w = Function(V)
+   u = Function(V)
+   solve(a == L, u, bc)
 
-   solve(a == L, w, bc)
-
-   w.rename("sol","sol")
-   file << w
-   error_L2 = errornorm(ue, w, norm_type='L2')
-   error_H1 = errornorm(ue, w, norm_type='H10')
+   u.rename("sol","sol")
+   file << u
+   error_L2 = errornorm(ue, u, norm_type='L2')
+   error_H1 = errornorm(ue, u, norm_type='H10')
    conv.append([mesh.hmax(), error_L2, error_H1])
 
    # refine the mesh

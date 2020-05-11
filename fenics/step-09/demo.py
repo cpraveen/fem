@@ -13,10 +13,6 @@ Experiments to try:
 from dolfin import *
 import numpy
 
-# Characteristic function for dirichlet boundary
-def Boundary(x, on_boundary):
-   return on_boundary
-
 degree = 1
 
 # Exact solution
@@ -52,7 +48,7 @@ for j in range(nstep):
    L = f*v*dx
 
    # Dirichlet bc
-   bc = DirichletBC(V, ue, Boundary)
+   bc = DirichletBC(V, ue, 'on_boundary')
 
    # Solution variable
    u = Function(V)
@@ -60,8 +56,9 @@ for j in range(nstep):
    file << u
 
    # Compute error in solution
-   err = interpolate(ue, V); err.rename("Error","Error")
-   err.vector()[:] -= u.vector().array()
+   err = interpolate(ue, V)
+   err.vector()[:] -= u.vector().get_local()
+   err.rename("Error","Error")
    ferr << err
    error_L2 = errornorm(ue, u, norm_type='L2')
    error_H1 = errornorm(ue, u, norm_type='H10')
@@ -75,7 +72,7 @@ for j in range(nstep):
    eta = numpy.array([0.5*numpy.sqrt(c.h()*ETA[c.index()]) \
                       for c in cells(mesh)])
    gamma = sorted(eta, reverse=True)[int(len(eta)*REFINE_FRACTION)]
-   flag = CellFunction("bool", mesh)
+   flag = MeshFunction("bool", mesh, 2)
    for c in cells(mesh):
       flag[c] = eta[c.index()] > gamma
 
@@ -88,7 +85,7 @@ for j in range(nstep):
 
 
 print("---------------------------------------")
-f = open('conv.dat','w')
+f = open('conv_'+refine_type+'.dat','w')
 for j in range(nstep):
    fmt='{0:6d} {1:14.6e} {2:14.6e} {3:14.6e}'
    print(fmt.format(conv[j][0], conv[j][1], conv[j][2], conv[j][3]))
