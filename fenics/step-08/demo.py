@@ -36,19 +36,19 @@ File('u.pvd') << u
 
 # project gradient
 V2 = VectorFunctionSpace(mesh, 'CG', degree)
-w = TrialFunction(V2)
-v = TestFunction(V2)
-ag = inner(w, v)*dx
-Lg = inner(grad(u), v)*dx
-gradu = Function(V2)
-solve(ag == Lg, gradu)
+u2 = TrialFunction(V2)
+v2 = TestFunction(V2)
+ag = inner(u2, v2)*dx
+Lg = inner(grad(u), v2)*dx
+u2 = Function(V2)
+solve(ag == Lg, u2)
 
 # Alternately, we can use the "project" function
-#gradu = project(grad(u), V2)
+#u2 = project(grad(u), V2)
 
-File('gradu.pvd') << gradu
+File('gradu.pvd') << u2
 
-# Maximum norm computation
+# Maximum norm computation (not exact)
 ue = Function(V)
 ue = interpolate(g, V)
 # Get numpy arrays

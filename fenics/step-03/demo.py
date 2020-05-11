@@ -35,8 +35,8 @@ for n in np:
    u.rename('u','u')
    file << u
 
-   error_L2 = errornorm(g, w, norm_type='L2')
-   error_H1 = errornorm(g, w, norm_type='H1')
+   error_L2 = errornorm(g, u, norm_type='L2')
+   error_H1 = errornorm(g, u, norm_type='H1')
    print("n = ", n, " h =", mesh.hmax(), " error = ", error_L2, error_H1)
    conv.append([n, mesh.hmax(), error_L2, error_H1])
 

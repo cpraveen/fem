@@ -9,8 +9,8 @@ from math import atan2, sqrt, sin, log
 class uexact(UserExpression):
    def eval(self, values, x):
       r = sqrt(x[0]**2 + x[1]**2)
-      theta = atan2(x[1], x[0])
-      if theta < 0:
+      theta = atan2(x[1], x[0])  # Returns angle in [-pi,pi]
+      if theta < 0: # Map angle to [0,2*pi]
          theta = theta + 2*pi
       values[0] = r**(2.0/3.0) * sin(2.0*theta/3.0)
    def value_shape(self):
