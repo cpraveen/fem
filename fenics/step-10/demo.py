@@ -32,7 +32,7 @@ nstep = 10
 REFINE_FRACTION = 0.1
 
 # Refinement type: 'uniform' or 'adaptive'
-refine_type = 'adaptive'
+refine_type = 'uniform'
 
 file = File('sol.pvd')
 for j in range(nstep):
@@ -42,7 +42,7 @@ for j in range(nstep):
    v = TestFunction(V)
 
    # Bilinear form
-   mu = Coefficient(degree=degree+3)
+   mu = Coefficient(degree=0)
    a = mu*inner(grad(u), grad(v))*dx
 
    # Linear functional
@@ -50,7 +50,7 @@ for j in range(nstep):
    L = f*v*dx
 
    # Dirichlet bc
-   bc = DirichletBC(V, 0.0, Boundary)
+   bc = DirichletBC(V, 0.0, 'on_boundary')
 
    # Solution variable
    u = Function(V)
@@ -68,7 +68,7 @@ for j in range(nstep):
    eta = numpy.array([0.5*numpy.sqrt(c.h()*ETA[c.index()]) \
                       for c in cells(mesh)])
    gamma = sorted(eta, reverse=True)[int(len(eta)*REFINE_FRACTION)]
-   flag = CellFunction("bool", mesh)
+   flag = MeshFunction("bool", mesh, 2)
    for c in cells(mesh):
       flag[c] = eta[c.index()] > gamma
 
