@@ -26,7 +26,7 @@ n = 10
 mesh = RectangleMesh(Point(-1.0, -1.0), Point(+1.0, +1.0), n, n)
 
 # Number of refinement steps
-nstep = 10
+nstep = 5
 
 # Fraction of cells to refine
 REFINE_FRACTION = 0.1
