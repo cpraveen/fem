@@ -11,7 +11,6 @@ degree = 1
 mesh = UnitSquareMesh(20,20)
 
 V = FunctionSpace(mesh, 'CG', degree)
-
 u = TrialFunction(V)
 v = TestFunction(V)
 
@@ -20,12 +19,12 @@ a = inner(grad(u), grad(v))*dx
 A = assemble(a)
 
 # Linear functional
-f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
+f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
 L = f*v*dx
 b = assemble(L)
 
 # Dirichlet bc
-g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
+g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
 bc= DirichletBC(V, g, 'on_boundary')
 bc.apply(A, b)
 

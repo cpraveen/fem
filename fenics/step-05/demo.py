@@ -35,16 +35,17 @@ for j in range(5):
    L = f*v*dx
 
    # Dirichlet bc
-   ue = uexact(degree=degree+3)
-   bc = DirichletBC(V, ue, 'on_boundary')
+   g = uexact(degree=degree)
+   bc = DirichletBC(V, g, 'on_boundary')
 
    # Solution variable
-   w = Function(V)
+   u = Function(V)
+   solve(a == L, u, bc)
 
-   solve(a == L, w, bc)
-
-   file << w
-   error_L2 = errornorm(ue, w, norm_type='L2')
+   u.rename('solution','solution')
+   file << u
+   ue = uexact(degree=degree+3)
+   error_L2 = errornorm(ue, u, norm_type='L2')
    conv.append([V.dim(), mesh.hmax(), error_L2])
 
    # refine the mesh

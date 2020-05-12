@@ -16,11 +16,11 @@ v = TestFunction(V)
 a = inner(grad(u), grad(v))*dx
 
 # Linear functional
-f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+1)
+f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
 L = f*v*dx
 
 # Dirichlet bc
-g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+1)
+g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
 bc= DirichletBC(V, g, 'on_boundary')
 
 # Solution variable

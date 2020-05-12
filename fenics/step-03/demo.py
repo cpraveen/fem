@@ -7,11 +7,11 @@ is given by f(x,y) = 2(2*pi)^2 u(x,y). The BC g is obtained from exact solution.
 from dolfin import *
 
 degree = 1
-np = [20, 40, 80, 160, 320]
+N = [20, 40, 80, 160, 320]
 
 conv = []
 file = File('sol.pvd')
-for n in np:
+for n in N:
    mesh = UnitSquareMesh(n,n)
 
    V = FunctionSpace(mesh, 'CG', degree)
@@ -22,11 +22,11 @@ for n in np:
    a = inner(grad(u), grad(v))*dx
 
    # Linear functional
-   f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
+   f = Expression('8*pi*pi*sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
    L = f*v*dx
 
    # Dirichlet bc
-   g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
+   g = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree)
    bc= DirichletBC(V, g, 'on_boundary')
 
    # Solution variable
@@ -35,8 +35,9 @@ for n in np:
    u.rename('u','u')
    file << u
 
-   error_L2 = errornorm(g, u, norm_type='L2')
-   error_H1 = errornorm(g, u, norm_type='H1')
+   uexact = Expression('sin(2*pi*x[0])*cos(2*pi*x[1])',degree=degree+3)
+   error_L2 = errornorm(uexact, u, norm_type='L2')
+   error_H1 = errornorm(uexact, u, norm_type='H10')
    print("n = ", n, " h =", mesh.hmax(), " error = ", error_L2, error_H1)
    conv.append([n, mesh.hmax(), error_L2, error_H1])
 

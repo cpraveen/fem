@@ -5,8 +5,8 @@
 from dolfin import *
 
 mesh = UnitSquareMesh(20,20)
-
-V = FunctionSpace(mesh, 'CG', 1)
+degree = 1
+V = FunctionSpace(mesh, 'CG', degree)
 u = TrialFunction(V)
 v = TestFunction(V)
 

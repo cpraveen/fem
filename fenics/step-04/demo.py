@@ -9,19 +9,19 @@ from dolfin import *
 # Characteristic function for different boundaries
 class Left(SubDomain):
     def inside(self, x, on_boundary):
-        return near(x[0], 0.0)
+        return near(x[0], 0.0) and on_boundary
 
 class Right(SubDomain):
     def inside(self, x, on_boundary):
-        return near(x[0], 1.0)
+        return near(x[0], 1.0) and on_boundary
 
 class Bottom(SubDomain):
     def inside(self, x, on_boundary):
-        return near(x[1], 0.0)
+        return near(x[1], 0.0) and on_boundary
 
 class Top(SubDomain):
     def inside(self, x, on_boundary):
-        return near(x[1], 1.0)
+        return near(x[1], 1.0) and on_boundary
 
 degree = 1
 mesh = UnitSquareMesh(20,20)
@@ -57,6 +57,7 @@ bc_top    = DirichletBC(V, u_top,    Top())
 bc = [bc_left, bc_bottom, bc_top]
 
 # Solution variable
-w = Function(V)
-solve(a == L, w, bc)
-File('sol.pvd') << w
+u = Function(V)
+solve(a == L, u, bc)
+u.rename('solution','solution')
+File('sol.pvd') << u
