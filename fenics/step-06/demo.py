@@ -47,6 +47,10 @@ for j in range(nstep):
    bc3 = DirichletBC(V, Constant(0), BottomRight)
    bc  = [bc1, bc2, bc3]
 
+   # We can use exact solution for all dirichlet bc. Comment above line
+   # and uncomment following line.
+   # bc  = DirichletBC(V, ue, 'on_boundary')
+
    # Solution variable
    u = Function(V)
    solve(a == L, u, bc)
