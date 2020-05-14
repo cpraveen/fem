@@ -1,6 +1,7 @@
 # Examples using Fenics
 
 [Fenics](https://fenicsproject.org) can be installed by following the instructions [here](https://fenicsproject.org/download). For more learning resources, see
+* [DOLFIN documentation](https://fenicsproject.org/docs/dolfin/2019.1.0/python/index.html), in particular see the Demos.
 * [Fenics tutorial](https://fenicsproject.org/tutorial/)
 * [Fenics book](https://fenicsproject.org/book/)
 
