@@ -25,7 +25,7 @@
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/precondition.h>
-#include <deal.II/lac/constraint_matrix.h>
+#include <deal.II/lac/affine_constraints.h>
 
 #include <fstream>
 #include <iostream>
@@ -89,17 +89,17 @@ private:
    void compute_error (double &L2_error, double &H1_error) const;
    void refine_grid ();
    
-   unsigned int           nrefine;
-   Triangulation<dim>     triangulation;
-   FE_Q<dim>              fe;
-   DoFHandler<dim>        dof_handler;
-   ConstraintMatrix       constraints;
+   unsigned int              nrefine;
+   Triangulation<dim>        triangulation;
+   FE_Q<dim>                 fe;
+   DoFHandler<dim>           dof_handler;
+   AffineConstraints<double> constraints;
 
-   SparsityPattern        sparsity_pattern;
-   SparseMatrix<double>   system_matrix;
+   SparsityPattern           sparsity_pattern;
+   SparseMatrix<double>      system_matrix;
    
-   Vector<double>         solution;
-   Vector<double>         system_rhs;
+   Vector<double>            solution;
+   Vector<double>            system_rhs;
 };
 
 
@@ -264,12 +264,12 @@ void LaplaceProblem<dim>::refine_grid ()
    Vector<float> estimated_error_per_cell (triangulation.n_active_cells());
    KellyErrorEstimator<dim>::estimate (dof_handler,
                                        QGauss<dim-1>(fe.degree+2),
-                                       typename FunctionMap<dim>::type(),
+                                       std::map<types::boundary_id, const Function<dim> *>(),
                                        solution,
                                        estimated_error_per_cell);
    GridRefinement::refine_and_coarsen_fixed_fraction (triangulation,
-                                                    estimated_error_per_cell,
-                                                    0.3, 0.03);
+                                                      estimated_error_per_cell,
+                                                      0.3, 0.03);
    triangulation.execute_coarsening_and_refinement ();
 }
 
