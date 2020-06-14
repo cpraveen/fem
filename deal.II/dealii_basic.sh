@@ -1,5 +1,5 @@
 # Set deal.II version
-V=9.1.1
+V=9.2.0
 
 # Where do you want to install deal.II
 DEAL_II_DIR=$HOME/deal.II
