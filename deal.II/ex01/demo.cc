@@ -187,15 +187,12 @@ void LaplaceProblem::assemble_system ()
                                              0,
                                              BoundaryValues(),
                                              boundary_values);
-   MatrixTools::apply_boundary_values (boundary_values,
-                                       system_matrix,
-                                       solution,
-                                       system_rhs);
    // right boundary condition
    VectorTools::interpolate_boundary_values (dof_handler,
                                              1,
                                              BoundaryValues(),
                                              boundary_values);
+   // Modify matrix and rhs
    MatrixTools::apply_boundary_values (boundary_values,
                                        system_matrix,
                                        solution,
