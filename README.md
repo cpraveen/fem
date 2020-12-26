@@ -23,6 +23,13 @@ unzip master.zip
 ```
 which creates the directory ```fembook-master```.
 
+## Other codes
+
+* [fem50](https://github.com/cpraveen/fem50): matlab codes for 2d BVP
+* [juliafem](https://github.com/cpraveen/juliafem): julia codes for 2d BVP
+* [deal.II](https://bitbucket.org/cpraveen/deal_ii): more deal.II examples
+* [fenics](https://github.com/cpraveen/fenics): more fenics examples
+
 ## Additional software
 Some of the examples require additional software.
 
