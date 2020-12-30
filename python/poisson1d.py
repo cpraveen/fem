@@ -163,7 +163,7 @@ else:
         xloc = xgrid[n] + xu * hgrid[n]
         plt.plot(xloc,values,'r-')
 
-plt.plot(xgrid,0*xgrid,'+-')
+plt.plot(xgrid,0*xgrid,'|-',markersize=15)
 plt.legend(('Exact','FEM'))
 plt.xlabel('x'); plt.ylabel('u')
 plt.title('Degree = '+str(k)+', elements = '+str(N))
