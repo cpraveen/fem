@@ -31,14 +31,8 @@ def gauss_lobatto_points(n):
         exit()
     return np.array(x)
 
-# Plot the points
-for n in range(2,8):
-    x = 0.5*(1 + gauss_lobatto_points(n))
-    plt.plot(x, (10-n)*np.ones(n), 'o-')
-plt.yticks([])
-plt.title('Gauss-Lobatto points')
-
-for n in range(2,8):
+# Plot lagrange polynomials
+for n in range(7,1,-1):
     plt.figure()
     xs = 0.5*(1 + gauss_lobatto_points(n))
     for i in range(n):
@@ -47,8 +41,17 @@ for n in range(2,8):
         fun = lagrange(xs, values)
         x = np.linspace(0,1,100)
         plt.plot(x, fun(x))
+        plt.plot(xs,0*xs,'o')
         plt.xlabel('x')
         plt.grid(True)
         plt.title('Number of points = '+str(n))
+
+# Plot the points
+plt.figure()
+for n in range(2, 8):
+    x = 0.5*(1 + gauss_lobatto_points(n))
+    plt.plot(x, (10-n)*np.ones(n), 'o-')
+plt.yticks([])
+plt.title('Gauss-Lobatto points')
 
 plt.show()

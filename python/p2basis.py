@@ -21,7 +21,6 @@ h = 1.0/N
 M = 2*N + 1 # no of dofs
 xd = np.linspace(0.0, 1.0, M)
 
-
 x1 = np.linspace(-h,h,500)
 x2 = np.linspace(0.0,h,500)
 y1 = basis1(h,x1)
@@ -30,7 +29,7 @@ y2 = basis2(h,x2)
 xs1,xs2 = 0.0,0.0
 for i in range(M):
     plt.clf()
-    plt.plot(xg,0*xg,'s-',markersize=10)
+    plt.plot(xg,0*xg,'|-',markersize=25)
     plt.plot(xd,0*xd,'ro',markersize=8)
     plt.axis([0.0,1.0,-0.5,1.5])
     plt.xlabel('$x$'); plt.ylabel('$\phi$')
