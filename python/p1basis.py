@@ -27,7 +27,11 @@ ax = fig.add_subplot(111)
 ax.set_xlabel('$x$'); ax.set_ylabel('$\phi$')
 line1, = ax.plot(xg,0*xg,'o-')
 line2, = ax.plot(x,0*x,'r-',linewidth=2)
-plt.axis([0.0,1.0,-0.1,1.5])
+for i in range(N+1):
+    node = '$x_'+str(i)+'$'
+    plt.text(xg[i],-0.02,node,ha='center',va='top')
+plt.axis([-0.1,1.1,-0.1,1.5])
+plt.grid(True)
 plt.draw()
 
 for i in range(N+1):
