@@ -59,9 +59,11 @@ xmin, xmax = 0.0, 1.0
 N = args.nelem   # number of elements
 k = args.degree  # degree of polynomials
 
+# Make grid
 xgrid = np.linspace(xmin,xmax,N+1) # grid
 hgrid = xgrid[1:] - xgrid[0:-1]    # element lengths
 
+# Build local dof to global dof map
 local_to_global = np.zeros((N,k+1),dtype=int)
 count = 0
 for i in range(N): # element loop
@@ -129,25 +131,27 @@ for n in range(N): # Loop over elements
 # Apply bc
 print('Applying bcs ...')
 u = np.zeros((M,1))
-u[0] = boundary_value(xgrid[0])
+u[0]  = boundary_value(xgrid[0])
 u[-1] = boundary_value(xgrid[-1])
-b -= A@u
-b[0] = A[0,0]*u[0]
+b    -= A@u
+b[0]  = A[0,0]*u[0]
 b[-1] = A[-1,-1]*u[-1]
-A[0,1:] = 0.0 # first row
-A[1:,0] = 0.0 # first column
-A[-1,0:-1] = 0.0  # last row
-A[0:-1,-1] = 0.0  # last column
+A[0,1:]    = 0.0 # first row
+A[1:,0]    = 0.0 # first column
+A[-1,0:-1] = 0.0 # last row
+A[0:-1,-1] = 0.0 # last column
 A = csc_matrix(A) # convert to csc since spsolve needs this
 
 print('Solving Ax=b ...')
 u = spsolve(A,b)
 
+# Compute error norm
+
 # plot solution
 if k == 1:
     xfine = np.linspace(xmin,xmax,1000)
     plt.plot(xfine,exact_solution(xfine),'k--',xgrid,u,'ro-')
-else:
+else: # sub-sample inside each element
     xfine = np.linspace(xmin,xmax,1000)
     plt.plot(xfine,exact_solution(xfine),'k--')
     # Sample fem solution on nu uniform points in each element

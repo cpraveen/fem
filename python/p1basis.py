@@ -14,7 +14,7 @@ def basis(x,i,h):
             y[j] = (x[j] - xl)/h
     return y
 
-N = 5 # Number of elements
+N = 6 # Number of elements
 xg = np.linspace(0.0, 1.0, N+1)
 h = 1.0/N
 
