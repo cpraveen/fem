@@ -11,7 +11,7 @@ These codes are prepared as material for teaching finite element method.
 ```
 git clone https://github.com/cpraveen/fembook.git
 ```
-(2) Download a zip file by clicking on the green button called "Clone or download" and then "Download ZIP".
+(2) Download a zip file by clicking on the green button called "Code" and then "Download ZIP".
 
 (3) Or use wget
 ```
