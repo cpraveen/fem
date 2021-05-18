@@ -1,3 +1,9 @@
+'''
+Solves the bvp
+    -u'' = f in (xmin,xmax)
+     u(xmin) = alpha
+     u(xmax) = beta
+'''
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import lagrange
