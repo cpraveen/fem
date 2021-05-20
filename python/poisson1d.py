@@ -167,7 +167,7 @@ else: # sub-sample inside each element
     shape_value = np.zeros((nu,k+1))
     for i in range(k+1):
         shape_value[:,i] = shape_funs[i](xu)
-    for n in range(N):
+    for n in range(N): # Loop over elements
         uloc = u[local_to_global[n,:]] # extract dofs on this element
         values = shape_value @ uloc
         xloc = xgrid[n] + xu * hgrid[n]
