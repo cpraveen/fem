@@ -46,7 +46,7 @@ public:
 
 template <>
 double ExactSolution<2>::value (const Point<2> &p,
-                                  const unsigned int /*component*/) const
+                                const unsigned int /*component*/) const
 {
    return sin(2*M_PI*p[0])*sin(2*M_PI*p[1]);
 }
@@ -73,7 +73,7 @@ public:
 
 template <>
 double RightHandSide<2>::value (const Point<2> &p,
-                                  const unsigned int /*component*/) const
+                                const unsigned int /*component*/) const
 {
    return 8*M_PI*M_PI*sin(2*M_PI*p[0])*sin(2*M_PI*p[1]);
 }
@@ -89,10 +89,11 @@ public:
 };
 
 template <int dim>
-double BoundaryValues<dim>::value (const Point<dim>& /*p*/,
+double BoundaryValues<dim>::value (const Point<dim>& p,
                                    const unsigned int /*component*/) const
 {
-   return 0.0;
+   ExactSolution<dim> exact_solution;
+   return exact_solution.value(p);
 }
 
 //------------------------------------------------------------------------------
