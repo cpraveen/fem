@@ -237,8 +237,12 @@ void LaplaceProblem<dim>::solve ()
 {
    SolverControl           solver_control (1000, 1e-12);
    SolverCG<>              cg (solver_control);
+
+   PreconditionSSOR<SparseMatrix<double>> preconditioner;
+   preconditioner.initialize(system_matrix, 1.2);
+
    cg.solve (system_matrix, solution, system_rhs,
-             PreconditionIdentity());
+             preconditioner);
    
    std::cout
    << "   " << solver_control.last_step()
