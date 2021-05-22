@@ -7,6 +7,7 @@ gmsh -2 ../ex06/Gamma.geo -o Gamma.msh
 Now compile and run the code
 ```
 cmake .
+make release
 make
 ./demo
 ```

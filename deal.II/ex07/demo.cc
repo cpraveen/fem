@@ -201,9 +201,14 @@ void LaplaceProblem<dim>::solve ()
 {
    SolverControl           solver_control (1000, 1e-12);
    SolverCG<>              cg (solver_control);
-   cg.solve (system_matrix, solution, system_rhs,
-             PreconditionIdentity());
+
+   PreconditionSSOR<SparseMatrix<double>> preconditioner;
+   preconditioner.initialize(system_matrix, 1.2);
+
+   cg.solve(system_matrix, solution, system_rhs,
+            preconditioner);
    constraints.distribute (solution);
+
    std::cout
    << "   " << solver_control.last_step()
    << " CG iterations needed to obtain convergence."
@@ -309,7 +314,7 @@ int main ()
 {
    deallog.depth_console (0);
    int degree = 1;
-   unsigned int nrefine = 5;
+   unsigned int nrefine = 7;
    LaplaceProblem<2> problem (degree, nrefine);
    std::vector<unsigned int> ncell(nrefine), ndofs(nrefine);
    std::vector<double> L2_error(nrefine), H1_error(nrefine);
