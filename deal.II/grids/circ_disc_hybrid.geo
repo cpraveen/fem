@@ -47,9 +47,8 @@ Line Loop(2) = {1,-6,15,-11};
 Plane Surface(2) = {2};
 Recombine Surface(2);
 
-Physical Line(1) = {1,6,11,15}; // cylinder surface
 Physical Line(2) = {2,8,17,13}; // outer boundary
-Physical Surface(3) = {1,5,14,10}; 
+Physical Surface(3) = {1,5,14,10,2}; 
 
 //Geometry.Normals = 100;
 //Mesh.MshFileVersion = 2.1;
