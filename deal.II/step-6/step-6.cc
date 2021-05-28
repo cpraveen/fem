@@ -152,7 +152,7 @@ template <int dim>
 Step6<dim>::Step6()
   : fe(2)
   , dof_handler(triangulation),
-  mapping(2)
+  mapping(3)
 {}
 
 
@@ -266,7 +266,7 @@ void Step6<dim>::assemble_system()
   FEValues<dim> fe_values(mapping, fe,
                           quadrature_formula,
                           update_values | update_gradients |
-                            update_quadrature_points | update_JxW_values);
+                          update_quadrature_points | update_JxW_values);
 
   const unsigned int dofs_per_cell = fe.dofs_per_cell;
 
@@ -493,7 +493,7 @@ void Step6<dim>::output_results(const unsigned int cycle) const
     data_out.set_flags(vtk_flags);
     data_out.attach_dof_handler(dof_handler);
     data_out.add_data_vector(solution, "solution");
-    data_out.build_patches(mapping, 2, DataOut<dim>::curved_inner_cells);
+    data_out.build_patches(mapping, 3, DataOut<dim>::curved_inner_cells);
     std::ofstream output("solution-" + std::to_string(cycle) + ".vtu");
     data_out.write_vtu(output);
   }
