@@ -488,9 +488,9 @@ void Step6<dim>::output_results(const unsigned int cycle) const
 
   {
     DataOut<dim> data_out;
-    //DataOutBase::VtkFlags vtk_flags;
-    //vtk_flags.write_higher_order_cells = true;
-    //data_out.set_flags(vtk_flags);
+    DataOutBase::VtkFlags vtk_flags;
+    vtk_flags.write_higher_order_cells = true;
+    data_out.set_flags(vtk_flags);
     data_out.attach_dof_handler(dof_handler);
     data_out.add_data_vector(solution, "solution");
     data_out.build_patches(mapping, 2, DataOut<dim>::curved_inner_cells);
