@@ -1,5 +1,5 @@
 # Set deal.II version
-V=9.2.0
+V=9.3.0
 
 # Where do you want to install deal.II
 DEAL_II_DIR=$HOME/deal.II
@@ -26,13 +26,13 @@ wget -c https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}.tar
 echo "==> Extracting deal.II sources"
 tar zxvf dealii-${V}.tar.gz > install.log
 cd dealii-${V}
-rm -rf build 
+rm -rf build
 mkdir -p build
 cd build
 echo "==> Run cmake"
 sh $DEAL_II_DIR/dealii-build/dealii.sh
 echo "==> Compiling"
-# If you have a multicore machine, set a larger value here. 
+# If you have a multicore machine, set a larger value here.
 # The compilation will be faster.
 make -j $NPROC
 echo "==> Install"
