@@ -20,6 +20,8 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 ## Installing deal.II
 The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming v9.3.0 but change this to the actual version you are using.
 
+### Prepare your system
+
 You will need to have C and C++ compilers installed. In Debian/Ubuntu, you can install like this
 
 ```shell
@@ -32,6 +34,8 @@ We need `cmake` to generate makefiles and we also use `wget` below to download s
 ```shell
 sudo apt install gfortran gnuplot cmake wget
 ```
+
+### Manual download and install
 
 Suppose we want to install deal.II in `$HOME/deal.II` directory. Add following line in your `$HOME/.bashrc` file
 
