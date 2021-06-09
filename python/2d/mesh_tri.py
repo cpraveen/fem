@@ -15,6 +15,7 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.title('Mesh')
 plt.axis('equal')
+plt.savefig('mesh.svg')
 
 # Show boundary faces
 plt.figure()
@@ -36,7 +37,7 @@ plt.colorbar(c)
 plt.tricontour(x, y, tri, u, colors='k', levels=20)
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('Solution')
+plt.title('Colour and contour plot')
 plt.axis('equal')
 
 plt.show()

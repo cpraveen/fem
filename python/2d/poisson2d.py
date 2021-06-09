@@ -94,5 +94,6 @@ plt.xlabel('x')
 plt.ylabel('y')
 plt.title('Solution')
 plt.axis('equal')
+plt.savefig('sol.svg')
 
 plt.show()
