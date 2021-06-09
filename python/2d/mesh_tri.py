@@ -28,7 +28,7 @@ plt.title('Boundary faces')
 plt.axis('equal')
 
 # Some smooth function of (x,y)
-u = np.sin(2.0*np.pi*x) * np.sin(2.0*np.pi*y)
+u = (0.5/(2.0*np.pi)**2) * np.sin(2.0*np.pi*x) * np.cos(2.0*np.pi*y)
 
 plt.figure()
 c = plt.tricontourf(x, y, tri, u, cmap='rainbow', levels=20)
