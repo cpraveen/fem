@@ -15,3 +15,8 @@ Line(5) = {5,1};
 
 Line Loop(1) = {1,2,3,4,5};
 Plane Surface(1) = {1};
+
+Physical Line(1) = {5}; // bottom left
+Physical Line(2) = {1}; // bottom right
+Physical Line(3) = {2,3,4}; // all other sides
+Physical Surface(4) = {1};

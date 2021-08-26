@@ -7,6 +7,8 @@
 
 Jupyter notebook version of these examples are available [here](https://drive.google.com/drive/folders/1uonODhFK6gjouBDXNYXHnBAz-nDzqlJL?usp=sharing). I try to maintain identical code in both, but if you find some discrepancy between the two, please inform me.
 
+For instructions on how to install Fenics on colab, see https://fem-on-colab.github.io
+
 **THESE CODES ARE TESTED WITH FENICS VERSION 2019.1.0, THEY WILL NOT WORK WITH DOLFINX**
 
 * step-01
@@ -16,7 +18,7 @@ Jupyter notebook version of these examples are available [here](https://drive.go
 * step-02
   * Laplace equation with variable data
   * Dirichlet BC
-  * Expression 
+  * Expression
   * saving to file and Paraview
 
 * step-03
