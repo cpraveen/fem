@@ -65,12 +65,12 @@ for c in range(ncells):
 # Solution array
 u = np.zeros(npoints)
 
-# Fill boundary values
+# Fill boundary values into solution array u
 for i in range(nbpts):
     p = bpts[i]
     u[p] = uexact(x[p], y[p])
 
-# Modify matrix and rhs to apply bc
+# Modify matrix and rhs to apply dirichlet bc
 b -= A @ u
 for i in range(nbpts):
     c = bpts[i]

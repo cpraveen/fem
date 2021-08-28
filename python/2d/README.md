@@ -2,7 +2,7 @@
 
 You need [Gmsh](http://www.gmsh.info) and [meshio](https://github.com/nschloe/meshio) to run this problem.
 
-Generate the mesh
+## Generate the mesh
 
 ```bash
 gmsh -2 mesh_tri.geo
@@ -20,7 +20,9 @@ which looks like this
 <img src="output/mesh.svg">
 </p>
 
-Solve the Poisson equation
+The code also shows how to make use of mesh object and how to draw contour plots on a triangular grid.
+
+## Solve the Poisson equation
 
 ```bash
 python poisson2d.py
