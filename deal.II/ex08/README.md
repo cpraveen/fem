@@ -1,3 +1,25 @@
-# Unsteady heat equation
+# Laplace equation with discontinuous dirichlet bc: adaptive refinement
 
-This is based on step-26 from deal.II tutorial. I have removed grid adaptation to make this simplified test case.
+This code solves Laplace equation
+
+```text
+ Laplace(u) = 0  in  (-0.5, +0.5) x (0, 1)
+         u  = 1  on  (-0.5,  0.0) x (y = 0)
+         u  = 0  on  ( 0.0, +0.5) x (y = 0)
+         u  = (1/pi) * atan(y/x)  elsewhere on boundary
+```
+
+The exact solution is
+
+```text
+u = (1/pi) * atan(y/x)
+```
+
+Now compile and run the code
+
+```shell
+cmake .
+make release
+make
+./demo
+```

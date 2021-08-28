@@ -1,5 +1,7 @@
 # Solve Poisson equation in 2d/3d
 
+Same as ex02a but here we solve on triangular grid.
+
 Steps to run this example
 
 ```
