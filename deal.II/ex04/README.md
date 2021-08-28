@@ -32,7 +32,7 @@ with dirichlet bc which is obtained from the exact solution
    u = (1/pi) * atan(y/x)
 ```
 
-On the bottom side y=0, the dirichlet bc is discontinuous at the origin. Change the code like this. The exact solution:
+On the bottom side `y=0`, the dirichlet bc is discontinuous at the origin. Change the code like this. The exact solution:
 
 ```c++
 template <>

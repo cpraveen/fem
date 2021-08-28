@@ -1,5 +1,7 @@
 # Laplace equation with discontinuous dirichlet bc: adaptive refinement
 
+This problem was given as an exercise in ex04 where uniform grid refinement is performed.
+
 This code solves Laplace equation
 
 ```text

@@ -59,8 +59,8 @@ Tensor<1,2> ExactSolution<2>::gradient (const Point<2>   &p,
 {
    double r2 = p.norm_square();
    Tensor<1,2> values;
-   values[0] = -p[1] / r2;
-   values[1] =  p[0] / r2;
+   values[0] = -p[1] / (M_PI * r2);
+   values[1] =  p[0] / (M_PI * r2);
    return values;
 }
 
@@ -285,7 +285,10 @@ void LaplaceProblem<dim>::run (std::vector<unsigned int> &ncell,
       {
          Point<dim> p1(-0.5, 0.0);
          Point<dim> p2(+0.5, 1.0);
-         GridGenerator::subdivided_hyper_rectangle(triangulation, {20, 20}, p1, p2);
+         GridGenerator::subdivided_hyper_rectangle(triangulation,
+                                                   {20, 20},
+                                                   p1,
+                                                   p2);
       }
       else
          refine_grid ();
