@@ -1,4 +1,4 @@
-/* 
+/*
  Solve 2d/3d laplace equation
  -Laplace(u) = f(x,y) in (0,1)x(0,1)
  Exact solution is u = sin(2*pi*x) * sin(2*pi*y)
@@ -37,7 +37,7 @@ class RightHandSide : public Function<dim>
 {
 public:
    RightHandSide () : Function<dim>() {}
-   
+
    virtual double value (const Point<dim>   &p,
                          const unsigned int  component = 0) const;
 };
@@ -65,7 +65,7 @@ class BoundaryValues : public Function<dim>
 {
 public:
    BoundaryValues () : Function<dim>() {}
-   
+
    virtual double value (const Point<dim>   &p,
                          const unsigned int  component = 0) const;
 };
@@ -84,20 +84,20 @@ class LaplaceProblem
 public:
    LaplaceProblem (int degree);
    void run ();
-   
+
 private:
    void make_grid_and_dofs ();
    void assemble_system ();
    void solve ();
    void output_results () const;
-   
+
    Triangulation<dim>     triangulation;
    FE_Q<dim>              fe;
    DoFHandler<dim>        dof_handler;
-   
+
    SparsityPattern        sparsity_pattern;
    SparseMatrix<double>   system_matrix;
-   
+
    Vector<double>         solution;
    Vector<double>         system_rhs;
 };
@@ -116,7 +116,7 @@ void LaplaceProblem<dim>::make_grid_and_dofs ()
 {
    GridGenerator::hyper_cube (triangulation, 0, 1);
    triangulation.refine_global (5);
-   
+
    std::cout
    << "   Number of active cells: "
    << triangulation.n_active_cells()
@@ -124,18 +124,18 @@ void LaplaceProblem<dim>::make_grid_and_dofs ()
    << "   Total number of cells: "
    << triangulation.n_cells()
    << std::endl;
-   
+
    dof_handler.distribute_dofs (fe);
-   
+
    std::cout
    << "   Number of degrees of freedom: "
    << dof_handler.n_dofs()
    << std::endl;
-   
+
    DynamicSparsityPattern dsp(dof_handler.n_dofs());
    DoFTools::make_sparsity_pattern (dof_handler, dsp);
    sparsity_pattern.copy_from(dsp);
-   
+
    system_matrix.reinit (sparsity_pattern);
    solution.reinit (dof_handler.n_dofs());
    system_rhs.reinit (dof_handler.n_dofs());
@@ -153,15 +153,15 @@ void LaplaceProblem<dim>::assemble_system ()
    FEValues<dim> fe_values (fe, quadrature_formula,
                             update_values   | update_gradients |
                             update_quadrature_points | update_JxW_values);
-   
+
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    const unsigned int   n_q_points    = quadrature_formula.size();
-   
+
    FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
    Vector<double>       cell_rhs (dofs_per_cell);
    std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
    std::vector<double>  rhs_values (n_q_points);
-   
+
    for (const auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
@@ -169,7 +169,7 @@ void LaplaceProblem<dim>::assemble_system ()
       cell_rhs = 0;
       right_hand_side.value_list (fe_values.get_quadrature_points(),
                                   rhs_values);
-      
+
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
          for (unsigned int i=0; i<dofs_per_cell; ++i)
          {
@@ -177,12 +177,12 @@ void LaplaceProblem<dim>::assemble_system ()
                cell_matrix(i,j) += (fe_values.shape_grad (i, q_point) *  // grad(phi_i)
                                     fe_values.shape_grad (j, q_point) *  // grad(phi_j)
                                     fe_values.JxW (q_point));            // det(J) * w
-            
+
             cell_rhs(i) += (fe_values.shape_value (i, q_point) *  // phi_i
                             rhs_values[q_point] *                 // f
                             fe_values.JxW (q_point));             // det(J) * w
          }
-      
+
       cell->get_dof_indices (local_dof_indices);
       for (unsigned int i=0; i<dofs_per_cell; ++i)
       {
@@ -190,11 +190,11 @@ void LaplaceProblem<dim>::assemble_system ()
             system_matrix.add (local_dof_indices[i],
                                local_dof_indices[j],
                                cell_matrix(i,j));
-         
+
          system_rhs(local_dof_indices[i]) += cell_rhs(i);
       }
    }
-   
+
    // boundary condition
    std::map<types::global_dof_index,double> boundary_values;
    VectorTools::interpolate_boundary_values (dof_handler,
@@ -215,7 +215,7 @@ void LaplaceProblem<dim>::solve ()
    SolverCG<>              cg (solver_control);
    cg.solve (system_matrix, solution, system_rhs,
              PreconditionIdentity());
-   
+
    std::cout
    << "   " << solver_control.last_step()
    << " CG iterations needed to obtain convergence."
@@ -227,7 +227,7 @@ template <int dim>
 void LaplaceProblem<dim>::output_results () const
 {
    DataOut<dim> data_out;
-   
+
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
    data_out.build_patches (fe.degree);
@@ -252,6 +252,6 @@ int main ()
    int degree = 1;
    LaplaceProblem<2> problem (degree);
    problem.run ();
-   
+
    return 0;
 }
