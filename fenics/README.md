@@ -5,9 +5,13 @@
 * [Fenics tutorial](https://fenicsproject.org/tutorial/)
 * [Fenics book](https://fenicsproject.org/book/)
 
+## Running on colab
+
 Jupyter notebook version of these examples are available [here](https://drive.google.com/drive/folders/1uonODhFK6gjouBDXNYXHnBAz-nDzqlJL?usp=sharing). I try to maintain identical code in both, but if you find some discrepancy between the two, please inform me.
 
 For instructions on how to install Fenics on colab, see https://fem-on-colab.github.io
+
+## List of codes
 
 **THESE CODES ARE TESTED WITH FENICS VERSION 2019.1.0, THEY WILL NOT WORK WITH DOLFINX**
 
