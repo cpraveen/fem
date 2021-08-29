@@ -1,4 +1,4 @@
-# Linear advection equation using Galerkin method
+# Linear advection equation using Galerkin and SUPG method
 
 We solve
 
@@ -21,8 +21,20 @@ and
        = 0  otherwise
 ```
 
+## Using Galerkin method
+
 A sample solution is shown below
 
 <p align="center">
-<img width="45%" src="output/sol_128x128.png">
-</p
+<img width="45%" src="output/gal_128x128.png">
+</p>
+
+## Using SUPG method
+
+A sample solution is shown below
+
+<p align="center">
+<img width="45%" src="output/supg_128x128.png">
+</p>
+
+See the [step-9](https://www.dealii.org/developer/doxygen/deal.II/step_9.html) tutorial in deal.II for another example of SUPG.

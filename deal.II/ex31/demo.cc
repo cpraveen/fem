@@ -102,7 +102,7 @@ template <int dim>
 class LaplaceProblem
 {
 public:
-   LaplaceProblem (int degree);
+   LaplaceProblem (int degree, std::string method);
    void run ();
 
 private:
@@ -111,6 +111,7 @@ private:
    void solve ();
    void output_results () const;
 
+   std::string            method;
    Triangulation<dim>     triangulation;
    FE_Q<dim>              fe;
    DoFHandler<dim>        dof_handler;
@@ -125,11 +126,14 @@ private:
 
 //------------------------------------------------------------------------------
 template <int dim>
-LaplaceProblem<dim>::LaplaceProblem (int degree) :
+LaplaceProblem<dim>::LaplaceProblem (int degree, std::string method)
+:
+method(method),
 fe (degree),
 dof_handler (triangulation)
 {
    std::cout << "Degree = " << degree << std::endl;
+   std::cout << "Method = " << method << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -184,6 +188,8 @@ void LaplaceProblem<dim>::assemble_system ()
    std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
    std::vector<double>  rhs_values (n_q_points);
 
+   int supg = (method == "supg") ? 1 : 0;
+
    for (const auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
@@ -192,15 +198,24 @@ void LaplaceProblem<dim>::assemble_system ()
       right_hand_side.value_list (fe_values.get_quadrature_points(),
                                   rhs_values);
 
+      const double h = cell->diameter();
+
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
       {
          Tensor<1,dim> vel = velocity<dim>(fe_values.quadrature_point(q_point));
+         double mod_vel = vel.norm();
+         double f_supg = supg * h / mod_vel;
          for (unsigned int i=0; i<dofs_per_cell; ++i)
          {
             for (unsigned int j=0; j<dofs_per_cell; ++j)
-               cell_matrix(i,j) += (fe_values.shape_value (i, q_point) *         // phi_i
-                                    (vel * fe_values.shape_grad (j, q_point)) *  // vel . grad(phi_j)
-                                    fe_values.JxW (q_point));                    // det(J) * w
+            {
+               double v_grad_phi_i = vel * fe_values.shape_grad(i, q_point);
+               double v_grad_phi_j = vel * fe_values.shape_grad(j, q_point);
+               double f = (fe_values.shape_value (i, q_point) *   // phi_i
+                           v_grad_phi_j)                          // vel . grad(phi_j)
+                        + f_supg * v_grad_phi_i * v_grad_phi_j;
+               cell_matrix(i,j) += f * fe_values.JxW (q_point);   // f * det(J) * w
+            }
 
             cell_rhs(i) += (fe_values.shape_value (i, q_point) *  // phi_i
                             rhs_values[q_point] *                 // f
@@ -255,9 +270,10 @@ void LaplaceProblem<dim>::output_results () const
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
    data_out.build_patches (fe.degree);
-   std::ofstream output ("solution.vtk");
+   std::string filename = method + ".vtk";
+   std::ofstream output (filename);
    data_out.write_vtk (output);
-   std::cout << "Saved solution into solution.vtk" << std::endl;
+   std::cout << "Saved solution into " << filename << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -275,8 +291,16 @@ int main ()
 {
    deallog.depth_console (0);
    int degree = 1;
-   LaplaceProblem<2> problem (degree);
-   problem.run ();
+   {
+      LaplaceProblem<2> problem (degree, "galerkin");
+      problem.run ();
+      std::cout << "------------------------------------\n";
+   }
+   {
+      LaplaceProblem<2> problem (degree, "supg");
+      problem.run ();
+      std::cout << "------------------------------------\n";
+   }
 
    return 0;
 }
