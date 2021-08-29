@@ -17,6 +17,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. ex08: 2-d Laplace equation with discontinuous Dirichlet bc, adaptive refinement
 1. ex09: 2-d Poisson with discontinuous coefficient. Same as step-6 in deal.II tutorials, modified to use gmsh grid
 1. ex21: 2-d unsteady heat equation
+1. ex31: 2-d linear advection equation using Galerkin method
 
 ## Installing deal.II
 
