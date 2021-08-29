@@ -18,7 +18,11 @@ Open and see `error.pdf` for a table of error versus mesh size and corresponding
 
 The solution error as a function of x,y is saved into different files as the grid is refined. You can open the error-##.vtk files in visit and see the error distribution in the domain.
 
-## Discontinuous dirichlet bc
+## Exercise: Solve on triangular grid
+
+Modify this example to solve on triangular grids. See ex02b for an example of how to do this.
+
+## Exercise: Discontinuous dirichlet bc
 
 Solve the problem
 

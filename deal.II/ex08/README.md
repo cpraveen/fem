@@ -25,3 +25,8 @@ make release
 make
 ./demo
 ```
+
+## Exercise: Solve on triangular grid
+
+Modify this example to solve on triangular grids. See ex02b for an example of how to do this.
+

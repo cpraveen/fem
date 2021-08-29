@@ -6,7 +6,7 @@ This is based on step-6 from the deal.II tutorials but modified to use grid made
 * output_results: enable curved vtk output (use Paraview)
 * Use MappingQGeneric(3) for assembly and error estimation
 
-```bash
+```shell
 cmake .
 make release && make
 gmsh -2 ../grids/circ_disc_nice.geo -o circ_disc_nice.msh
@@ -15,7 +15,7 @@ gmsh -2 ../grids/circ_disc_nice.geo -o circ_disc_nice.msh
 
 Visualize the grids
 
-```bash
+```shell
 gnuplot plot_grid.gnu
 ```
 
