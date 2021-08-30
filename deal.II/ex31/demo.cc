@@ -188,7 +188,7 @@ void LaplaceProblem<dim>::assemble_system ()
    std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
    std::vector<double>  rhs_values (n_q_points);
 
-   int supg = (method == "supg") ? 1 : 0;
+   const int supg = (method == "supg") ? 1 : 0;
 
    for (const auto &cell : dof_handler.active_cell_iterators())
    {
@@ -202,24 +202,24 @@ void LaplaceProblem<dim>::assemble_system ()
 
       for (unsigned int q_point=0; q_point<n_q_points; ++q_point)
       {
-         Tensor<1,dim> vel = velocity<dim>(fe_values.quadrature_point(q_point));
-         double mod_vel = vel.norm();
-         double f_supg = supg * h / mod_vel;
+         const Tensor<1,dim> vel = velocity<dim>(fe_values.quadrature_point(q_point));
+         const double mod_vel = vel.norm();
+         const double f_supg = supg * h / mod_vel;
          for (unsigned int i=0; i<dofs_per_cell; ++i)
          {
-            for (unsigned int j=0; j<dofs_per_cell; ++j)
+            const double v_grad_phi_i = vel * fe_values.shape_grad(i, q_point);
+            // phi_i + (h/|vel|) * v . grad(phi_i)
+            const double test_i = (fe_values.shape_value(i, q_point)
+                                  + f_supg * v_grad_phi_i);
+            for (unsigned int j = 0; j < dofs_per_cell; ++j)
             {
-               double v_grad_phi_i = vel * fe_values.shape_grad(i, q_point);
-               double v_grad_phi_j = vel * fe_values.shape_grad(j, q_point);
-               double f = (fe_values.shape_value (i, q_point) *   // phi_i
-                           v_grad_phi_j)                          // vel . grad(phi_j)
-                        + f_supg * v_grad_phi_i * v_grad_phi_j;
-               cell_matrix(i,j) += f * fe_values.JxW (q_point);   // f * det(J) * w
+               const double v_grad_phi_j = vel * fe_values.shape_grad(j, q_point);
+               cell_matrix(i,j) += test_i * v_grad_phi_j * fe_values.JxW (q_point);
             }
 
-            cell_rhs(i) += (fe_values.shape_value (i, q_point) *  // phi_i
-                            rhs_values[q_point] *                 // f
-                            fe_values.JxW (q_point));             // det(J) * w
+            cell_rhs(i) += (test_i *                   // test fun
+                            rhs_values[q_point] *      // rhs func
+                            fe_values.JxW (q_point));  // det(J) * w
          }
       }
 
