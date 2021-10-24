@@ -8,7 +8,7 @@ We solve
               u  = g   on   {x = 0}
 ```
 
-where
+where the speed is
 
 ```text
   beta = (y, -x)
@@ -40,6 +40,8 @@ A sample solution is shown below
 <img width="45%" src="output/gal_128x128.png">
 </p>
 
+There are lot of oscillation arising at the jump which corrupt the solution throughout the domain.
+
 ## Using SUPG method
 
 A sample solution is shown below
@@ -47,5 +49,7 @@ A sample solution is shown below
 <p align="center">
 <img width="45%" src="output/supg_128x128.png">
 </p>
+
+We still have some oscillations in the solution but they are confined to regions around the jump.
 
 See the [step-9](https://www.dealii.org/developer/doxygen/deal.II/step_9.html) tutorial in deal.II for another example of SUPG.

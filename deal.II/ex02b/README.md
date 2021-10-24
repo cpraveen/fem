@@ -14,9 +14,10 @@ or colordiff
 colordiff -y ../ex02a/demo.cc demo.cc
 ```
 
-or use a gui diff tool
+or use vscode or a gui diff tool
 
 ```shell
+code -n -d ../ex02a/demo.cc demo.cc
 meld ../ex02a/demo.cc demo.cc
 tkdiff ../ex02a/demo.cc demo.cc
 ```

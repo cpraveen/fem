@@ -23,6 +23,10 @@ pdflatex error.tex
 
 Open and see `error.pdf` for a table of error versus number of dofs. The solution and error are saved in files `solution-00.vtk`, `solution-01.vtk`, etc. Open them together in VisIt and see the change with grid refinement.
 
+```shell
+visit -o solution-*.vtk
+```
+
 ## Exercise: Solve on triangular grid
 
 Modify this example to solve on triangular grids. See ex02b for an example of how to do this.
