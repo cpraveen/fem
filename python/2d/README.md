@@ -8,13 +8,13 @@ You need [Gmsh](http://www.gmsh.info) and [meshio](https://github.com/nschloe/me
 gmsh -2 mesh_tri.geo
 ```
 
-See the mesh
+The code `mesh_tri.py` shows how to plot the mesh and some function defined on this mesh. Run it like this
 
 ```bash
 python mesh_tri.py
 ```
 
-which looks like this
+and you should see the mesh which looks like this
 
 <p align="center">
 <img src="output/mesh.svg">
