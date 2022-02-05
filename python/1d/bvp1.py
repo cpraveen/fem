@@ -164,4 +164,8 @@ for n in range(N): # Loop over elements
 plt.xlabel('x'); plt.ylabel('u')
 plt.title('Degree = '+str(k)+', elements = '+str(N))
 plt.grid(True)
+
+d = np.loadtxt('bvp1.txt')
+plt.plot(d[:,0],d[:,1],'--',label='Exact')
+plt.legend()
 plt.show()
