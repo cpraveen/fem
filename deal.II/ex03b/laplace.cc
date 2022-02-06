@@ -3,7 +3,9 @@
       -Laplace(u) = 1 in (0,1) x (0,1)
    with zero Dirichlet boundary conditions.
 
-   All assesmbly operations are done using library functions.
+   All assembly operations are done using library functions.
+
+   Use triangular grid.
 */
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
