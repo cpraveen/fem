@@ -10,36 +10,8 @@ from scipy.interpolate import lagrange
 from scipy.sparse import lil_matrix, csc_matrix
 from scipy.sparse.linalg import spsolve
 import argparse
+from lgl import *
 
-#------------------------------------------------------------------------------
-# See section on "Gauss-Lobattto rules" here
-#    https://en.wikipedia.org/wiki/Gaussian_quadrature
-def gauss_lobatto_points(n):
-    if n == 2:
-        x = [-1,1]
-    elif n == 3:
-        x = [-1,0,1]
-    elif n == 4:
-        x = [-1, -1/np.sqrt(5), 1/np.sqrt(5), 1]
-    elif n == 5:
-        x = [-1, -np.sqrt(3.0/7.0), 0, np.sqrt(3.0/7.0), 1]
-    elif n == 6:
-        x = [-1, -np.sqrt(1.0/3.0 + 2.0*np.sqrt(7)/21), 
-                 -np.sqrt(1.0/3.0 - 2.0*np.sqrt(7)/21), 
-                  np.sqrt(1.0/3.0 - 2.0*np.sqrt(7)/21), 
-                  np.sqrt(1.0/3.0 + 2.0*np.sqrt(7)/21), 
-              1]
-    elif n == 7:
-        x = [-1, -np.sqrt(5.0/11.0 + (2.0/11)*np.sqrt(5.0/3.0)),
-                 -np.sqrt(5.0/11.0 - (2.0/11)*np.sqrt(5.0/3.0)),
-                  0,
-                  np.sqrt(5.0/11.0 - (2.0/11)*np.sqrt(5.0/3.0)),
-                  np.sqrt(5.0/11.0 + (2.0/11)*np.sqrt(5.0/3.0)),
-              1]
-    else:
-        print('Not implemented for n>7 points')
-        exit()
-    return np.array(x)
 #------------------------------------------------------------------------------
 kw = 20
 

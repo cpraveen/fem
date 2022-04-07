@@ -134,7 +134,7 @@ void LaplaceProblem::assemble_system ()
    system_rhs    = 0;
 
    std::cout << "Assembling matrix, rhs\n";
-   QGauss<1>  quadrature_formula(2*fe.degree);
+   QGauss<1>  quadrature_formula(fe.degree + 1);
    FEValues<1> fe_values (fe, quadrature_formula,
                           update_values   | update_gradients |
                           update_quadrature_points | update_JxW_values);

@@ -172,7 +172,7 @@ void LaplaceProblem<dim>::assemble_system ()
    system_matrix = 0;
    system_rhs = 0;
 
-   QGauss<dim>  quadrature_formula(2*fe.degree);
+   QGauss<dim>  quadrature_formula(fe.degree + 1);
    const RightHandSide<dim> right_hand_side;
    FEValues<dim> fe_values (fe, quadrature_formula,
                             update_values   | update_gradients |
@@ -283,7 +283,7 @@ void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) con
                                       solution,
                                       exact_solution,
                                       difference_per_cell,
-                                      QGauss<dim>(2*fe.degree+1),
+                                      QGauss<dim>(fe.degree+3),
                                       VectorTools::L2_norm);
    L2_error = difference_per_cell.l2_norm();
 
@@ -292,7 +292,7 @@ void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) con
                                       solution,
                                       exact_solution,
                                       difference_per_cell,
-                                      QGauss<dim>(2*fe.degree+1),
+                                      QGauss<dim>(fe.degree+3),
                                       VectorTools::H1_seminorm);
    H1_error = difference_per_cell.l2_norm();
 }

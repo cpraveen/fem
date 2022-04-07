@@ -58,7 +58,7 @@ Write a function to the compute error norm in solution and its derivative. The f
 void LaplaceProblem::compute_error () const
 {
    std::cout << "Computing error norm ...\n";
-   QGauss<1>  quadrature_formula(2*fe.degree);
+   QGauss<1>  quadrature_formula(fe.degree + 3);
    FEValues<1> fe_values (fe, quadrature_formula,
                           update_values   | update_gradients |
                           update_quadrature_points | update_JxW_values);
