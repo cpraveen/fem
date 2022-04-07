@@ -52,6 +52,9 @@ You must include following file
 in order to use the sparse solver.
 
 ## Exercise 3
+Write a function to the compute error norm in solution and its derivative.
+
+## Exercise 4
 Solve the more general problem
 
 -(a u')' + b u' + c u = f

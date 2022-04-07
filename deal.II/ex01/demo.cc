@@ -35,8 +35,8 @@ class RightHandSide : public Function<1>
 public:
    RightHandSide () : Function<1>() {}
    
-   virtual double value (const Point<1>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<1>   &p,
+                 const unsigned int  component = 0) const;
 };
 
 double RightHandSide::value (const Point<1> &p,
@@ -51,8 +51,8 @@ class BoundaryValues : public Function<1>
 public:
    BoundaryValues () : Function<1>() {}
    
-   virtual double value (const Point<1>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<1>   &p,
+                 const unsigned int  component = 0) const;
 };
 
 double BoundaryValues::value (const Point<1> &p,

@@ -11,6 +11,7 @@ from scipy.sparse import lil_matrix, csc_matrix
 from scipy.sparse.linalg import spsolve
 import argparse
 
+#------------------------------------------------------------------------------
 # See section on "Gauss-Lobattto rules" here
 #    https://en.wikipedia.org/wiki/Gaussian_quadrature
 def gauss_lobatto_points(n):
@@ -97,7 +98,7 @@ for i in range(k+1):
     shape_funs.append(shape_fun)
     shape_grads.append(shape_fun.deriv())
 
-# Quadrature points
+# Gauss-Legendre quadrature points
 Nq = k + 1
 xq,wq = np.polynomial.legendre.leggauss(Nq)
 xq = 0.5*(1 + xq) # transform to [0,1]
@@ -117,10 +118,10 @@ A = lil_matrix((M,M)) # system matrix
 # Assemble matrix and rhs
 print('Assembling ...')
 for n in range(N): # Loop over elements
-    Aloc = np.zeros((k+1,k+1))
-    bloc = np.zeros((k+1,1))
-    xphy = xgrid[n] + xq * hgrid[n]
-    rhs_values = f(xphy) # rhs function values
+    Aloc = np.zeros((k+1,k+1))      # local matrix
+    bloc = np.zeros((k+1,1))        # local rhs vector
+    xphy = xgrid[n] + xq * hgrid[n] # quad pts in real space
+    rhs_values = f(xphy)            # rhs function values
     for i in range(k+1): # Loop over basis functions
         bloc[i] = hgrid[n] * np.sum(rhs_values * shape_value[:,i] * wq)
         for j in range(k+1): # Loop over basis functions
