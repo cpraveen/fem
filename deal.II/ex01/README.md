@@ -52,11 +52,50 @@ You must include following file
 in order to use the sparse solver.
 
 ## Exercise 3
-Write a function to the compute error norm in solution and its derivative.
+Write a function to the compute error norm in solution and its derivative. The following function does this for the solution error. We use the `BoundaryValues` class to compute the exact solution.
+
+```c++
+void LaplaceProblem::compute_error () const
+{
+   std::cout << "Computing error norm ...\n";
+   QGauss<1>  quadrature_formula(2*fe.degree);
+   FEValues<1> fe_values (fe, quadrature_formula,
+                          update_values   | update_gradients |
+                          update_quadrature_points | update_JxW_values);
+
+   const unsigned int   n_q_points    = quadrature_formula.size();
+
+   std::vector<double> ex_sol_values (n_q_points);
+   std::vector<double> num_sol_values (n_q_points);
+   const BoundaryValues exact_solution;
+
+   double u_err = 0.0;
+   for(const auto &cell : dof_handler.active_cell_iterators())
+   {
+      fe_values.reinit (cell);
+      fe_values.get_function_values (solution, num_sol_values);
+      exact_solution.value_list(fe_values.get_quadrature_points(),
+                                ex_sol_values);
+      double cell_u_err = 0.0;
+      for(const auto q : fe_values.quadrature_point_indices())
+      {
+         double err = ex_sol_values[q] - num_sol_values[q];
+         cell_u_err += pow(err, 2) * fe_values.JxW(q);
+      }
+      u_err += cell_u_err;
+   }
+   u_err = sqrt(u_err);
+   std::cout << "L2 error norm = " << u_err << std::endl;
+}
+```
+
+Run with `nrefine = 5` and then with `nrefine = 6`, and use the two error norm values to estimate convergence rate.
 
 ## Exercise 4
 Solve the more general problem
 
+```
 -(a u')' + b u' + c u = f
+```
 
-with a(x) = 1 + x, b(x) = x, c(x) = 1. You can keep same exact solution and obtain f(x). Add one class for a, b, c which are derived from `Function<1>` class. Modify the `assemble_system` function. Since the problem is now non-symmetric, we cannot use CG solver. Use the direct solver as explained above.
+with `a(x) = 1 + x, b(x) = x, c(x) = 1`. You can keep same exact solution and obtain `f(x)`. Add one class for a, b, c which are derived from `Function<1>` class. Modify the `assemble_system` function. Since the problem is now non-symmetric, we cannot use CG solver. Use the direct solver as explained above.

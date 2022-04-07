@@ -22,6 +22,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 ## deal.II Examples
 
 1. [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html): Poisson equation with discontinuous coefficients, grid adaptation
+1. [step-10](https://dealii.org/developer/doxygen/deal.II/step_10.html): Higher order mappings, compute value of pi
 1. [step-11](https://dealii.org/developer/doxygen/deal.II/step_11.html): Poisson equation with Neumann boundary conditions
 1. [step-12](https://dealii.org/developer/doxygen/deal.II/step_12.html): Discontinuous Galerkin methods for steady linear advection problem
 1. [step-23](https://dealii.org/developer/doxygen/deal.II/step_23.html): Second order wave equation solved as first order system
