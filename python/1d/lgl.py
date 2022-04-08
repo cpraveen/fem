@@ -83,6 +83,7 @@ def lglnodes(n,eps=1.0e-14):
 #------------------------------------------------------------------------------
 # See section on "Gauss-Lobattto rules" here
 #    https://en.wikipedia.org/wiki/Gaussian_quadrature
+# Returns n GLL points in [-1,1]
 def gauss_lobatto_points(n):
     if n == 2:
         x = [-1,1]
