@@ -1,8 +1,8 @@
-//Geometry.Normals = 100;
+// Generate mesh for annular region
 
-ri = 1.0;
-ro = 2.0;
-h  = 0.1;
+ri = 1.0; // inner radius
+ro = 2.0; // outer radius
+h  = 0.1; // cell size
 
 Point(1) = {0, 0, 0, h};
 
@@ -46,3 +46,5 @@ Plane Surface(4) = {4};
 Physical Surface(100) = {1,2,3,4};
 Physical Line("inner") = {1,2,3,4};
 Physical Line("outer") = {5,6,7,8};
+
+//Geometry.Normals = 100;

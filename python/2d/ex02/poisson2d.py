@@ -1,7 +1,8 @@
 '''
 Solve
-   -Laplace(u) = f  in  (0,1) x (0,1)
-            u  = g  on  boundary
+   -Laplace(u)  = 1,   {1 < r < 2}
+            u   = 0,   {r = 1}
+          du/dn = 0,   {r = 2}
 '''
 import meshio
 import numpy as np
@@ -32,7 +33,7 @@ allfaces = mesh.cells_dict["line"]
 ifaces = mesh.cell_sets_dict["inner"]["line"]
 faces = allfaces[ifaces]
 
-# Find unique boundary points
+# Find unique dirichlet boundary points
 bpts = np.unique(faces)
 
 npoints = len(x)
@@ -46,7 +47,7 @@ print('points, cells, faces, bpts = ', npoints, ncells, nfaces, nbpts)
 f = lambda x,y: 1.0
 
 # boundary value on inner boundary
-ubdry = lambda x,y: 1.0
+ubdry = lambda x,y: 0.0
 
 b = np.zeros(npoints)   # rhs vector
 A = lil_matrix((npoints,npoints)) # system matrix
