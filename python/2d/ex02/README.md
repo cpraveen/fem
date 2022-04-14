@@ -20,8 +20,16 @@ See mesh and boundary
 $ python mesh_tri.py
 ```
 
+<p align="center">
+<img src="output/mesh.svg">
+</p>
+
 Solve the problem
 
 ```
 $ python poisson2d.py
 ```
+
+<p align="center">
+<img src="output/sol.svg">
+</p>
