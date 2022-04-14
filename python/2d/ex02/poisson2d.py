@@ -97,4 +97,19 @@ plt.title('Solution')
 plt.axis('equal')
 plt.savefig('sol.svg')
 
+uexact = lambda r: -0.25 * r**2 + 2 * np.log(r) + 0.25
+
+j1 = np.where(np.abs(y) < 1.0e-10)
+j2 = np.where(x > 0)
+j  = np.intersect1d(j1,j2)
+plt.figure()
+plt.plot(x[j], u[j], 'o', label='FEM')
+x1 = np.sort(x[j])
+plt.plot(x1, uexact(x1), '-', label='Exact')
+plt.xlabel('r')
+plt.ylabel('u(r)')
+plt.legend()
+plt.title('Solution along 1 <= x <= 2, y = 0')
+plt.savefig('line.svg')
+
 plt.show()

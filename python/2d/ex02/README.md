@@ -32,4 +32,5 @@ $ python poisson2d.py
 
 <p align="center">
 <img src="output/sol.svg">
+<img src="output/line.svg">
 </p>
