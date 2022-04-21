@@ -47,7 +47,7 @@ Line Loop(4) = {12, 8, -9, -4};
 Plane Surface(4) = {4};
 
 Physical Surface(100) = {1,2,3,4};
-Physical Line("inner") = {1,2,3,4};
-Physical Line("outer") = {5,6,7,8};
+Physical Line(101) = {1,2,3,4};
+Physical Line(102) = {5,6,7,8};
 
 //Geometry.Normals = 100;

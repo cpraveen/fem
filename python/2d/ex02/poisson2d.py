@@ -97,11 +97,12 @@ plt.title('Solution')
 plt.axis('equal')
 plt.savefig('sol.svg')
 
+# Plot solution along radial line: {1 <= x <= 2} U {y = 0}
 uexact = lambda r: -0.25 * r**2 + 2 * np.log(r) + 0.25
 
-j1 = np.where(np.abs(y) < 1.0e-10)
-j2 = np.where(x > 0)
-j  = np.intersect1d(j1,j2)
+j1 = np.where(np.abs(y) < 1.0e-10) # y = 0
+j2 = np.where(x > 0)               # x > 0
+j  = np.intersect1d(j1,j2)         # {x > 0} and {y = 0}
 plt.figure()
 plt.plot(x[j], u[j], 'o', label='FEM')
 r = np.linspace(1.0, 2.0, 100)
@@ -111,5 +112,14 @@ plt.ylabel('u(r)')
 plt.legend()
 plt.title('Solution along 1 <= x <= 2, y = 0')
 plt.savefig('line.svg')
+
+# Plot all solution as function of radius
+plt.figure()
+plt.plot(np.sqrt(x**2 + y**2), u, '.', label='FEM')
+plt.plot(r, uexact(r), '-', label='Exact')
+plt.legend()
+plt.xlabel('r')
+plt.ylabel('u(r)')
+plt.title('All solution values')
 
 plt.show()
