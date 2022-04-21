@@ -29,9 +29,8 @@ def assemble_cell(x, y, f):
 mesh = meshio.read("annulus.msh")
 x, y = mesh.points[:,0], mesh.points[:,1]
 cells = mesh.cells_dict["triangle"]
-allfaces = mesh.cells_dict["line"]
 ifaces = mesh.cell_sets_dict["inner"]["line"]
-faces = allfaces[ifaces]
+faces = mesh.cells_dict["line"][ifaces]
 
 # Find unique dirichlet boundary points
 bpts = np.unique(faces)
@@ -110,7 +109,7 @@ plt.plot(r, uexact(r), '-', label='Exact')
 plt.xlabel('r')
 plt.ylabel('u(r)')
 plt.legend()
-plt.title('Solution along 1 <= x <= 2, y = 0')
+plt.title('Solution along {1 <= x <= 2, y = 0}')
 plt.savefig('line.svg')
 
 # Plot all solution as function of radius
