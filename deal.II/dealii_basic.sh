@@ -5,6 +5,8 @@ V=9.3.3
 DEAL_II_DIR=$HOME/deal.II
 
 # For parallel compiling, set this to number of cores in your cpu
+# If you have a multicore machine, set a larger value here.
+# The compilation will be faster.
 NPROC=2
 
 # Needed if you are behind proxy
@@ -18,7 +20,7 @@ mkdir -p $DEAL_II_DIR
 mkdir -p $DEAL_II_DIR/dealii-build
 cd $DEAL_II_DIR/dealii-build
 
-echo "==> Download deal.II cmake script"
+echo "==> Downloading deal.II cmake script"
 wget -c https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 
 echo "==> Downloading deal.II sources"
@@ -32,8 +34,6 @@ cd build
 echo "==> Run cmake"
 sh $DEAL_II_DIR/dealii-build/dealii.sh
 echo "==> Compiling"
-# If you have a multicore machine, set a larger value here.
-# The compilation will be faster.
 make -j $NPROC
 echo "==> Install"
 make install
@@ -47,6 +47,7 @@ tar zxvf dealii-${V}-offline_documentation.tar.gz > install.log
 #rm dealii-${V}-offline_documentation.tar.gz
 
 echo "==> Installed in $DEAL_II_DIR"
-echo "==> Add the following line to your $HOME/.bashrc file"
+echo "==> Add the following line to your $HOME/.bashrc file if you use bash"
+echo "==> or to the startup file for your shell"
 echo "    export DEAL_II_DIR=$DEAL_II_DIR"
 echo "==> You may delete directory: $DEAL_II_DIR/dealii-build"

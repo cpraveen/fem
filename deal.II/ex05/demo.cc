@@ -69,8 +69,8 @@ class RightHandSide : public Function<dim>
 public:
    RightHandSide () : Function<dim>() {}
    
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const;
 };
 
 template <>
@@ -170,7 +170,7 @@ void LaplaceProblem<dim>::assemble_system ()
    
    FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
    Vector<double>       cell_rhs (dofs_per_cell);
-   std::vector<unsigned int> local_dof_indices (dofs_per_cell);
+   std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
    
    typename DoFHandler<dim>::active_cell_iterator
       cell = dof_handler.begin_active(),
@@ -229,7 +229,7 @@ void LaplaceProblem<dim>::assemble_system ()
    }
    
    // Dirichlet boundary condition
-   std::map<unsigned int,double> boundary_values;
+   std::map<types::global_dof_index,double> boundary_values;
    // Left boundary
    VectorTools::interpolate_boundary_values (dof_handler,
                                              0,

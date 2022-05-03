@@ -87,7 +87,7 @@ CMakeCache.txt	CTestTestfile.cmake  include	   share
 Now compile
 
 ```shell
-make -j4      # number = number of CPU cores
+make -j4      # -jN,  N = number of CPU cores on your computer
 make install
 ```
 

@@ -40,7 +40,7 @@ public:
 };
 
 double RightHandSide::value (const Point<1> &p,
-                                  const unsigned int /*component*/) const
+                             const unsigned int /*component*/) const
 {
    return 16*M_PI*M_PI*sin(4*M_PI*p[0]);
 }
@@ -56,7 +56,7 @@ public:
 };
 
 double BoundaryValues::value (const Point<1> &p,
-                                   const unsigned int /*component*/) const
+                              const unsigned int /*component*/) const
 {
    return p[0] + sin(4*M_PI*p[0]);
 }

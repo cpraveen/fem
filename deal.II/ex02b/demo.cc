@@ -39,8 +39,8 @@ class RightHandSide : public Function<dim>
 public:
    RightHandSide () : Function<dim>() {}
 
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const;
 };
 
 // RHS in 2-D
@@ -67,8 +67,8 @@ class BoundaryValues : public Function<dim>
 public:
    BoundaryValues () : Function<dim>() {}
 
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const;
 };
 
 template <int dim>
@@ -152,7 +152,7 @@ void LaplaceProblem<dim>::assemble_system ()
    system_matrix = 0;
    system_rhs    = 0;
 
-   QGaussSimplex<dim>  quadrature_formula(2*fe.degree);
+   QGaussSimplex<dim>  quadrature_formula(fe.degree + 1);
    const RightHandSide<dim> right_hand_side;
    FEValues<dim> fe_values (mapping, fe, quadrature_formula,
                             update_values   | update_gradients |

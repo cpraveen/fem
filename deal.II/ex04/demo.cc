@@ -38,10 +38,10 @@ class ExactSolution : public Function<dim>
 public:
    ExactSolution () : Function<dim>() {}
    
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
-   virtual Tensor<1,dim> gradient (const Point<dim>   &p,
-                                   const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const;
+   Tensor<1,dim> gradient (const Point<dim>   &p,
+                           const unsigned int  component = 0) const;
 };
 
 template <>
@@ -67,8 +67,8 @@ class RightHandSide : public Function<dim>
 public:
    RightHandSide () : Function<dim>() {}
    
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const;
 };
 
 template <>
@@ -84,8 +84,8 @@ class BoundaryValues : public Function<dim>
 public:
    BoundaryValues () : Function<dim>() {}
    
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const;
 };
 
 template <int dim>
