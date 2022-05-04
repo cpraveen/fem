@@ -1,9 +1,9 @@
 # 2-D Poisson equation with discontinuous coefficient
 
-This is based on step-6 from the deal.II tutorials but modified to use grid made in gmsh. We use curved elements to better represent the discontinuity. The changes are in
+This is based on [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html) from the deal.II tutorials but modified to use grid made in gmsh. We use curved elements to better represent the discontinuity. The changes are in these functions.
 
-* run: Reads gmsh grid and attaches SphericalManifold
-* output_results: enable curved vtk output (use Paraview)
+* `run`: Reads gmsh grid and attaches SphericalManifold
+* `output_results`: enable curved vtk output (use Paraview)
 * Use MappingQGeneric(3) for assembly and error estimation
 
 ```shell
