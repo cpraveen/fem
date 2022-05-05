@@ -1,9 +1,11 @@
 /* 
- Solve 2d laplace equation
- -Laplace(u) = f(x) in (0,1)x(0,1)
- Exact solution is u = sin(2*pi*x) * sin(2*pi*y)
+ Solve 2d Poisson equation
+    -Laplace(u) = f(x) in (0,1)x(0,1)
+ Exact solution is 
+    u = sin(2*pi*x) * sin(2*pi*y)
  f is obtained from exact solution.
  Boundary condition is dirichlet and taken from exact solution.
+ Perform grid convergence test.
 */
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>

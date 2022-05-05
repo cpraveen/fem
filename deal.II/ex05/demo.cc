@@ -1,11 +1,13 @@
 /* 
- Solve 2d laplace equation
- -Laplace(u) = f(x) in (0,1)x(0,1)
- Exact solution is u = sin(2*pi*x) * sin(2*pi*y)
+ Solve 2d Poisson equation
+    -Laplace(u) = f(x) in (0,1)x(0,1)
+ Exact solution is 
+    u = sin(2*pi*x) * sin(2*pi*y)
  f is obtained from exact solution.
  Boundary condition:
    dirichlet: on x=0 and x=1
    neumann  : on y=0 and y=1
+The boundary data is obtained from exact solution.
 */
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -172,10 +174,7 @@ void LaplaceProblem<dim>::assemble_system ()
    Vector<double>       cell_rhs (dofs_per_cell);
    std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
    
-   typename DoFHandler<dim>::active_cell_iterator
-      cell = dof_handler.begin_active(),
-      endc = dof_handler.end();
-   for (; cell!=endc; ++cell)
+   for (const auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
       cell_matrix = 0;

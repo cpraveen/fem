@@ -1,8 +1,10 @@
 /* 
  Solve 2d laplace equation
- -Laplace(u) = 0  in Gamma shaped domain
- Exact solution is u = r^(2/3) * sin(2*theta/3)
+    -Laplace(u) = 0  in Gamma shaped domain
+ Exact solution is 
+    u = r^(2/3) * sin(2*theta/3)
  Boundary condition is dirichlet and taken from exact solution.
+ Perform uniform grid refinement.
 */
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_in.h>
@@ -158,10 +160,7 @@ void LaplaceProblem<dim>::assemble_system ()
    Vector<double>       cell_rhs (dofs_per_cell);
    std::vector<unsigned int> local_dof_indices (dofs_per_cell);
    
-   typename DoFHandler<dim>::active_cell_iterator
-      cell = dof_handler.begin_active(),
-      endc = dof_handler.end();
-   for (; cell!=endc; ++cell)
+   for (const auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
       cell_matrix = 0;

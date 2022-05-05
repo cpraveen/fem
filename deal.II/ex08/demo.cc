@@ -1,7 +1,8 @@
 /*
  Solve 2d laplace equation
- -Laplace(u) = 0  in Gamma shaped domain
- Exact solution is u = r^(2/3) * sin(2*theta/3)
+    -Laplace(u) = 0  in Gamma shaped domain
+ Exact solution is 
+    u = r^(2/3) * sin(2*theta/3)
  Boundary condition is dirichlet and taken from exact solution.
 */
 #include <deal.II/grid/tria.h>
@@ -29,7 +30,6 @@
 
 #include <fstream>
 #include <iostream>
-
 
 using namespace dealii;
 
@@ -69,7 +69,7 @@ template <int dim>
 class LaplaceProblem
 {
 public:
-   LaplaceProblem (int degree, unsigned int nrefine);
+   LaplaceProblem (int degree, unsigned int nrefine, std::string refine_type);
    void run (std::vector<unsigned int> &ncell,
              std::vector<unsigned int> &ndofs,
              std::vector<double>       &L2_error,
@@ -84,6 +84,7 @@ private:
    void refine_grid ();
 
    unsigned int              nrefine;
+   std::string               refine_type;
    Triangulation<dim>        triangulation;
    FE_Q<dim>                 fe;
    DoFHandler<dim>           dof_handler;
@@ -99,8 +100,11 @@ private:
 
 //------------------------------------------------------------------------------
 template <int dim>
-LaplaceProblem<dim>::LaplaceProblem (int degree, unsigned int nrefine) :
+LaplaceProblem<dim>::LaplaceProblem (int degree, unsigned int nrefine,
+                                     std::string refine_type) 
+:
 nrefine (nrefine),
+refine_type (refine_type),
 fe (degree),
 dof_handler (triangulation)
 {}
@@ -161,10 +165,7 @@ void LaplaceProblem<dim>::assemble_system ()
    Vector<double>       cell_rhs (dofs_per_cell);
    std::vector<unsigned int> local_dof_indices (dofs_per_cell);
 
-   typename DoFHandler<dim>::active_cell_iterator
-      cell = dof_handler.begin_active(),
-      endc = dof_handler.end();
-   for (; cell!=endc; ++cell)
+   for (const auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit (cell);
       cell_matrix = 0;
@@ -291,7 +292,14 @@ void LaplaceProblem<dim>::run (std::vector<unsigned int> &ncell,
                                                    p2);
       }
       else
-         refine_grid ();
+      {
+         if(refine_type == "uniform")
+            triangulation.refine_global(1);
+         else if(refine_type == "adaptive")
+            refine_grid ();
+         else
+            AssertThrow(false, ExcMessage("Unknown refine_type"));
+      }
 
       setup_system();
       assemble_system ();
@@ -309,8 +317,9 @@ int main ()
 {
    deallog.depth_console (0);
    int degree = 1;
-   unsigned int nrefine = 7;
-   LaplaceProblem<2> problem (degree, nrefine);
+   unsigned int nrefine = 5;
+   std::string refine_type = "uniform";
+   LaplaceProblem<2> problem (degree, nrefine, refine_type);
    std::vector<unsigned int> ncell(nrefine), ndofs(nrefine);
    std::vector<double> L2_error(nrefine), H1_error(nrefine);
    problem.run (ncell, ndofs, L2_error, H1_error);
@@ -336,6 +345,14 @@ int main ()
 
    convergence_table.set_tex_format("cells", "r");
    convergence_table.set_tex_format("dofs",  "r");
+
+   if(refine_type == "uniform")
+   {
+      convergence_table.evaluate_convergence_rates
+         ("L2", ConvergenceTable::reduction_rate_log2);
+      convergence_table.evaluate_convergence_rates
+         ("H1", ConvergenceTable::reduction_rate_log2);
+   }
 
    std::cout << std::endl;
    convergence_table.write_text(std::cout);

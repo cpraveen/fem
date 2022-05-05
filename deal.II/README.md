@@ -14,7 +14,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. ex05: 2-d Poisson on unit square, mixed bc
 1. ex06: 2-d Laplace equation in non-convex (Gamma-shaped) domain, convergence under uniform refinement
 1. ex07: 2-d Laplace equation in non-convex (Gamma-shaped) domain, convergence under adaptive refinement
-1. ex08: 2-d Laplace equation with discontinuous Dirichlet bc, adaptive refinement
+1. ex08: 2-d Laplace equation with discontinuous Dirichlet bc, uniform and adaptive refinement
 1. ex09: 2-d Poisson with discontinuous coefficient. Same as [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html) in deal.II tutorials, modified to use gmsh grid
 1. ex10: Poisson equation in annulus, curved boundaries
 1. ex21: 2-d unsteady heat equation

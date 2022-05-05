@@ -27,14 +27,16 @@ Open and see `error.pdf` for a table of error versus number of dofs. The solutio
 visit -o solution-*.vtk
 ```
 
+If we compare the error vs dofs from uniform and adaptive refinement, we see that adaptive refinement allows us to achieve same error level as uniform refinement but with substantially fewer dofs.
+
 ## Exercise: Solve on triangular grid
 
 Modify this example to solve on triangular grids. See ex02b for an example of how to do this.
 
 ## Additional examples
 
-See step-06 in the deal.II tutorials
+See `ex08`, `ex09`, and `step-6` in the deal.II tutorials
 
 http://www.dealii.org/developer/doxygen/deal.II/step_6.html
 
-for another example on adaptively refined grids.
+for other example on adaptively refined grids.

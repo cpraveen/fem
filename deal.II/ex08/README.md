@@ -26,7 +26,19 @@ make
 ./demo
 ```
 
+First run with uniform refinement
+
+```
+nrefine = 5;
+refine_type = "uniform";
+```
+
+then with adaptive refinement
+
+```
+nrefine = 7;
+refine_type = "adaptive";
+```
 ## Exercise: Solve on triangular grid
 
 Modify this example to solve on triangular grids. See ex02b for an example of how to do this.
-
