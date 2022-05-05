@@ -10,6 +10,7 @@
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/fe/fe_q.h>
+#include <deal.II/fe/mapping_q1.h>
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <deal.II/lac/sparse_matrix.h>
@@ -37,6 +38,8 @@ int main()
    GridGenerator::hyper_cube (triangulation);
    triangulation.refine_global (4);
 
+   const MappingQ1<dim> mapping;
+
    // Declare FE space
    const FE_Q<dim> fe(degree);
 
@@ -53,14 +56,16 @@ int main()
    // Compute matrix
    SparseMatrix<double> system_matrix;
    system_matrix.reinit (sparsity_pattern);
-   MatrixCreator::create_laplace_matrix (dof_handler, 
+   MatrixCreator::create_laplace_matrix (mapping,
+                                         dof_handler, 
                                          QGauss<dim>(2*degree),
                                          system_matrix);
 
    // Compute rhs vector
    Vector<double> system_rhs;
    system_rhs.reinit (dof_handler.n_dofs());
-   VectorTools::create_right_hand_side (dof_handler,
+   VectorTools::create_right_hand_side (mapping,
+                                        dof_handler,
                                         QGauss<dim>(2*degree),
                                         ConstantFunction<dim>(1.0),
                                         system_rhs);
@@ -71,7 +76,8 @@ int main()
 
    // Apply boundary conditions
    std::map<types::global_dof_index,double> boundary_values;
-   VectorTools::interpolate_boundary_values (dof_handler,
+   VectorTools::interpolate_boundary_values (mapping,
+                                             dof_handler,
                                              0,
                                              ZeroFunction<dim>(),
                                              boundary_values);
@@ -92,7 +98,7 @@ int main()
    DataOut<dim> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
-   data_out.build_patches (degree);
+   data_out.build_patches (mapping, degree);
 
    std::ofstream output ("solution.vtk");
    data_out.write_vtk (output);
