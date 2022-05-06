@@ -21,6 +21,11 @@ Run with different degree for solution and mapping.
 
 ```
 degree = 1; mapping_degree = 1;
+
 degree = 2; mapping_degree = 1;
 degree = 2; mapping_degree = 2;
+
+degree = 3; mapping_degree = 1;
+degree = 3; mapping_degree = 2;
+degree = 3; mapping_degree = 3;
 ```
