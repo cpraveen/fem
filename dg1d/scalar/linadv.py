@@ -2,8 +2,12 @@
 def flux(x,u):
     return u
 
+# Central flux
+def central_flux(x, ul, ur):
+    return 0.5 * (ul + ur)
+
 # Upwind flux
-def numflux(x, ul, ur):
+def upwind_flux(x, ul, ur):
     return ul
 
 def max_speed(u):

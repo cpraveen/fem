@@ -32,15 +32,27 @@ parser.add_argument('-limit', choices=('no','yes'), help='Apply limiter',
 parser.add_argument('-tvbM', type=float, help='TVB M parameter', default=0.0)
 parser.add_argument('-compute_error', choices=('no','yes'), 
                     help='Compute error norm', default='no')
+parser.add_argument('-num_flux', choices=('central','upwind','roe','godunov'),
+                    help='Numerical flux', default='upwind')
 args = parser.parse_args()
 
 # Select PDE
 if args.pde == 'linear':
     from linadv import *
+    if args.num_flux == 'central':
+        numflux = central_flux
+    else:
+        numflux = upwind_flux
 elif args.pde == 'varadv':
     from varadv import *
 elif args.pde == 'burger':
     from burger import *
+    if args.num_flux == 'central':
+        numflux = central_flux
+    elif args.num_flux == 'roe' or args.num_flux == 'upwind':
+        numflux = roe_flux
+    else:
+        numflux = godunov_flux
 else:
     print('PDE not implemented')
     exit()
@@ -100,7 +112,7 @@ def init_plot(ax,u0):
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
-        f  = Vu.dot(u0[i,:])
+        f  = Vu @ u0[i,:]
         line, = ax.plot(x,f,linewidth=2)
         lines.append(line)
         umin = np.min([umin, f.min()])
@@ -117,7 +129,7 @@ def update_plot(lines,t,u1):
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xu       # transform gauss points to cell
-        f  = Vu.dot(u1[i,:])
+        f  = Vu @ u1[i,:]
         lines[i].set_ydata(f)
         umin = np.min([umin, f.min()])
         umax = np.max([umax, f.max()])
@@ -159,9 +171,9 @@ while t < Tf:
         for i in range(nc):
             xc = xmin + i*dx + 0.5*dx # cell center
             x  = xc + 0.5*dx*xg       # transform gauss points to cell
-            u = Vf.dot(u1[i,:])       # solution at gauss points
+            u = Vf @ u1[i,:]          # solution at gauss points
             f = flux(x,u)             # flux at gauss points
-            res[i,:] = -Vg.dot(f)     # flux integral over cell
+            res[i,:] = -Vg @ f        # flux integral over cell
         # Now we compute the inter-cell fluxes
         # First face: left cell = last cell, right cell = 0'th cell
         ul = u1[-1,:].dot(bp) # get ul from last cell
@@ -214,7 +226,7 @@ if args.compute_error == 'yes':
     error_norm = 0.0
     for i in range(nc):
         # DG solution at gauss points
-        un = Vf.dot(u1[i,:])
+        un = Vf @ u1[i,:]
         # Exact solution at gauss points
         xc = xmin + i*dx + 0.5*dx # cell center
         x  = xc + 0.5*dx*xg       # transform gauss points to cell
