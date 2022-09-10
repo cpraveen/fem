@@ -10,7 +10,7 @@ make
 
 ## Run the problem in 3d
 
-To run in 3-d, change the problem in main function as
+To run in 3-d, change the problem in `main` function as
 
 ```
    LaplaceProblem<3> problem (degree);
@@ -18,7 +18,7 @@ To run in 3-d, change the problem in main function as
 
 save, recompile and run the code.
 
-## Zero Neumann bc
+## Exercise: Zero Neumann bc
 
 Let us solve the problem with same right hand side, but apply Dirichlet bc only on left and right side of the domain. Modify the grid generation as
 

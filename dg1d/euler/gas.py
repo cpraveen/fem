@@ -82,7 +82,7 @@ def numflux(ul,ur):
     laml = max_eig(ul)
     lamr = max_eig(ur)
     lam  = max(laml,lamr)
-    f = np.zeros(3)
+    f = np.empty(3)
     f[0] = 0.5*(fl0 + fr0) - 0.5*lam*(ur[0] - ul[0])
     f[1] = 0.5*(fl1 + fr1) - 0.5*lam*(ur[1] - ul[1])
     f[2] = 0.5*(fl2 + fr2) - 0.5*lam*(ur[2] - ul[2])

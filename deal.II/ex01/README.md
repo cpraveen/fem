@@ -3,24 +3,34 @@
 Note: A dollar sign indicates the shell prompt you get in a terminal.
 
 ## How to run
+
 Generate Makefile
+
 ```
 $ cmake .
 ```
+
 Compile the code
+
 ```
 $ make
 ```
+
 Run the executable
+
 ```
 $ ./demo
 ```
+
 The solution is saved into a file. You can plot it in gnuplot
+
 ```
 $ gnuplot
 gnuplot> load 'plot.gnu'
 ```
+
 The script `make_eps.gnu` generates solution in eps format, run it as
+
 ```
 $ gnuplot make_eps.gnu
 $ gv sol.eps
@@ -29,29 +39,38 @@ $ gv sol.eps
 ## Exercise 1
 
 Try to increase degree in the main function
+
 ```
 int degree = 10;
 unsigned int nrefine = 1;
 ```
+
 In this case, there are just two elements. To get better solution visualization, use more patches, e.g.,
+
 ```
 data_out.build_patches (2*fe.degree);
 ```
 
 ## Exercise 2
+
 Try a direct solver. Remove the contents of `solve` function and put this
+
 ```
 SparseDirectUMFPACK solver;
 solver.initialize (system_matrix);
 solver.vmult (solution, system_rhs);
 ```
+
 You must include following file
+
 ```
 #include <deal.II/lac/sparse_direct.h>
 ```
+
 in order to use the sparse solver.
 
 ## Exercise 3
+
 Write a function to the compute error norm in solution and its derivative. The following function does this for the solution error. We use the `BoundaryValues` class to compute the exact solution.
 
 ```c++
@@ -92,6 +111,7 @@ void LaplaceProblem::compute_error () const
 Run with `nrefine = 5` and then with `nrefine = 6`, and use the two error norm values to estimate convergence rate.
 
 ## Exercise 4
+
 Solve the more general problem
 
 ```
