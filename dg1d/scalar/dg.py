@@ -137,7 +137,7 @@ def update_plot(lines,t,u1):
         umax = np.max([umax, f.max()])
     plt.axis([xmin,xmax,umin-0.1,umax+0.1])
     plt.title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(round(cfl,3))+
-              ', t = '+str(round(t,3)))
+              ', t = '+str("%.3f" % round(t,3)))
     plt.draw(); plt.pause(0.1)
 
 # Allocate solution variables
@@ -213,6 +213,11 @@ while t < Tf:
     t += dt; it += 1
     if it%args.plot_freq == 0 or np.abs(Tf-t) < 1.0e-13:
         update_plot(lines,t,u1)
+
+# Save final cell average solution to file
+xc = xmin + np.arange(nc)*dx + 0.5*dx # cell centers
+np.savetxt('avg.txt', np.column_stack([xc,u1[:,0]]))
+print("Saved final cell averages to avg.txt")
 
 if args.compute_error == 'yes':
     # Compute error norm using ng-point quadrature
