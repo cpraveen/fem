@@ -6,6 +6,33 @@ This is a Python code which solves linear advection and Burger's equation with p
 python dg.py -h
 ```
 
+## Files
+
+DG method
+
+* `basis.py`
+* `dg.py`
+* `limiter.py`
+
+PDEs
+
+* `linavd.py`
+* `varavd.py`
+* `burger.py`
+
+Initial conditions
+
+* `gauss.py`
+* `hat.py`
+* `mult.py`
+* `sin2pi.py`
+* `sin2pi.py`
+
+Fourier analysis
+
+* `fourier.py`
+* `dda.py`
+
 ## Linear advection equation
 
 Try a smooth initial condition
