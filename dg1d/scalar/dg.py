@@ -111,9 +111,9 @@ for i in range(nd):
 def init_plot(ax,u0):
     lines = []
     umin, umax = 1.0e20, -1.0e20
-    for i in range(nc):
+    for i in range(nc): # Loop over cells
         xc = xmin + i*dx + 0.5*dx # cell center
-        x  = xc + 0.5*dx*xu       # transform gauss points to cell
+        x  = xc + 0.5*dx*xu       # transform uniform points to cell
         f  = Vu @ u0[i,:]
         line, = ax.plot(x,f,linewidth=2)
         lines.append(line)
@@ -130,7 +130,6 @@ def update_plot(lines,t,u1):
     umin, umax = 1.0e20, -1.0e20
     for i in range(nc):
         xc = xmin + i*dx + 0.5*dx # cell center
-        x  = xc + 0.5*dx*xu       # transform gauss points to cell
         f  = Vu @ u1[i,:]
         lines[i].set_ydata(f)
         umin = np.min([umin, f.min()])
