@@ -74,11 +74,13 @@ else:
 
 k  = args.degree      # polynomial degree
 cfl= args.cfl/(2*k+1) # cfl number
+tvbM = args.tvbM      # parameter in TVB limiter
 nc = args.ncell       # number of cells
-
-nd = k + 1 # dofs per cell
-dx = (xmax - xmin)/nc
-Mdx2 = args.tvbM * dx**2
+nd = k + 1            # dofs per cell
+Tf = args.Tf          # simulation time
+limit = args.limit
+plot_freq = args.plot_freq
+compute_error = args.compute_error
 
 # k+1 point gauss rule, integrates exactly upto degree 2*k+1
 Nq     = k+1
@@ -106,6 +108,9 @@ bm, bp = np.zeros(nd), np.zeros(nd)
 for i in range(nd):
     bm[i] = shape_value(i,-1.0)
     bp[i] = shape_value(i,+1.0)
+
+dx = (xmax - xmin)/nc
+Mdx2 = tvbM * dx**2
 
 # Initialize plot
 def init_plot(ax,u0):
@@ -160,7 +165,6 @@ wait = input("Press enter to continue ")
 
 it, t = 0, 0.0
 dt  = cfl*dx/max_speed(u1)
-Tf  = args.Tf
 lam = dt/dx
 while t < Tf:
     if t+dt > Tf:
@@ -193,7 +197,7 @@ while t < Tf:
         # Peform rk stage
         u1[:,:] = ark[rk]*u0 + brk[rk]*(u1 - lam*res)
         # Apply TVB limiter
-        if args.limit == 'yes':
+        if limit == 'yes':
             for i in range(nc):
                 if i==0:
                     ul = u1[-1,0]
@@ -210,7 +214,7 @@ while t < Tf:
                     u1[i,1 ] = du   # Copy limited gradient
                     u1[i,2:] = 0.0  # Kill all higher modes
     t += dt; it += 1
-    if it%args.plot_freq == 0 or np.abs(Tf-t) < 1.0e-13:
+    if it%plot_freq == 0 or np.abs(Tf-t) < 1.0e-13:
         update_plot(lines,t,u1)
 
 # Save final cell average solution to file
@@ -218,7 +222,7 @@ xc = xmin + np.arange(nc)*dx + 0.5*dx # cell centers
 np.savetxt('avg.txt', np.column_stack([xc,u1[:,0]]))
 print("Saved final cell averages to avg.txt")
 
-if args.compute_error == 'yes':
+if compute_error == 'yes':
     # Compute error norm using ng-point quadrature
     # We assume final solution = initial solution
     ng = k + 3
