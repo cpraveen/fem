@@ -164,9 +164,9 @@ lines = init_plot(ax,u1)
 wait = input("Press enter to continue ")
 
 it, t = 0, 0.0
-dt  = cfl*dx/max_speed(u1)
-lam = dt/dx
 while t < Tf:
+    dt  = cfl*dx/max_speed(u1)
+    lam = dt/dx
     if t+dt > Tf:
         dt = Tf - t
         lam = dt/dx
