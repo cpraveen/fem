@@ -1,4 +1,4 @@
-from numpy import sqrt
+from numpy import sqrt,empty
 
 # Legendre polynomials on [-1,+1]
 def Legendre(n, x):
@@ -27,3 +27,13 @@ def shape_value(n, x):
 # Returns derivative of n'th basis function evaluated at x in [-1,+1]
 def shape_grad(n, x):
     return dLegendre(n,x)*sqrt(2*n+1)
+
+# Vandermonde matrix for degree = k at points defined in x
+# V_ij = phi_j( x_i )
+def Vandermonde(k, x):
+    n = len(x)
+    V = empty((n, k+1))
+    for i in range(n):
+        for j in range(k+1):
+            V[i, j] = shape_value(j, x[i])
+    return V

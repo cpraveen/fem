@@ -11,6 +11,7 @@ python dg.py -h
 DG method
 
 * `basis.py`
+* `dgsolver.py`
 * `dg.py`
 * `limiter.py`
 
