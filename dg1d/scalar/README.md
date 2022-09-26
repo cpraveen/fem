@@ -48,6 +48,12 @@ After any multiple of time period, the solution is equal to initial condition an
 python dg.py -pde linear -ic sin2pi -degree 1 -ncell 50 -compute_error yes
 ```
 
+Perform grid refinement
+
+```
+python dg.py -pde linear -ic sin2pi -degree 1 -ncell 20 -nrefine 5
+```
+
 Now try with a discontinuous initial condition
 
 ```

@@ -161,8 +161,8 @@ class DG:
             umin = np.min([umin, f.min()])
             umax = np.max([umax, f.max()])
         plt.axis([xmin, xmax, umin-0.1, umax+0.1])
-        plt.title(str(nc)+' cells, Deg = '+str(k)+', CFL = '+str(round(cfl, 3)) +
-                ', t = '+str("%.3f" % round(t, 3)))
+        plt.title(str(nc) + ' cells, Deg = ' + str(k) + ', CFL = ' +
+                  str(round(cfl, 3)) + ', t = ' + str("%.3f" % round(t, 3)))
         plt.draw()
         plt.pause(0.1)
 
@@ -267,7 +267,7 @@ class DG:
                 dt = Tf - t
                 lam = dt / dx
             u0[:, :] = u1
-            for rk in range(3):
+            for rk in range(3): # Loop over RK stages
                 self.compute_residual()
                 u1[:, :] = ark[rk]*u0 + brk[rk]*(u1 - lam*res)
                 if limit == 'yes':

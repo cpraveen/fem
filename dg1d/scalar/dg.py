@@ -30,7 +30,11 @@ args = parser.parse_args()
 
 if args.nrefine == 0: # Run on a single grid, plot solution
     dg = DG(args)
-    dg.run()
+    if args.compute_error == 'yes':
+        nc, dx, error = dg.run()
+        print('ncell, dx, error = %5d %12.4e %12.4e' % (nc, dx, error))
+    else:
+        dg.run()
     plt.show()
 else:                 # Perform grid refinement, disable plotting
     args.plot_freq = 0
