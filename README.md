@@ -3,7 +3,7 @@ These codes are prepared as material for teaching finite element method.
 
 * deal.II: Examples using deal.II library in C++
 * fenics: Examples using Fenics in Python
-* dg1d: A simple 1-D DG code in Python for scalar conservation law
+* dg1d: A simple 1-D DG code in Python/C for scalar/euler equations
 
 ## How to get the code ?
 
