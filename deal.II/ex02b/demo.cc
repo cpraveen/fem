@@ -40,7 +40,7 @@ public:
    RightHandSide () : Function<dim>() {}
 
    double value (const Point<dim>   &p,
-                 const unsigned int  component = 0) const;
+                 const unsigned int  component = 0) const override;
 };
 
 // RHS in 2-D
@@ -68,7 +68,7 @@ public:
    BoundaryValues () : Function<dim>() {}
 
    double value (const Point<dim>   &p,
-                 const unsigned int  component = 0) const;
+                 const unsigned int  component = 0) const override;
 };
 
 template <int dim>

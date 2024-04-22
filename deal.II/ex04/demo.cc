@@ -41,9 +41,9 @@ public:
    ExactSolution () : Function<dim>() {}
    
    double value (const Point<dim>   &p,
-                 const unsigned int  component = 0) const;
+                 const unsigned int  component = 0) const override;
    Tensor<1,dim> gradient (const Point<dim>   &p,
-                           const unsigned int  component = 0) const;
+                           const unsigned int  component = 0) const override;
 };
 
 template <>
@@ -70,7 +70,7 @@ public:
    RightHandSide () : Function<dim>() {}
    
    double value (const Point<dim>   &p,
-                 const unsigned int  component = 0) const;
+                 const unsigned int  component = 0) const override;
 };
 
 template <>
@@ -87,7 +87,7 @@ public:
    BoundaryValues () : Function<dim>() {}
    
    double value (const Point<dim>   &p,
-                 const unsigned int  component = 0) const;
+                 const unsigned int  component = 0) const override;
 };
 
 template <int dim>

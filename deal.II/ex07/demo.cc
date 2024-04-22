@@ -42,10 +42,10 @@ class ExactSolution : public Function<dim>
 public:
    ExactSolution () : Function<dim>() {}
    
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
-   virtual Tensor<1,dim> gradient (const Point<dim>   &p,
-                                   const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const override;
+   Tensor<1,dim> gradient (const Point<dim>   &p,
+                           const unsigned int  component = 0) const override;
 };
 
 template <>

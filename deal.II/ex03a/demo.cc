@@ -67,7 +67,7 @@ int main()
    VectorTools::create_right_hand_side (mapping,
                                         dof_handler,
                                         QGauss<dim>(2*degree),
-                                        ConstantFunction<dim>(1.0),
+                                        Functions::ConstantFunction<dim>(1.0),
                                         system_rhs);
 
    // Solution vector
@@ -79,7 +79,7 @@ int main()
    VectorTools::interpolate_boundary_values (mapping,
                                              dof_handler,
                                              0,
-                                             ZeroFunction<dim>(),
+                                             Functions::ZeroFunction<dim>(),
                                              boundary_values);
    MatrixTools::apply_boundary_values (boundary_values,
                                        system_matrix,

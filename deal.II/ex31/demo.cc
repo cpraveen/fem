@@ -48,8 +48,8 @@ class RightHandSide : public Function<dim>
 public:
    RightHandSide () : Function<dim>() {}
 
-   virtual double value (const Point<dim>&   p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<dim>&   p,
+                 const unsigned int  component = 0) const override;
 };
 
 // RHS in 2-D
@@ -68,8 +68,8 @@ class BoundaryValues : public Function<dim>
 public:
    BoundaryValues () : Function<dim>() {}
 
-   virtual double value (const Point<dim>   &p,
-                         const unsigned int  component = 0) const;
+   double value (const Point<dim>   &p,
+                 const unsigned int  component = 0) const override;
 };
 
 template <int dim>

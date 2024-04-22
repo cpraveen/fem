@@ -36,7 +36,7 @@ public:
    RightHandSide () : Function<1>() {}
    
    double value (const Point<1>   &p,
-                 const unsigned int  component = 0) const;
+                 const unsigned int  component = 0) const override;
 };
 
 double RightHandSide::value (const Point<1> &p,
@@ -52,7 +52,7 @@ public:
    BoundaryValues () : Function<1>() {}
    
    double value (const Point<1>   &p,
-                 const unsigned int  component = 0) const;
+                 const unsigned int  component = 0) const override;
 };
 
 double BoundaryValues::value (const Point<1> &p,
