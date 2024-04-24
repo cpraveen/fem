@@ -41,6 +41,10 @@ and use `rhs_function` in `VectorTools::create_right_hand_side`. Define the exac
 
 and use `exact_solution` in `VectorTools::interpolate_boundary_values` to apply Dirichlet boundary conditions.
 
+Also, see the documentation
+
+https://www.dealii.org/current/doxygen/deal.II/classFunctionParser.html
+
 ## Exercise: Laplace with coefficient function
 
 See the different versions of `MatrixCreator::create_laplace_matrix` function.
