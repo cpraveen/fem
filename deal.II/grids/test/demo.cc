@@ -13,11 +13,12 @@ int main()
    Triangulation<2> triangulation;
    const double rin = 1.0;
    const double rout = 2.0;
+   const int ncells = 10;
    GridGenerator::hyper_shell(triangulation,
                               Point<2>(0.0, 0.0),
                               rin,
                               rout,
-                              10,
+                              ncells,
                               true);
    GridOut grid_out;
 
