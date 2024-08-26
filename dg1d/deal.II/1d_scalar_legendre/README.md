@@ -7,12 +7,17 @@ cmake .
 make release
 ```
 
-Compile and run
+Compile
 
 ```shell
 make
+```
+
+Set parameters in file `input.prm` and run
+
+```shell
 rm -f *.gpl
-./dg
+./dg input.prm
 gnuplot anim.gnu
 ```
 

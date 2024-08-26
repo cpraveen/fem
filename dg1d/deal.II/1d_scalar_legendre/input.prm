@@ -1,0 +1,10 @@
+set degree        = 1
+set ncells        = 50
+set nrefine       = 1
+set output step   = 10
+set test case     = sine    # sine,hat,trihat,exp
+set cfl           = 0.0
+set final time    = 10.0
+set limiter       = none    # none,tvd
+set numflux       = upwind  # central,upwind
+set tvb parameter = 100.0

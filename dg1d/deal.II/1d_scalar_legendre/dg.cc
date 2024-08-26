@@ -15,6 +15,7 @@
 #include <deal.II/base/function.h>
 #include <deal.II/base/convergence_table.h>
 #include <deal.II/base/logstream.h>
+#include <deal.II/base/parameter_handler.h>
 
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/data_out.h>
@@ -44,9 +45,9 @@ const double b_rk[3] = {1.0, 1.0 / 4.0, 2.0 / 3.0};
 const double speed = 1.0;
 
 // Numerical flux functions
-enum FluxType {central, upwind};
-enum TestCase {sine, hat, trihat, expo};
-enum LimiterType {none, tvd};
+enum class FluxType {central, upwind};
+enum class TestCase {sine, hat, trihat, exp};
+enum class LimiterType {none, tvd};
 
 //------------------------------------------------------------------------------
 // Scheme parameters
@@ -58,7 +59,7 @@ struct Parameter
    double final_time;
    TestCase test_case;
    unsigned int n_cells;
-   unsigned int nstep;
+   unsigned int n_refine;
    unsigned int output_step;
    LimiterType limiter_type;
    FluxType flux_type;
@@ -121,18 +122,18 @@ InitialCondition<dim>::value(const Point<dim>& p,
    double value = 0;
 
    // test case: sine
-   if(test_case == sine)
+   if(test_case == TestCase::sine)
    {
       value = -std::sin(M_PI* x);
    }
-   else if(test_case == hat)
+   else if(test_case == TestCase::hat)
    {
       if(std::fabs(x) < 0.25)
          value = 1.0;
       else
          value = 0.0;
    }
-   else if(test_case == trihat)
+   else if(test_case == TestCase::trihat)
    {
       while(x >  1.0) x = x - 2.0;
       while(x < -1.0) x = x + 2.0;
@@ -143,7 +144,7 @@ InitialCondition<dim>::value(const Point<dim>& p,
       else
          value = 1.0 - 2.0 * x;
    }
-   else if(test_case == expo)
+   else if(test_case == TestCase::exp)
    {
       value = exp(-10.0 * x* x);
    }
@@ -199,15 +200,15 @@ Solution<dim>::gradient(const Point<dim>&   p,
    double x = p[0] - final_time;
 
    // test case: sine
-   if(test_case == sine)
+   if(test_case == TestCase::sine)
    {
       values[0] = -M_PI * std::cos(M_PI* x);
    }
-   else if(test_case == hat)
+   else if(test_case == TestCase::hat)
    {
       values[0] = 0;
    }
-   else if(test_case == trihat)
+   else if(test_case == TestCase::trihat)
    {
       while(x >  1.0) x = x - 2.0;
       while(x < -1.0) x = x + 2.0;
@@ -218,7 +219,7 @@ Solution<dim>::gradient(const Point<dim>&   p,
       else
          values[0] = -2.0;
    }
-   else if(test_case == expo)
+   else if(test_case == TestCase::exp)
    {
       values[0] = -20.0 * x * exp(-10.0 * x* x);
    }
@@ -272,11 +273,11 @@ numerical_flux(const FluxType& flux_type,
 {
    switch(flux_type)
    {
-      case central:
+      case FluxType::central:
          CentralFlux(left_state, right_state, flux);
          break;
 
-      case upwind:
+      case FluxType::upwind:
          UpwindFlux(left_state, right_state, flux);
          break;
 
@@ -321,7 +322,7 @@ private:
    unsigned int         n_rk_stages;
    LimiterType          limiter_type;
    FluxType             flux_type;
-   unsigned int         nstep;
+   unsigned int         n_refine;
    unsigned int         output_step;
    Triangulation<dim>   triangulation;
    FE_DGP<dim>          fe;
@@ -349,7 +350,7 @@ ScalarProblem<dim>::ScalarProblem(Parameter param,
    cfl(param.cfl),
    limiter_type(param.limiter_type),
    flux_type(param.flux_type),
-   nstep(param.nstep),
+   n_refine(param.n_refine),
    output_step(param.output_step),
    fe(param.degree),
    dof_handler(triangulation)
@@ -360,22 +361,22 @@ ScalarProblem<dim>::ScalarProblem(Parameter param,
 
    n_rk_stages = 3;
 
-   if(test_case == sine)
+   if(test_case == TestCase::sine)
    {
       xmin    = -1.0;
       xmax    = +1.0;
    }
-   else if(test_case == hat)
+   else if(test_case == TestCase::hat)
    {
       xmin    = -1.0;
       xmax    = +1.0;
    }
-   else if(test_case == trihat)
+   else if(test_case == TestCase::trihat)
    {
       xmin    = -1.0;
       xmax    = +1.0;
    }
-   else if(test_case == expo)
+   else if(test_case == TestCase::exp)
    {
       xmin    = -20.0;
       xmax    = +20.0;
@@ -399,6 +400,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
 {
    if(step == 0)
    {
+      std::cout << "Making initial grid ...\n";
       GridGenerator::subdivided_hyper_cube(triangulation, n_cells, xmin, xmax);
       typedef typename Triangulation<dim>::cell_iterator Iter;
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
@@ -748,7 +750,7 @@ template <int dim>
 void
 ScalarProblem<dim>::apply_limiter()
 {
-   if(fe.degree == 0 || limiter_type == none) return;
+   if(fe.degree == 0 || limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
 }
 
@@ -922,7 +924,7 @@ template <int dim>
 void
 ScalarProblem<dim>::run()
 {
-   for(unsigned int step = 0; step < nstep; ++step)
+   for(unsigned int step = 0; step < n_refine; ++step)
    {
       make_grid_and_dofs(step);
       solve();
@@ -955,29 +957,101 @@ ScalarProblem<dim>::run()
 }
 
 //------------------------------------------------------------------------------
+// Declare input parameters
+//------------------------------------------------------------------------------
+void declare_parameters(ParameterHandler &prm)
+{
+   prm.declare_entry("degree", "0", Patterns::Integer(0, 6),
+                     "Polynomial degree");
+   prm.declare_entry("ncells", "100", Patterns::Integer(10),
+                     "Number of elements");
+   prm.declare_entry("nrefine", "1", Patterns::Integer(1,10),
+                     "Number of grid refinements");
+   prm.declare_entry("output step", "10", Patterns::Integer(0),
+                     "Frequency to save solution");
+   prm.declare_entry("test case", "sine",
+                     Patterns::Selection("sine|hat|trihat|exp"),
+                     "Test case");
+   prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0), 
+                     "CFL number");
+   prm.declare_entry("final time", "0.0", Patterns::Double(0), 
+                     "Final time");
+   prm.declare_entry("limiter", "none",
+                     Patterns::Selection("none|tvd"),
+                     "Limiter");
+   prm.declare_entry("numflux", "upwind",
+                     Patterns::Selection("upwind|central"),
+                     "Numerical flux");
+   prm.declare_entry("tvb parameter", "0.0", Patterns::Double(0), 
+                     "TVB parameter");
+}
+
+//------------------------------------------------------------------------------
+void parse_parameters(const ParameterHandler &ph, Parameter &param)
+{
+   param.degree = ph.get_integer("degree");
+   param.n_cells = ph.get_integer("ncells");
+   param.n_refine = ph.get_integer("nrefine");
+   param.output_step = ph.get_integer("output step");
+
+   {
+      std::string value = ph.get("test case");
+      if(value == "sine") param.test_case = TestCase::sine;
+      else if(value == "hat") param.test_case = TestCase::hat;
+      else if(value == "trihat") param.test_case = TestCase::trihat;
+      else if(value == "exp") param.test_case = TestCase::exp;
+      else AssertThrow(false, ExcMessage("Unknown test case"));
+   }
+
+   param.cfl = ph.get_double("cfl");
+   if(param.cfl == 0.0) param.cfl = 0.98 / (2*param.degree + 1);
+   if(param.cfl < 0.0) param.cfl = param.cfl / (2*param.degree + 1);
+
+   param.final_time = ph.get_double("final time");
+   Mlim = ph.get_double("tvb parameter");
+
+   {
+      std::string value = ph.get("numflux");
+      if(value == "upwind") param.flux_type = FluxType::upwind;
+      else if(value == "central") param.flux_type = FluxType::central;
+      else AssertThrow(false, ExcMessage("Unknown numerical flux"));
+   }
+
+   {
+      std::string value = ph.get("limiter");
+      if(value == "none") param.limiter_type = LimiterType::none;
+      else if(value == "tvd") param.limiter_type = LimiterType::tvd;
+      else AssertThrow(false, ExcMessage("Unknown limiter"));
+   }
+}
+
+//------------------------------------------------------------------------------
 // Main function
 //------------------------------------------------------------------------------
 int
-main()
+main(int argc, char **argv)
 {
    deallog.depth_console(0);
    {
-      Parameter param;
-      param.degree       = 1;
-      param.n_cells      = 50;
-      param.nstep        = 1;      // number of refinements
-      param.output_step  = 10;
-      param.test_case    = sine;   // sine, hat, trihat
-      param.cfl          = 0.98 / (2.0 * param.degree + 1.0);
-      param.final_time   = 10;
-      param.limiter_type = none;   // none, tvd
-      param.flux_type    = upwind; // central, upwind
-
       bool debug = false;
-      Mlim = 100.0;
 
-      ScalarProblem<1> scalar_problem(param, debug);
-      scalar_problem.run();
+      ParameterHandler ph;
+      declare_parameters(ph);
+      if (argc < 2)
+      {
+         std::cout << "Specify input parameter file\n";
+         std::cout << "It should contain following parameters.\n\n";
+         ph.print_parameters(std::cout, ParameterHandler::Text);
+         return 0;
+      }
+      ph.parse_input(argv[1]);
+      ph.print_parameters(std::cout, ParameterHandler::Text);
+
+      Parameter param;
+      parse_parameters(ph, param);
+
+      ScalarProblem<1> problem(param, debug);
+      problem.run();
    }
 
    return 0;
