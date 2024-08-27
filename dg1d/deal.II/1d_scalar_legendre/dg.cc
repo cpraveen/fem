@@ -30,6 +30,8 @@
 #include "pde.h"
 #include "test_data.h"
 
+#define sign(a)   (((a) > 0.0) ? 1 : -1)
+
 using namespace dealii;
 
 // Coefficients for 3-stage SSP RK scheme of Shu-Osher
@@ -712,8 +714,8 @@ declare_parameters(ParameterHandler& prm)
    prm.declare_entry("limiter", "none",
                      Patterns::Selection("none|tvd"),
                      "Limiter");
-   prm.declare_entry("numflux", "upwind",
-                     Patterns::Selection("upwind|central"),
+   prm.declare_entry("numflux", "central",
+                     Patterns::Anything(),
                      "Numerical flux");
    prm.declare_entry("tvb parameter", "0.0", Patterns::Double(0),
                      "TVB parameter");
@@ -746,15 +748,13 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("numflux");
-      if(value == "upwind") param.flux_type = FluxType::upwind;
-      else if(value == "central") param.flux_type = FluxType::central;
-      else AssertThrow(false, ExcMessage("Unknown numerical flux"));
+      param.flux_type = FluxTypeList[value];
    }
 
    {
       std::string value = ph.get("limiter");
-      if(value == "none") param.limiter_type = LimiterType::none;
-      else if(value == "tvd") param.limiter_type = LimiterType::tvd;
+      if (value == "none") param.limiter_type = LimiterType::none;
+      else if (value == "tvd") param.limiter_type = LimiterType::tvd;
       else AssertThrow(false, ExcMessage("Unknown limiter"));
    }
 }

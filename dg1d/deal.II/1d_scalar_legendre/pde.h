@@ -1,5 +1,3 @@
-#define sign(a)   (((a) > 0.0) ? 1 : -1)
-
 using namespace dealii;
 
 // Advection speed
@@ -7,6 +5,9 @@ const double speed = 1.0;
 
 // Numerical flux functions
 enum class FluxType {central, upwind};
+
+std::map<std::string, FluxType> FluxTypeList{{"central", FluxType::central}, 
+                                             {"upwind",  FluxType::upwind}};
 
 //------------------------------------------------------------------------------
 // Flux of the PDE model: f(u)
