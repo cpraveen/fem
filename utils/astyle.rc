@@ -1,0 +1,48 @@
+## ---------------------------------------------------------------------
+##
+## Copyright (C) 2012 - 2013 by the deal.II authors
+##
+## This file is part of the deal.II library.
+##
+## The deal.II library is free software; you can use it, redistribute
+## it, and/or modify it under the terms of the GNU Lesser General
+## Public License as published by the Free Software Foundation; either
+## version 2.1 of the License, or (at your option) any later version.
+## The full text of the license can be found in the file LICENSE at
+## the top level of the deal.II distribution.
+##
+## ---------------------------------------------------------------------
+
+# astyle 2.02 indentation style for deal.II
+
+--style=bsd
+
+--convert-tabs
+--indent-preproc-block
+--indent-preproc-cond
+--indent-preproc-define
+--indent=spaces=3
+--indent-namespaces
+--min-conditional-indent=0
+--indent-preproc-cond
+--indent-switches
+
+# space b/w "for" and "("
+#--unpad-header
+
+--unpad-paren
+--pad-oper
+--pad-comma
+
+--close-templates
+--keep-one-line-statements
+
+--break-return-type
+--attach-return-type-decl
+
+# write things as 'char *p'
+--align-pointer=type
+--align-reference=type
+
+--suffix=none
+--quiet
