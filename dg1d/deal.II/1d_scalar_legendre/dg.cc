@@ -48,23 +48,23 @@ enum class LimiterType {none, tvd};
 //------------------------------------------------------------------------------
 struct Parameter
 {
-   int degree;
-   double cfl;
-   double final_time;
-   TestCase test_case;
+   int          degree;
+   double       cfl;
+   double       final_time;
+   TestCase     test_case;
    unsigned int n_cells;
    unsigned int n_refine;
    unsigned int output_step;
-   LimiterType limiter_type;
-   double Mlim;
-   FluxType flux_type;
+   LimiterType  limiter_type;
+   double       Mlim;
+   FluxType     flux_type;
 };
 
 //------------------------------------------------------------------------------
 // minmod of three numbers
 //------------------------------------------------------------------------------
 double
-minmod(const double a, const double b, const double c, const double Mh2=0.0)
+minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
 {
    double aa = std::fabs(a);
    if(aa < Mh2) return a;
@@ -99,22 +99,22 @@ public:
       Function<dim>(),
       test_case(test_case)
    {
-      if (test_case == TestCase::sine)
+      if(test_case == TestCase::sine)
       {
          xmin = -1.0;
          xmax = +1.0;
       }
-      else if (test_case == TestCase::hat)
+      else if(test_case == TestCase::hat)
       {
          xmin = -1.0;
          xmax = +1.0;
       }
-      else if (test_case == TestCase::trihat)
+      else if(test_case == TestCase::trihat)
       {
          xmin = -1.0;
          xmax = +1.0;
       }
-      else if (test_case == TestCase::exp)
+      else if(test_case == TestCase::exp)
       {
          xmin = -20.0;
          xmax = +20.0;
@@ -191,9 +191,9 @@ public:
       final_time(final_time)
    {}
 
-   double value(const Point<dim>&   p,
+   double value(const Point<dim>&    p,
                 const unsigned int  component = 0) const override;
-   Tensor<1, dim> gradient(const Point<dim>&   p,
+   Tensor<1, dim> gradient(const Point<dim>&    p,
                            const unsigned int  component = 0) const override;
 private:
    const TestCase test_case;
@@ -203,7 +203,7 @@ private:
 // Exact solution works correctly only for periodic case
 template<int dim>
 double
-Solution<dim>::value(const Point<dim>&   p,
+Solution<dim>::value(const Point<dim>&    p,
                      const unsigned int) const
 {
    Point<dim> pp(p);
@@ -216,7 +216,7 @@ Solution<dim>::value(const Point<dim>&   p,
 // Exact solution works correctly only for periodic case
 template<int dim>
 Tensor<1, dim>
-Solution<dim>::gradient(const Point<dim>&   p,
+Solution<dim>::gradient(const Point<dim>&    p,
                         const unsigned int) const
 {
    Tensor<1, dim> values;
@@ -317,10 +317,9 @@ template <int dim>
 class ScalarProblem
 {
 public:
-   ScalarProblem(Parameter param,
+   ScalarProblem(Parameter& param,
                  const InitialCondition<dim>& initial_condition,
-                 const Solution<dim>&         exact_solution,
-                 bool debug);
+                 const Solution<dim>&          exact_solution);
    void run();
 
 private:
@@ -338,19 +337,10 @@ private:
    void output_results(const double time) const;
    void process_solution(unsigned int step);
 
-   TestCase             test_case;
-   bool                 debug;
-   unsigned int         n_cells;
+   Parameter*           param;
    double               dt;
    double               xmin, xmax, dx;
-   double               cfl;
-   double               final_time;
    unsigned int         n_rk_stages;
-   LimiterType          limiter_type;
-   double               Mlim;
-   FluxType             flux_type;
-   unsigned int         n_refine;
-   unsigned int         output_step;
 
    const InitialCondition<dim> initial_condition;
    const Solution<dim>         exact_solution;
@@ -371,28 +361,17 @@ private:
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim>
-ScalarProblem<dim>::ScalarProblem(Parameter param,
+ScalarProblem<dim>::ScalarProblem(Parameter&                   param,
                                   const InitialCondition<dim>& initial_condition,
-                                  const Solution<dim>&         exact_solution,
-                                  bool debug) :
-   test_case(param.test_case),
-   debug(debug),
-   n_cells(param.n_cells),
-   cfl(param.cfl),
-   final_time(param.final_time),
-   limiter_type(param.limiter_type),
-   Mlim(param.Mlim),
-   flux_type(param.flux_type),
-   n_refine(param.n_refine),
-   output_step(param.output_step),
+                                  const Solution<dim>&         exact_solution)
+   :
+   param(&param),
    initial_condition(initial_condition),
    exact_solution(exact_solution),
    fe(param.degree),
    dof_handler(triangulation)
 {
    AssertThrow(dim == 1, ExcIndexRange(dim, 0, 1));
-
-   final_time = param.final_time;
 
    n_rk_stages = 3;
 
@@ -410,7 +389,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    if(step == 0)
    {
       std::cout << "Making initial grid ...\n";
-      GridGenerator::subdivided_hyper_cube(triangulation, n_cells, xmin, xmax);
+      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, xmin, xmax);
       typedef typename Triangulation<dim>::cell_iterator Iter;
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
       GridTools::collect_periodic_faces(triangulation,
@@ -427,7 +406,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    dx = (xmax - xmin) / triangulation.n_active_cells();
 
    unsigned int counter = 0;
-   for(auto &cell : triangulation.active_cell_iterators())
+   for(auto & cell : triangulation.active_cell_iterators())
       cell->set_user_index(counter++);
 
    std::cout << "   Number of active cells: "
@@ -476,7 +455,7 @@ ScalarProblem<dim>::assemble_mass_matrix()
    imm = 0.0;
 
    // Cell iterator
-   for(auto &cell : dof_handler.active_cell_iterators())
+   for(auto & cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
       cell_matrix = 0.0;
@@ -513,7 +492,7 @@ ScalarProblem<dim>::initialize()
    Vector<double>       cell_rhs(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
-   for(auto &cell : dof_handler.active_cell_iterators())
+   for(auto & cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
       cell_rhs  = 0.0;
@@ -559,7 +538,7 @@ ScalarProblem<dim>::assemble_rhs()
    // for getting neighbour cell solutions to compute intercell flux
    QTrapezoid<dim> quadrature_dummy;
    FEValues<dim> fe_values_neighbor(fe, quadrature_dummy,
-                                    update_values   | update_gradients);
+                                    update_values | update_gradients);
 
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    const unsigned int   n_q_points    = quadrature_formula.size();
@@ -569,13 +548,13 @@ ScalarProblem<dim>::assemble_rhs()
    Vector<double>       cell_rhs(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
-   FEInterfaceValues<dim> fe_face_values(fe, 
-                                         Quadrature<dim-1>(Point<dim>(0.0)),
+   FEInterfaceValues<dim> fe_face_values(fe,
+                                         Quadrature<dim-1> (Point<dim>(0.0)),
                                          update_values);
 
    rhs = 0.0;
 
-   for(auto &cell : dof_handler.active_cell_iterators())
+   for(auto & cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
 
@@ -597,7 +576,7 @@ ScalarProblem<dim>::assemble_rhs()
 
       // Add cell residual to rhs
       cell->get_dof_indices(dof_indices);
-      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+      for(unsigned int i = 0; i < dofs_per_cell; ++i)
       {
          auto ig = dof_indices[i];
          rhs(ig) += cell_rhs(i);
@@ -609,17 +588,17 @@ ScalarProblem<dim>::assemble_rhs()
       fe_face_values.reinit(cell, 1, 0,
                             ncell, cell->neighbor_of_neighbor(1), 0);
       const unsigned int n_face_dofs = fe_face_values.n_current_interface_dofs();
-      const auto &face_dof_indices = fe_face_values.get_interface_dof_indices();
+      const auto& face_dof_indices = fe_face_values.get_interface_dof_indices();
       std::vector<double> left_state(1), right_state(1);
       fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
       fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
       double num_flux;
-      numerical_flux(flux_type, left_state[0], right_state[0], num_flux);
-      for(unsigned int i=0; i < n_face_dofs; ++i)
+      numerical_flux(param->flux_type, left_state[0], right_state[0], num_flux);
+      for(unsigned int i = 0; i < n_face_dofs; ++i)
       {
          auto ig = face_dof_indices[i];
-         rhs(ig) += -num_flux * 
-                     fe_face_values.jump_in_shape_values(i,0);
+         rhs(ig) += -num_flux *
+                    fe_face_values.jump_in_shape_values(i, 0);
       }
    }
 
@@ -637,7 +616,7 @@ ScalarProblem<dim>::compute_averages()
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
-   for(auto &cell : dof_handler.active_cell_iterators())
+   for(auto & cell : dof_handler.active_cell_iterators())
    {
       cell->get_dof_indices(dof_indices);
       average[cell->user_index()] = solution(dof_indices[0]);
@@ -657,7 +636,7 @@ ScalarProblem<dim>::mark_troubled_cells()
    std::vector<double> face_values(2), limited_face_values(2);
 
    unsigned int n_troubled_cells = 0;
-   for(auto &cell : dof_handler.active_cell_iterators())
+   for(auto & cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
       fe_values.get_function_values(solution, face_values);
@@ -701,12 +680,12 @@ ScalarProblem<dim>::apply_TVD_limiter()
 {
    if(fe.degree == 0) return;
 
-   const double Mh2 = Mlim * dx * dx;
+   const double Mh2 = param->Mlim * dx * dx;
    const double sqrt_3 = std::sqrt(3.0);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
-   for(auto &cell : dof_handler.active_cell_iterators())
+   for(auto & cell : dof_handler.active_cell_iterators())
    {
       auto c  = cell->user_index();
       auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
@@ -735,7 +714,7 @@ template <int dim>
 void
 ScalarProblem<dim>::apply_limiter()
 {
-   if(fe.degree == 0 || limiter_type == LimiterType::none) return;
+   if(fe.degree == 0 || param->limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
 }
 
@@ -746,7 +725,7 @@ template <int dim>
 void
 ScalarProblem<dim>::compute_dt()
 {
-   dt = cfl * dx / fabs(speed);
+   dt = param->cfl * dx / fabs(speed);
 }
 
 //------------------------------------------------------------------------------
@@ -792,7 +771,7 @@ ScalarProblem<dim>::output_results(const double time) const
    filename = "avg_" + Utilities::int_to_string(counter) + ".gpl";
    fo.open(filename);
 
-   for(auto &cell : triangulation.active_cell_iterators())
+   for(auto & cell : triangulation.active_cell_iterators())
    {
       Point<dim> x = cell->center();
       auto c = cell->user_index();
@@ -823,12 +802,12 @@ ScalarProblem<dim>::solve()
    double time = 0.0;
    unsigned int iter = 0;
 
-   while(time < final_time)
+   while(time < param->final_time)
    {
       solution_old  = solution;
 
       compute_dt();
-      if(time + dt > final_time) dt = final_time - time;
+      if(time + dt > param->final_time) dt = param->final_time - time;
 
       for(unsigned int rk = 0; rk < n_rk_stages; ++rk)
       {
@@ -840,11 +819,7 @@ ScalarProblem<dim>::solve()
 
       time += dt;
       ++iter;
-      if(iter % output_step == 0) output_results(time);
-
-      if(debug)
-         std::cout << "Iter = " << iter << " time = " << time
-                   << std::endl;
+      if(iter % param->output_step == 0) output_results(time);
    }
    output_results(time);
    std::cout << "Iter = " << iter << " time = " << time
@@ -899,7 +874,7 @@ template <int dim>
 void
 ScalarProblem<dim>::run()
 {
-   for(unsigned int step = 0; step < n_refine; ++step)
+   for(unsigned int step = 0; step < param->n_refine; ++step)
    {
       make_grid_and_dofs(step);
       solve();
@@ -934,22 +909,23 @@ ScalarProblem<dim>::run()
 //------------------------------------------------------------------------------
 // Declare input parameters
 //------------------------------------------------------------------------------
-void declare_parameters(ParameterHandler &prm)
+void
+declare_parameters(ParameterHandler& prm)
 {
    prm.declare_entry("degree", "0", Patterns::Integer(0, 6),
                      "Polynomial degree");
    prm.declare_entry("ncells", "100", Patterns::Integer(10),
                      "Number of elements");
-   prm.declare_entry("nrefine", "1", Patterns::Integer(1,10),
+   prm.declare_entry("nrefine", "1", Patterns::Integer(1, 10),
                      "Number of grid refinements");
    prm.declare_entry("output step", "10", Patterns::Integer(0),
                      "Frequency to save solution");
    prm.declare_entry("test case", "sine",
                      Patterns::Selection("sine|hat|trihat|exp"),
                      "Test case");
-   prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0), 
+   prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0),
                      "CFL number");
-   prm.declare_entry("final time", "0.0", Patterns::Double(0), 
+   prm.declare_entry("final time", "0.0", Patterns::Double(0),
                      "Final time");
    prm.declare_entry("limiter", "none",
                      Patterns::Selection("none|tvd"),
@@ -957,12 +933,13 @@ void declare_parameters(ParameterHandler &prm)
    prm.declare_entry("numflux", "upwind",
                      Patterns::Selection("upwind|central"),
                      "Numerical flux");
-   prm.declare_entry("tvb parameter", "0.0", Patterns::Double(0), 
+   prm.declare_entry("tvb parameter", "0.0", Patterns::Double(0),
                      "TVB parameter");
 }
 
 //------------------------------------------------------------------------------
-void parse_parameters(const ParameterHandler &ph, Parameter &param)
+void
+parse_parameters(const ParameterHandler& ph, Parameter& param)
 {
    param.degree = ph.get_integer("degree");
    param.n_cells = ph.get_integer("ncells");
@@ -979,8 +956,8 @@ void parse_parameters(const ParameterHandler &ph, Parameter &param)
    }
 
    param.cfl = ph.get_double("cfl");
-   if(param.cfl == 0.0) param.cfl = 0.98 / (2*param.degree + 1);
-   if(param.cfl < 0.0) param.cfl = param.cfl / (2*param.degree + 1);
+   if(param.cfl == 0.0) param.cfl = 0.98 / (2 * param.degree + 1);
+   if(param.cfl < 0.0) param.cfl = param.cfl / (2 * param.degree + 1);
 
    param.final_time = ph.get_double("final time");
    param.Mlim = ph.get_double("tvb parameter");
@@ -1004,15 +981,13 @@ void parse_parameters(const ParameterHandler &ph, Parameter &param)
 // Main function
 //------------------------------------------------------------------------------
 int
-main(int argc, char **argv)
+main(int argc, char** argv)
 {
    deallog.depth_console(0);
    {
-      bool debug = false;
-
       ParameterHandler ph;
       declare_parameters(ph);
-      if (argc < 2)
+      if(argc < 2)
       {
          std::cout << "Specify input parameter file\n";
          std::cout << "It should contain following parameters.\n\n";
@@ -1027,7 +1002,7 @@ main(int argc, char **argv)
 
       const auto initial_condition = InitialCondition<1>(param.test_case);
       const auto exact_solution = Solution<1>(param.test_case, param.final_time);
-      ScalarProblem<1> problem(param, initial_condition, exact_solution, debug);
+      ScalarProblem<1> problem(param, initial_condition, exact_solution);
       problem.run();
    }
 
