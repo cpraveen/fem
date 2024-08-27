@@ -70,7 +70,7 @@ struct Parameter
 // minmod of three numbers
 //------------------------------------------------------------------------------
 double
-minmod(const double& a, const double& b, const double& c)
+minmod(const double a, const double b, const double c)
 {
    double aa = std::fabs(a);
    if(aa < Mh2) return a;
@@ -236,7 +236,7 @@ Solution<dim>::gradient(const Point<dim>&   p,
 // Flux of the PDE model
 //------------------------------------------------------------------------------
 double
-physical_flux(const double& u)
+physical_flux(const double u)
 {
    return speed * u;
 }
@@ -245,8 +245,8 @@ physical_flux(const double& u)
 // Central flux
 //------------------------------------------------------------------------------
 void
-CentralFlux(const double& left_state,
-            const double& right_state,
+CentralFlux(const double left_state,
+            const double right_state,
             double& flux)
 {
    flux = 0.5 * speed * (left_state + right_state);
@@ -256,8 +256,8 @@ CentralFlux(const double& left_state,
 // Upwind flux
 //------------------------------------------------------------------------------
 void
-UpwindFlux(const double& left_state,
-           const double& right_state,
+UpwindFlux(const double left_state,
+           const double right_state,
            double& flux)
 {
    flux  = speed * ((speed > 0) ? left_state : right_state);
@@ -267,9 +267,9 @@ UpwindFlux(const double& left_state,
 // Compute flux across cell faces
 //------------------------------------------------------------------------------
 void
-numerical_flux(const FluxType& flux_type,
-               double& left_state,
-               double& right_state,
+numerical_flux(const FluxType flux_type,
+               const double left_state,
+               const double right_state,
                double& flux)
 {
    switch(flux_type)
@@ -775,7 +775,7 @@ ScalarProblem<dim>::output_results(const double time) const
       data_out.build_patches(2 * fe.degree);
 
    std::string filename = "sol_" + Utilities::int_to_string(counter) + ".gpl";
-   std::cout << "t = " << time << "  " << filename << std::endl;
+   std::cout << "Outout at t = " << time << "  " << filename << std::endl;
 
    std::ofstream output(filename);
    data_out.write_gnuplot(output);
@@ -838,10 +838,9 @@ ScalarProblem<dim>::solve()
          std::cout << "Iter = " << iter << " time = " << time
                    << std::endl;
    }
+   output_results(time);
    std::cout << "Iter = " << iter << " time = " << time
              << std::endl;
-
-   output_results(time);
 }
 
 //------------------------------------------------------------------------------
