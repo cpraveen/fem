@@ -31,13 +31,6 @@
 
 using namespace dealii;
 
-// Number of variables: mass, momentum and energy
-double xmin, xmax, xmid;
-double u_left, u_right;
-double final_time;
-double Mlim; // used in TVB limiter
-double Mh2;
-
 // Coefficients for 3-stage SSP RK scheme of Shu-Osher
 const double a_rk[3] = {0.0, 3.0 / 4.0, 1.0 / 3.0};
 const double b_rk[3] = {1.0, 1.0 / 4.0, 2.0 / 3.0};
@@ -63,6 +56,7 @@ struct Parameter
    unsigned int n_refine;
    unsigned int output_step;
    LimiterType limiter_type;
+   double Mlim;
    FluxType flux_type;
 };
 
@@ -70,7 +64,7 @@ struct Parameter
 // minmod of three numbers
 //------------------------------------------------------------------------------
 double
-minmod(const double a, const double b, const double c)
+minmod(const double a, const double b, const double c, const double Mh2=0.0)
 {
    double aa = std::fabs(a);
    if(aa < Mh2) return a;
@@ -104,13 +98,39 @@ public:
       :
       Function<dim>(),
       test_case(test_case)
-   {}
+   {
+      if (test_case == TestCase::sine)
+      {
+         xmin = -1.0;
+         xmax = +1.0;
+      }
+      else if (test_case == TestCase::hat)
+      {
+         xmin = -1.0;
+         xmax = +1.0;
+      }
+      else if (test_case == TestCase::trihat)
+      {
+         xmin = -1.0;
+         xmax = +1.0;
+      }
+      else if (test_case == TestCase::exp)
+      {
+         xmin = -20.0;
+         xmax = +20.0;
+      }
+      else
+      {
+         std::cout << "Unknown test case\n";
+      }
+   }
 
    double value(const Point<dim>& p,
                 const unsigned int component = 0) const override;
+   double xmin, xmax;
 
 private:
-   TestCase test_case;
+   const TestCase test_case;
 };
 
 // Initial condition
@@ -164,10 +184,11 @@ template <int dim>
 class Solution : public Function<dim>
 {
 public:
-   Solution(TestCase test_case)
+   Solution(TestCase test_case, double final_time)
       :
       Function<dim>(),
-      test_case(test_case)
+      test_case(test_case),
+      final_time(final_time)
    {}
 
    double value(const Point<dim>&   p,
@@ -175,7 +196,8 @@ public:
    Tensor<1, dim> gradient(const Point<dim>&   p,
                            const unsigned int  component = 0) const override;
 private:
-   TestCase test_case;
+   const TestCase test_case;
+   const double final_time;
 };
 
 // Exact solution works correctly only for periodic case
@@ -296,6 +318,8 @@ class ScalarProblem
 {
 public:
    ScalarProblem(Parameter param,
+                 const InitialCondition<dim>& initial_condition,
+                 const Solution<dim>&         exact_solution,
                  bool debug);
    void run();
 
@@ -318,13 +342,18 @@ private:
    bool                 debug;
    unsigned int         n_cells;
    double               dt;
-   double               dx;
+   double               xmin, xmax, dx;
    double               cfl;
+   double               final_time;
    unsigned int         n_rk_stages;
    LimiterType          limiter_type;
+   double               Mlim;
    FluxType             flux_type;
    unsigned int         n_refine;
    unsigned int         output_step;
+
+   const InitialCondition<dim> initial_condition;
+   const Solution<dim>         exact_solution;
 
    Triangulation<dim>   triangulation;
    FE_DGP<dim>          fe;
@@ -343,15 +372,21 @@ private:
 //------------------------------------------------------------------------------
 template <int dim>
 ScalarProblem<dim>::ScalarProblem(Parameter param,
+                                  const InitialCondition<dim>& initial_condition,
+                                  const Solution<dim>&         exact_solution,
                                   bool debug) :
    test_case(param.test_case),
    debug(debug),
    n_cells(param.n_cells),
    cfl(param.cfl),
+   final_time(param.final_time),
    limiter_type(param.limiter_type),
+   Mlim(param.Mlim),
    flux_type(param.flux_type),
    n_refine(param.n_refine),
    output_step(param.output_step),
+   initial_condition(initial_condition),
+   exact_solution(exact_solution),
    fe(param.degree),
    dof_handler(triangulation)
 {
@@ -361,34 +396,8 @@ ScalarProblem<dim>::ScalarProblem(Parameter param,
 
    n_rk_stages = 3;
 
-   if(test_case == TestCase::sine)
-   {
-      xmin    = -1.0;
-      xmax    = +1.0;
-   }
-   else if(test_case == TestCase::hat)
-   {
-      xmin    = -1.0;
-      xmax    = +1.0;
-   }
-   else if(test_case == TestCase::trihat)
-   {
-      xmin    = -1.0;
-      xmax    = +1.0;
-   }
-   else if(test_case == TestCase::exp)
-   {
-      xmin    = -20.0;
-      xmax    = +20.0;
-   }
-   else
-   {
-      std::cout << "Unknown test case\n";
-   }
-
-   dx = (xmax - xmin) / n_cells;
-   Mh2 = Mlim * dx * dx;
-
+   xmin = initial_condition.xmin;
+   xmax = initial_condition.xmax;
 }
 
 //------------------------------------------------------------------------------
@@ -414,9 +423,8 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    else
    {
       triangulation.refine_global(1);
-      n_cells = triangulation.n_active_cells();
-      dx = (xmax - xmin) / n_cells;
    }
+   dx = (xmax - xmin) / triangulation.n_active_cells();
 
    unsigned int counter = 0;
    for(auto &cell : triangulation.active_cell_iterators())
@@ -441,8 +449,8 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    rhs.reinit(dof_handler.n_dofs());
    imm.reinit(dof_handler.n_dofs());
 
-   average.reinit(triangulation.n_cells());
-   troubled_cell.resize(n_cells);
+   average.reinit(triangulation.n_active_cells());
+   troubled_cell.resize(triangulation.n_active_cells());
 }
 
 //------------------------------------------------------------------------------
@@ -504,7 +512,6 @@ ScalarProblem<dim>::initialize()
    const unsigned int   n_q_points    = quadrature_formula.size();
    Vector<double>       cell_rhs(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
-   InitialCondition<dim> initial_condition(test_case);
 
    for(auto &cell : dof_handler.active_cell_iterators())
    {
@@ -694,7 +701,8 @@ ScalarProblem<dim>::apply_TVD_limiter()
 {
    if(fe.degree == 0) return;
 
-   static const double sqrt_3 = std::sqrt(3.0);
+   const double Mh2 = Mlim * dx * dx;
+   const double sqrt_3 = std::sqrt(3.0);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
@@ -709,7 +717,7 @@ ScalarProblem<dim>::apply_TVD_limiter()
       double df = average[cr] - average[c];
 
       double Dx = solution(dof_indices[1]);
-      double Dx_new = minmod(sqrt_3* Dx, db, df) / sqrt_3;
+      double Dx_new = minmod(sqrt_3* Dx, db, df, Mh2) / sqrt_3;
 
       if(std::fabs(Dx - Dx_new) > 1.0e-6)
       {
@@ -851,7 +859,6 @@ void
 ScalarProblem<dim>::process_solution(unsigned int step)
 {
    // compute error in solution
-   Solution<dim> exact_solution(test_case);
    Vector<double> difference_per_cell(triangulation.n_active_cells());
    VectorTools::integrate_difference(dof_handler,
                                      solution,
@@ -976,7 +983,7 @@ void parse_parameters(const ParameterHandler &ph, Parameter &param)
    if(param.cfl < 0.0) param.cfl = param.cfl / (2*param.degree + 1);
 
    param.final_time = ph.get_double("final time");
-   Mlim = ph.get_double("tvb parameter");
+   param.Mlim = ph.get_double("tvb parameter");
 
    {
       std::string value = ph.get("numflux");
@@ -1018,7 +1025,9 @@ main(int argc, char **argv)
       Parameter param;
       parse_parameters(ph, param);
 
-      ScalarProblem<1> problem(param, debug);
+      const auto initial_condition = InitialCondition<1>(param.test_case);
+      const auto exact_solution = Solution<1>(param.test_case, param.final_time);
+      ScalarProblem<1> problem(param, initial_condition, exact_solution, debug);
       problem.run();
    }
 
