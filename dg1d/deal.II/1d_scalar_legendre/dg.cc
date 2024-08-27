@@ -10,6 +10,7 @@
 
 #include <deal.II/fe/fe_dgp.h>
 #include <deal.II/fe/fe_values.h>
+#include <deal.II/fe/fe_interface_values.h>
 
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/function.h>
@@ -310,7 +311,7 @@ private:
    void apply_TVD_limiter();
    void mark_troubled_cells();
    void update(const unsigned int rk_stage);
-   void output_results(const double& time) const;
+   void output_results(const double time) const;
    void process_solution(unsigned int step);
 
    TestCase             test_case;
@@ -324,6 +325,7 @@ private:
    FluxType             flux_type;
    unsigned int         n_refine;
    unsigned int         output_step;
+
    Triangulation<dim>   triangulation;
    FE_DGP<dim>          fe;
    DoFHandler<dim>      dof_handler;
@@ -333,8 +335,6 @@ private:
    Vector<double>       imm;
    Vector<double>       average;
    std::vector<bool>    troubled_cell;
-   double               residual;
-   double               residual0;
    ConvergenceTable     convergence_table;
 };
 
@@ -556,27 +556,27 @@ ScalarProblem<dim>::assemble_rhs()
 
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    const unsigned int   n_q_points    = quadrature_formula.size();
-
    std::vector<double>  solution_values(n_q_points);
-   std::vector<Tensor<1, dim>>  solution_grad(n_q_points);
 
    // for getting neighbor cell solution using trapezoidal rule
-   std::vector<double>  solution_values_n(2);
    Vector<double>       cell_rhs(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
-   residual = 0.0;
+   FEInterfaceValues<dim> fe_face_values(fe, 
+                                         Quadrature<dim-1>(Point<dim>(0.0)),
+                                         update_values);
+
+   rhs = 0.0;
 
    for(auto &cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
 
-      cell_rhs  = 0.0;
-
       // Compute conserved variables at quadrature points
       fe_values.get_function_values(solution,  solution_values);
 
       // Flux integral over cell
+      cell_rhs  = 0.0;
       for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
       {
          double flux = physical_flux(solution_values[q_point]);
@@ -588,59 +588,36 @@ ScalarProblem<dim>::assemble_rhs()
          }
       }
 
-      // Computation of flux at cell boundaries
-      double lf_left_state, lf_right_state;
-
-      // left face flux
-      // right state is from current cell
-      lf_right_state = solution_values [0];
-
-      // get left cell dof indices
-      fe_values_neighbor.reinit(cell->neighbor_or_periodic_neighbor(0));
-      fe_values_neighbor.get_function_values(solution,  solution_values_n);
-      lf_left_state = solution_values_n [1];
-
-      double left_flux;
-      numerical_flux(flux_type, lf_left_state, lf_right_state,
-                     left_flux);
-
-      // right face flux
-      // left state is from current cell
-      double rf_left_state, rf_right_state;
-      rf_left_state = solution_values [n_q_points - 1];
-
-      // get right cell to right face
-      fe_values_neighbor.reinit(cell->neighbor_or_periodic_neighbor(1));
-      fe_values_neighbor.get_function_values(solution,  solution_values_n);
-      rf_right_state = solution_values_n [0];
-
-      double right_flux;
-      numerical_flux(flux_type, rf_left_state, rf_right_state,
-                     right_flux);
-
-      // Add flux at cell boundaries
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
+      // Add cell residual to rhs
+      cell->get_dof_indices(dof_indices);
+      for (unsigned int i = 0; i < dofs_per_cell; ++i)
       {
-         // Left face flux
-         cell_rhs(i) += fe_values.shape_value(i, 0) *
-                        left_flux;
-
-
-         // Right face flux
-         cell_rhs(i) -= fe_values.shape_value(i, n_q_points - 1) *
-                        right_flux;
+         auto ig = dof_indices[i];
+         rhs(ig) += cell_rhs(i);
       }
 
-      // Multiply by inverse mass matrix and add to rhs
-      cell->get_dof_indices(dof_indices);
-      unsigned int ig;
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
+      // Add face residual to rhs
+      // assemble flux at right face only since we have periodic bc
+      auto ncell = cell->neighbor_or_periodic_neighbor(1);
+      fe_face_values.reinit(cell, 1, 0,
+                            ncell, cell->neighbor_of_neighbor(1), 0);
+      const unsigned int n_face_dofs = fe_face_values.n_current_interface_dofs();
+      const auto &face_dof_indices = fe_face_values.get_interface_dof_indices();
+      std::vector<double> left_state(1), right_state(1);
+      fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
+      fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
+      double num_flux;
+      numerical_flux(flux_type, left_state[0], right_state[0], num_flux);
+      for(unsigned int i=0; i < n_face_dofs; ++i)
       {
-         ig = dof_indices[i];
-         rhs(ig) = cell_rhs(i) * imm(ig);
-         residual += std::pow(rhs(ig), 2);
+         auto ig = face_dof_indices[i];
+         rhs(ig) += -num_flux * 
+                     fe_face_values.jump_in_shape_values(i,0);
       }
    }
+
+   // Multiply by inverse mass matrix
+   rhs.scale(imm);
 }
 
 //------------------------------------------------------------------------------
@@ -784,7 +761,7 @@ ScalarProblem<dim>::update(const unsigned int rk_stage)
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::output_results(const double& time) const
+ScalarProblem<dim>::output_results(const double time) const
 {
    static unsigned int counter = 0;
 
@@ -853,24 +830,16 @@ ScalarProblem<dim>::solve()
          apply_limiter();
       }
 
-      if(iter == 0)
-      {
-         std::cout << "Initial residual = " << residual << std::endl;
-         residual0 = residual;
-      }
-
-      residual /= residual0;
-
       time += dt;
       ++iter;
       if(iter % output_step == 0) output_results(time);
 
       if(debug)
          std::cout << "Iter = " << iter << " time = " << time
-                   << " Res =" << residual << std::endl;
+                   << std::endl;
    }
    std::cout << "Iter = " << iter << " time = " << time
-             << " Res =" << residual << std::endl;
+             << std::endl;
 
    output_results(time);
 }
