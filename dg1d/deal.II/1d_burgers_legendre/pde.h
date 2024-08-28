@@ -53,9 +53,9 @@ RoeFlux(const double left_state,
 // Godunov flux
 //------------------------------------------------------------------------------
 void
-GodunovFlux(const double& left_state,
-            const double& right_state,
-            double&        flux)
+GodunovFlux(const double left_state,
+            const double right_state,
+            double&      flux)
 {
    double u1 = std::max(0.0, left_state);
    double u2 = std::min(0.0, right_state);

@@ -52,7 +52,9 @@ private:
    const TestCase test_case;
 };
 
+//------------------------------------------------------------------------------
 // Initial condition
+//------------------------------------------------------------------------------
 template<int dim>
 double
 InitialCondition<dim>::value(const Point<dim>& p,
@@ -119,7 +121,9 @@ private:
    const double final_time;
 };
 
+//------------------------------------------------------------------------------
 // Exact solution works correctly only for periodic case
+//------------------------------------------------------------------------------
 template<int dim>
 double
 Solution<dim>::value(const Point<dim>&    p,
@@ -131,8 +135,9 @@ Solution<dim>::value(const Point<dim>&    p,
    return initial_condition.value(pp);
 }
 
-
+//------------------------------------------------------------------------------
 // Exact solution works correctly only for periodic case
+//------------------------------------------------------------------------------
 template<int dim>
 Tensor<1, dim>
 Solution<dim>::gradient(const Point<dim>&    p,
