@@ -309,12 +309,6 @@ ScalarProblem<dim>::assemble_rhs()
                            update_values   | update_gradients |
                            update_quadrature_points |
                            update_JxW_values);
-
-   // for getting neighbour cell solutions to compute intercell flux
-   QTrapezoid<dim> quadrature_dummy;
-   FEValues<dim> fe_values_neighbor(fe, quadrature_dummy,
-                                    update_values | update_gradients);
-
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    const unsigned int   n_q_points    = quadrature_formula.size();
    std::vector<double>  solution_values(n_q_points);
