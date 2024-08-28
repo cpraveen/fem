@@ -577,7 +577,6 @@ ScalarProblem<dim>::solve()
 {
    std::cout << "Solving 1-D scalar problem ...\n";
 
-   //make_grid_and_dofs();
    assemble_mass_matrix();
    initialize();
    compute_averages();
@@ -761,28 +760,25 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 int
 main(int argc, char** argv)
 {
-   deallog.depth_console(0);
+   ParameterHandler ph;
+   declare_parameters(ph);
+   if(argc < 2)
    {
-      ParameterHandler ph;
-      declare_parameters(ph);
-      if(argc < 2)
-      {
-         std::cout << "Specify input parameter file\n";
-         std::cout << "It should contain following parameters.\n\n";
-         ph.print_parameters(std::cout, ParameterHandler::Text);
-         return 0;
-      }
-      ph.parse_input(argv[1]);
+      std::cout << "Specify input parameter file\n";
+      std::cout << "It should contain following parameters.\n\n";
       ph.print_parameters(std::cout, ParameterHandler::Text);
-
-      Parameter param;
-      parse_parameters(ph, param);
-
-      const auto initial_condition = InitialCondition<1>(param.test_case);
-      const auto exact_solution = Solution<1>(param.test_case, param.final_time);
-      ScalarProblem<1> problem(param, initial_condition, exact_solution);
-      problem.run();
+      return 0;
    }
+   ph.parse_input(argv[1]);
+   ph.print_parameters(std::cout, ParameterHandler::Text);
+
+   Parameter param;
+   parse_parameters(ph, param);
+
+   const auto initial_condition = InitialCondition<1>(param.test_case);
+   const auto exact_solution = Solution<1>(param.test_case, param.final_time);
+   ScalarProblem<1> problem(param, initial_condition, exact_solution);
+   problem.run();
 
    return 0;
 }

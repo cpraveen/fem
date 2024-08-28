@@ -22,3 +22,12 @@ gnuplot anim.gnu
 ```
 
 If you modify `dg.cc`, then you must compile and run again.
+
+## Grid convergence test
+
+Set `nrefine > 1` in `input.prm` and run the code to perform error convergence study. A tex file `error.tex` with convergence table will also be generated. You can compile and see the pdf.
+
+```shell
+pdflatex error.tex
+open error.pdf
+```
