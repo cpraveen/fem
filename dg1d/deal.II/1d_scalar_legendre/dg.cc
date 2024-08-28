@@ -705,7 +705,7 @@ declare_parameters(ParameterHandler& prm)
    prm.declare_entry("output step", "10", Patterns::Integer(0),
                      "Frequency to save solution");
    prm.declare_entry("test case", "sine",
-                     Patterns::Selection("sine|hat|trihat|exp"),
+                     Patterns::Anything(),
                      "Test case");
    prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0),
                      "CFL number");
@@ -732,11 +732,7 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("test case");
-      if(value == "sine") param.test_case = TestCase::sine;
-      else if(value == "hat") param.test_case = TestCase::hat;
-      else if(value == "trihat") param.test_case = TestCase::trihat;
-      else if(value == "exp") param.test_case = TestCase::exp;
-      else AssertThrow(false, ExcMessage("Unknown test case"));
+      param.test_case = TestCaseList[value];
    }
 
    param.cfl = ph.get_double("cfl");

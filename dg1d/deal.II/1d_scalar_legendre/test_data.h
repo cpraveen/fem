@@ -2,6 +2,10 @@ using namespace dealii;
 
 enum class TestCase {sine, hat, trihat, exp};
 
+std::map<std::string, TestCase> TestCaseList{{"sine",   TestCase::sine}, 
+                                             {"hat",    TestCase::hat},
+                                             {"trihat", TestCase::trihat},
+                                             {"exp",    TestCase::exp}};
 //------------------------------------------------------------------------------
 // Initial condition
 //------------------------------------------------------------------------------
