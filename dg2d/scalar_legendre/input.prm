@@ -1,0 +1,9 @@
+set degree        = 1
+set ncells        = 100
+set nrefine       = 1
+set output step   = 20
+set cfl           = 0.0
+set final time    = 2.0
+set limiter       = none    # none,tvd
+set numflux       = upwind  # see pde.h for available fluxes
+set tvb parameter = 100.0

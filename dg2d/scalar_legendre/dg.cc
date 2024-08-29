@@ -14,21 +14,21 @@
 
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/function.h>
-#include <deal.II/base/convergence_table.h>
-#include <deal.II/base/logstream.h>
 #include <deal.II/base/parameter_handler.h>
 
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/data_out.h>
 
 #include <deal.II/lac/vector.h>
-#include <deal.II/lac/full_matrix.h>
+#include <deal.II/lac/affine_constraints.h>
+
+#include <deal.II/meshworker/mesh_loop.h>
 
 #include <fstream>
 #include <iostream>
 
-#include "pde.h"
 #include "test_data.h"
+#include "pde.h"
 
 #define sign(a)   (((a) > 0.0) ? 1 : -1)
 
@@ -46,10 +46,10 @@ enum class LimiterType {none, tvd};
 //------------------------------------------------------------------------------
 struct Parameter
 {
+   double       xmin, xmax, ymin, ymax;
    int          degree;
    double       cfl;
    double       final_time;
-   TestCase     test_case;
    unsigned int n_cells;
    unsigned int n_refine;
    unsigned int output_step;
@@ -86,20 +86,95 @@ minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
 }
 
 //------------------------------------------------------------------------------
+template <typename CIterator>
+void cell_size(const CIterator &cell, double &dx, double &dy)
+{
+   dx = cell->face(1)->center()[0] - cell->face(0)->center()[0];
+   dy = cell->face(3)->center()[1] - cell->face(2)->center()[1];
+}
+
+//------------------------------------------------------------------------------
+template <int dim>
+struct ScratchData
+{
+   ScratchData(const Mapping<dim> &mapping,
+               const FiniteElement<dim> &fe,
+               const Quadrature<dim> &cell_quadrature,
+               const Quadrature<dim-1> &face_quadrature,
+               const UpdateFlags update_flags = update_values |
+                                                update_gradients |
+                                                update_quadrature_points |
+                                                update_JxW_values,
+               const UpdateFlags interface_update_flags = update_values | 
+                                                          update_quadrature_points |
+                                                          update_JxW_values | 
+                                                          update_normal_vectors)
+       : 
+       fe_values(mapping, fe, cell_quadrature, update_flags), 
+       fe_interface_values(mapping,
+                           fe,
+                           face_quadrature,
+                           interface_update_flags),
+      solution_values(cell_quadrature.size())
+   {
+   }
+
+   ScratchData(const ScratchData<dim> &scratch_data)
+       : fe_values(scratch_data.fe_values.get_mapping(),
+                   scratch_data.fe_values.get_fe(),
+                   scratch_data.fe_values.get_quadrature(),
+                   scratch_data.fe_values.get_update_flags()),
+         fe_interface_values(scratch_data.fe_interface_values.get_mapping(),
+                             scratch_data.fe_interface_values.get_fe(),
+                             scratch_data.fe_interface_values.get_quadrature(),
+                             scratch_data.fe_interface_values.get_update_flags()),
+         solution_values(scratch_data.fe_values.get_quadrature().size())
+   {
+   }
+
+   FEValues<dim> fe_values;
+   FEInterfaceValues<dim> fe_interface_values;
+   std::vector<double> solution_values;
+};
+
+//------------------------------------------------------------------------------
+struct CopyDataFace
+{
+   std::vector<types::global_dof_index> joint_dof_indices;
+   Vector<double> cell_rhs;
+};
+
+//------------------------------------------------------------------------------
+struct CopyData
+{
+   Vector<double> cell_rhs;
+   std::vector<types::global_dof_index> local_dof_indices;
+   std::vector<CopyDataFace> face_data;
+
+   template <class Iterator>
+   void reinit(const Iterator &cell, unsigned int dofs_per_cell)
+   {
+      cell_rhs.reinit(dofs_per_cell);
+
+      local_dof_indices.resize(dofs_per_cell);
+      cell->get_dof_indices(local_dof_indices);
+   }
+};
+
+//------------------------------------------------------------------------------
 // Main class of the problem
 //------------------------------------------------------------------------------
 template <int dim>
 class ScalarProblem
 {
 public:
-   ScalarProblem(Parameter& param,
-                 const InitialCondition<dim>& initial_condition,
-                 const Solution<dim>&          exact_solution);
+   ScalarProblem(Parameter&           param,
+                 const Function<dim>& initial_condition,
+                 const Function<dim>& exact_solution);
    void run();
 
 private:
-   void solve();
-   void make_grid_and_dofs(unsigned int step);
+   void make_grid_and_dofs();
    void initialize();
    void assemble_mass_matrix();
    void assemble_rhs();
@@ -107,51 +182,61 @@ private:
    void compute_dt();
    void apply_limiter();
    void apply_TVD_limiter();
-   void mark_troubled_cells();
    void update(const unsigned int rk_stage);
    void output_results(const double time) const;
-   void process_solution(unsigned int step);
+   void process_solution();
+
+   template <class Iterator>
+   void cell_worker(const Iterator &cell,
+                    ScratchData<dim> &scratch_data,
+                    CopyData &copy_data);
+
+   template <class Iterator>
+   void face_worker(const Iterator &cell,
+                    const unsigned int &f,
+                    const unsigned int &sf,
+                    const Iterator &ncell,
+                    const unsigned int &nf,
+                    const unsigned int &nsf,
+                    ScratchData<dim> &scratch_data,
+                    CopyData &copy_data);
 
    Parameter*           param;
    double               dt;
-   double               xmin, xmax, dx;
    unsigned int         n_rk_stages;
 
-   const InitialCondition<dim> initial_condition;
-   const Solution<dim>         exact_solution;
+   const Function<dim>*  initial_condition;
+   const Function<dim>*  exact_solution;
 
    Triangulation<dim>   triangulation;
    FE_DGP<dim>          fe;
    DoFHandler<dim>      dof_handler;
+   MappingCartesian<dim> mapping;
+   AffineConstraints<double> constraints;
    Vector<double>       solution;
    Vector<double>       solution_old;
    Vector<double>       rhs;
    Vector<double>       imm;
    Vector<double>       average;
-   std::vector<bool>    troubled_cell;
-   ConvergenceTable     convergence_table;
 };
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim>
-ScalarProblem<dim>::ScalarProblem(Parameter&                   param,
-                                  const InitialCondition<dim>& initial_condition,
-                                  const Solution<dim>&         exact_solution)
+ScalarProblem<dim>::ScalarProblem(Parameter&           param,
+                                  const Function<dim>& initial_condition,
+                                  const Function<dim>& exact_solution)
    :
    param(&param),
-   initial_condition(initial_condition),
-   exact_solution(exact_solution),
+   initial_condition(&initial_condition),
+   exact_solution(&exact_solution),
    fe(param.degree),
    dof_handler(triangulation)
 {
-   AssertThrow(dim == 1, ExcIndexRange(dim, 0, 1));
+   AssertThrow(dim == 2, ExcIndexRange(dim, 0, 2));
 
    n_rk_stages = 3;
-
-   xmin = initial_condition.xmin;
-   xmax = initial_condition.xmax;
 }
 
 //------------------------------------------------------------------------------
@@ -159,26 +244,24 @@ ScalarProblem<dim>::ScalarProblem(Parameter&                   param,
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
+ScalarProblem<dim>::make_grid_and_dofs()
 {
-   if(step == 0)
-   {
-      std::cout << "Making initial grid ...\n";
-      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, xmin, xmax);
-      typedef typename Triangulation<dim>::cell_iterator Iter;
-      std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
-      GridTools::collect_periodic_faces(triangulation,
-                                        0,
-                                        1,
-                                        0,
-                                        periodicity_vector);
-      triangulation.add_periodicity(periodicity_vector);
-   }
-   else
-   {
-      triangulation.refine_global(1);
-   }
-   dx = (xmax - xmin) / triangulation.n_active_cells();
+   std::cout << "Making initial grid ...\n";
+   GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
+                                        param->xmin, param->xmax, true);
+   typedef typename Triangulation<dim>::cell_iterator Iter;
+   std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
+   GridTools::collect_periodic_faces(triangulation,
+                                     0,
+                                     1,
+                                     0,
+                                     periodicity_vector);
+   GridTools::collect_periodic_faces(triangulation,
+                                     2,
+                                     3,
+                                     1,
+                                     periodicity_vector);
+   triangulation.add_periodicity(periodicity_vector);
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
@@ -202,9 +285,11 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    solution_old.reinit(dof_handler.n_dofs());
    rhs.reinit(dof_handler.n_dofs());
    imm.reinit(dof_handler.n_dofs());
-
    average.reinit(triangulation.n_active_cells());
-   troubled_cell.resize(triangulation.n_active_cells());
+
+   // We dont have any constraints in DG.
+   constraints.clear();
+   constraints.close();
 }
 
 //------------------------------------------------------------------------------
@@ -220,7 +305,7 @@ ScalarProblem<dim>::assemble_mass_matrix()
    std::cout << "  Quadrature using " << fe.degree + 1 << " points\n";
 
    QGauss<dim>  quadrature_formula(fe.degree + 1);
-   FEValues<dim> fe_values(fe, quadrature_formula,
+   FEValues<dim> fe_values(mapping, fe, quadrature_formula,
                            update_values | update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    const unsigned int   n_q_points    = quadrature_formula.size();
@@ -258,7 +343,7 @@ ScalarProblem<dim>::initialize()
    std::cout << "Projecting initial condition ...\n";
 
    QGauss<dim>  quadrature_formula(2 * fe.degree + 1);
-   FEValues<dim> fe_values(fe, quadrature_formula,
+   FEValues<dim> fe_values(mapping, fe, quadrature_formula,
                            update_values   |
                            update_quadrature_points |
                            update_JxW_values);
@@ -276,7 +361,7 @@ ScalarProblem<dim>::initialize()
       for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
       {
          // Get primitive variable at quadrature point
-         double initial_value = initial_condition.value(fe_values.quadrature_point(q_point));
+         double initial_value = initial_condition->value(fe_values.quadrature_point(q_point));
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
          {
             cell_rhs(i) += fe_values.shape_value(i, q_point) *
@@ -298,78 +383,150 @@ ScalarProblem<dim>::initialize()
 }
 
 //------------------------------------------------------------------------------
+template <int dim>
+template <class Iterator>
+void ScalarProblem<dim>::cell_worker(const Iterator &cell,
+                                     ScratchData<dim> &scratch_data,
+                                     CopyData &copy_data)
+{
+   FEValues<dim> &fe_values = scratch_data.fe_values;
+   fe_values.reinit(cell);
+
+   const unsigned int dofs_per_cell = fe_values.get_fe().n_dofs_per_cell();
+   const unsigned int n_q_points = fe_values.get_quadrature().size();
+
+   copy_data.reinit(cell, dofs_per_cell);
+
+   auto &cell_rhs = copy_data.cell_rhs;
+   auto &solution_values = scratch_data.solution_values;
+   fe_values.get_function_values(solution,  solution_values);
+
+   for (unsigned int q = 0; q < n_q_points; ++q)
+   {
+      Tensor<1, dim> flux;
+      physical_flux(solution_values[q],
+                    fe_values.quadrature_point(q),
+                    flux);
+      for (unsigned int i = 0; i < dofs_per_cell; ++i)
+      {
+         cell_rhs(i) += (fe_values.shape_grad(i, q) *
+                         flux *
+                         fe_values.JxW(q));
+      }
+
+   }
+}
+
+//------------------------------------------------------------------------------
+template <int dim>
+template <class Iterator>
+void ScalarProblem<dim>::face_worker(const Iterator &cell,
+                                     const unsigned int &f,
+                                     const unsigned int &sf,
+                                     const Iterator &ncell,
+                                     const unsigned int &nf,
+                                     const unsigned int &nsf,
+                                     ScratchData<dim> &scratch_data,
+                                     CopyData &copy_data)
+{
+   FEInterfaceValues<dim> &fe_face_values = scratch_data.fe_interface_values;
+   fe_face_values.reinit(cell, f, sf, ncell, nf, nsf);
+
+   const unsigned int n_face_dofs = fe_face_values.n_current_interface_dofs();
+   const unsigned int n_q_points = fe_face_values.get_quadrature().size();
+   const auto &q_points = fe_face_values.get_quadrature_points();
+
+   std::vector<double> left_state(n_q_points), right_state(n_q_points);
+   fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
+   fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
+
+   copy_data.face_data.emplace_back();
+   CopyDataFace &copy_data_face = copy_data.face_data.back();
+   copy_data_face.joint_dof_indices = fe_face_values.get_interface_dof_indices();
+   copy_data_face.cell_rhs.reinit(n_face_dofs);
+   auto &cell_rhs = copy_data_face.cell_rhs;
+
+   for(unsigned int q=0; q<n_q_points; ++q)
+   {
+      double num_flux;
+      numerical_flux(param->flux_type, 
+                     left_state[q], 
+                     right_state[q], 
+                     q_points[q], 
+                     fe_face_values.normal(q),
+                     num_flux);
+      for (unsigned int i = 0; i < n_face_dofs; ++i)
+      {
+         cell_rhs(i) += -num_flux *
+                         fe_face_values.jump_in_shape_values(i, q) *
+                         fe_face_values.JxW(q);
+      }
+   }
+}
+
+//------------------------------------------------------------------------------
 // Assemble system rhs
 //------------------------------------------------------------------------------
 template <int dim>
 void
 ScalarProblem<dim>::assemble_rhs()
 {
-   QGaussLobatto<dim>  quadrature_formula(fe.degree + 2);
-   FEValues<dim> fe_values(fe, quadrature_formula,
-                           update_values   | update_gradients |
-                           update_quadrature_points |
-                           update_JxW_values);
-   const unsigned int   dofs_per_cell = fe.dofs_per_cell;
-   const unsigned int   n_q_points    = quadrature_formula.size();
-   std::vector<double>  solution_values(n_q_points);
+   using Iterator = typename DoFHandler<dim>::active_cell_iterator;
 
-   // for getting neighbor cell solution using trapezoidal rule
-   Vector<double>       cell_rhs(dofs_per_cell);
-   std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
+   auto cell_worker =
+       [&](const Iterator &cell,
+           ScratchData<dim> &scratch_data,
+           CopyData &copy_data)
+   {
+      this->cell_worker(cell, scratch_data, copy_data);
+   };
 
-   FEInterfaceValues<dim> fe_face_values(fe,
-                                         Quadrature<dim-1> (Point<dim>(0.0)),
-                                         update_values);
+   auto face_worker =
+       [&](const Iterator &cell,
+           const unsigned int f,
+           const unsigned int sf,
+           const typename DoFHandler<dim>::active_cell_iterator &ncell,
+           const unsigned int nf,
+           const unsigned int nsf,
+           ScratchData<dim> &scratch_data,
+           CopyData &copy_data)
+   {
+      this->face_worker(cell, f, sf, ncell, nf, nsf, scratch_data, copy_data);
+   };
+
+   auto copier = [&](const CopyData &cd)
+   {
+      this->constraints.distribute_local_to_global(cd.cell_rhs,
+                                                   cd.local_dof_indices,
+                                                   rhs);
+      for (auto &cdf : cd.face_data)
+      {
+         this->constraints.distribute_local_to_global(cdf.cell_rhs,
+                                                      cdf.joint_dof_indices,
+                                                      rhs);
+      }
+   };
+
+   const unsigned int n_gauss_points = fe.degree + 1;
+   const QGauss<dim> cell_quadrature(n_gauss_points);
+   const QGauss<dim-1> face_quadrature(n_gauss_points);
+
+   ScratchData<dim> scratch_data(mapping,
+                                 fe,
+                                 cell_quadrature,
+                                 face_quadrature);
 
    rhs = 0.0;
-
-   for(auto & cell : dof_handler.active_cell_iterators())
-   {
-      fe_values.reinit(cell);
-
-      // Compute conserved variables at quadrature points
-      fe_values.get_function_values(solution,  solution_values);
-
-      // Flux integral over cell
-      cell_rhs  = 0.0;
-      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-      {
-         double flux = physical_flux(solution_values[q_point]);
-         for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         {
-            cell_rhs(i) += (fe_values.shape_grad(i, q_point)[0] *
-                            flux*
-                            fe_values.JxW(q_point));
-         }
-      }
-
-      // Add cell residual to rhs
-      cell->get_dof_indices(dof_indices);
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
-      {
-         auto ig = dof_indices[i];
-         rhs(ig) += cell_rhs(i);
-      }
-
-      // Add face residual to rhs
-      // assemble flux at right face only since we have periodic bc
-      auto ncell = cell->neighbor_or_periodic_neighbor(1);
-      fe_face_values.reinit(cell, 1, 0,
-                            ncell, cell->neighbor_of_neighbor(1), 0);
-      const unsigned int n_face_dofs = fe_face_values.n_current_interface_dofs();
-      const auto& face_dof_indices = fe_face_values.get_interface_dof_indices();
-      std::vector<double> left_state(1), right_state(1);
-      fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
-      fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
-      double num_flux;
-      numerical_flux(param->flux_type, left_state[0], right_state[0], num_flux);
-      for(unsigned int i = 0; i < n_face_dofs; ++i)
-      {
-         auto ig = face_dof_indices[i];
-         rhs(ig) += -num_flux *
-                    fe_face_values.jump_in_shape_values(i, 0);
-      }
-   }
+   MeshWorker::mesh_loop(dof_handler.begin_active(),
+                         dof_handler.end(),
+                         cell_worker,
+                         copier,
+                         scratch_data,
+                         CopyData(),
+                         MeshWorker::assemble_own_cells |
+                         MeshWorker::assemble_own_interior_faces_once,
+                         nullptr,
+                         face_worker);
 
    // Multiply by inverse mass matrix
    rhs.scale(imm);
@@ -393,54 +550,6 @@ ScalarProblem<dim>::compute_averages()
 }
 
 //------------------------------------------------------------------------------
-// Use TVB limiter to identify troubled cells
-//------------------------------------------------------------------------------
-template <int dim>
-void
-ScalarProblem<dim>::mark_troubled_cells()
-{
-   const double EPS = 1.0e-14;
-   QTrapezoid<dim>  quadrature_formula;
-   FEValues<dim> fe_values(fe, quadrature_formula, update_values);
-   std::vector<double> face_values(2), limited_face_values(2);
-
-   unsigned int n_troubled_cells = 0;
-   for(auto & cell : dof_handler.active_cell_iterators())
-   {
-      fe_values.reinit(cell);
-      fe_values.get_function_values(solution, face_values);
-
-      auto c = cell->user_index();
-      auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
-      auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
-
-      double db = average[c]  - average[cl];
-      double df = average[cr] - average[c];
-
-      double DF = face_values[1] - average[c];
-      double DB = average[c] - face_values[0];
-
-      double dl = minmod(DB, db, df);
-      double dr = minmod(DF, db, df);
-
-      limited_face_values[0] = average[c] - dl;
-      limited_face_values[1] = average[c] + dr;
-      bool c0 = std::fabs(limited_face_values[0] - face_values[0])
-                > EPS * std::fabs(face_values[0]);
-      bool c1 = std::fabs(limited_face_values[1] - face_values[1])
-                > EPS * std::fabs(face_values[1]);
-
-      troubled_cell[c] = false;
-      if(c0 || c1)
-      {
-         troubled_cell[c] = true;
-         ++n_troubled_cells;
-      }
-   }
-   //std::cout << "No of troubled cells = " << n_troubled_cells << std::endl;
-}
-
-//------------------------------------------------------------------------------
 // Apply TVD limiter
 //------------------------------------------------------------------------------
 template <int dim>
@@ -448,30 +557,40 @@ void
 ScalarProblem<dim>::apply_TVD_limiter()
 {
    if(fe.degree == 0) return;
+   AssertThrow(false, ExcNotImplemented());
 
-   const double Mh2 = param->Mlim * dx * dx;
    const double sqrt_3 = std::sqrt(3.0);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
+      double dx, dy;
+      cell_size(cell, dx, dy);
+      const double Mh2 = param->Mlim * dx * dx;
       auto c  = cell->user_index();
       auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
       auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
+      auto cb = cell->neighbor_or_periodic_neighbor(2)->user_index();
+      auto ct = cell->neighbor_or_periodic_neighbor(3)->user_index();
       cell->get_dof_indices(dof_indices);
 
-      double db = average[c]  - average[cl];
-      double df = average[cr] - average[c];
-
+      double dbx = average[c]  - average[cl];
+      double dfx = average[cr] - average[c];
       double Dx = solution(dof_indices[1]);
-      double Dx_new = minmod(sqrt_3* Dx, db, df, Mh2) / sqrt_3;
+      double Dx_new = minmod(sqrt_3 * Dx, dbx, dfx, Mh2) / sqrt_3;
 
-      if(std::fabs(Dx - Dx_new) > 1.0e-6)
+      double dby = average[c]  - average[cb];
+      double dfy = average[ct] - average[c];
+      double Dy = solution(dof_indices[fe.degree+1]);
+      double Dy_new = minmod(sqrt_3 * Dy, dby, dfx, Mh2) / sqrt_3;
+
+      if(std::fabs(Dx - Dx_new) > 1.0e-6 || std::fabs(Dy - Dy_new) > 1.0e-6)
       {
-         solution(dof_indices[1]) = Dx_new;
-         for(unsigned int i = 2; i < dofs_per_cell; ++i)
+         for(unsigned int i = 1; i < dofs_per_cell; ++i)
             solution(dof_indices[i]) = 0;
+         solution(dof_indices[1]) = Dx_new;
+         solution(dof_indices[fe.degree+1]) = Dy_new;
       }
    }
 }
@@ -499,7 +618,11 @@ ScalarProblem<dim>::compute_dt()
    for(auto &cell : dof_handler.active_cell_iterators())
    {
       auto c = cell->user_index();
-      double dtcell = cell->measure() / (max_speed(average[c]) + 1.0e-20);
+      double dx, dy;
+      cell_size(cell, dx, dy);
+      Tensor<1,dim> jac;
+      flux_jacobian(average[c], cell->center(), jac);
+      double dtcell = 1.0 / (fabs(jac[0])/dx + fabs(jac[1])/dy + 1.0e-20);
       dt = std::min(dt, dtcell);
    }
 
@@ -531,33 +654,16 @@ ScalarProblem<dim>::output_results(const double time) const
    static unsigned int counter = 0;
 
    DataOut<dim> data_out;
+   DataOutBase::VtkFlags flags(time, counter);
+   data_out.set_flags(flags);
    data_out.attach_dof_handler(dof_handler);
    data_out.add_data_vector(solution, "solution");
+   data_out.build_patches(mapping, fe.degree+1);
 
-   if(fe.degree <= 1)
-      data_out.build_patches(1);
-   else
-      data_out.build_patches(2 * fe.degree);
-
-   std::string filename = "sol_" + Utilities::int_to_string(counter) + ".gpl";
-   std::cout << "Outout at t = " << time << "  " << filename << std::endl;
-
+   std::string filename = "sol_" + Utilities::int_to_string(counter,3) + ".vtu";
    std::ofstream output(filename);
-   data_out.write_gnuplot(output);
-
-   std::ofstream fo;
-   filename = "avg_" + Utilities::int_to_string(counter) + ".gpl";
-   fo.open(filename);
-
-   for(auto & cell : triangulation.active_cell_iterators())
-   {
-      Point<dim> x = cell->center();
-      auto c = cell->user_index();
-      int tc = (troubled_cell[c] ? 1 : 0);
-      fo << x(0) << " " << average[c] << "  " << tc << std::endl;
-   }
-
-   fo.close();
+   data_out.write_vtu(output);
+   std::cout << "Outout at t = " << time << "  " << filename << std::endl;
 
    ++counter;
 }
@@ -567,10 +673,11 @@ ScalarProblem<dim>::output_results(const double time) const
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::solve()
+ScalarProblem<dim>::run()
 {
    std::cout << "Solving 1-D scalar problem ...\n";
 
+   make_grid_and_dofs();
    assemble_mass_matrix();
    initialize();
    compute_averages();
@@ -597,10 +704,12 @@ ScalarProblem<dim>::solve()
       time += dt;
       ++iter;
       if(iter % param->output_step == 0) output_results(time);
+      std::cout << "Iter = " << iter 
+                << " dt = " << dt
+                << " time = " << time << std::endl;
    }
    output_results(time);
-   std::cout << "Iter = " << iter << " time = " << time
-             << std::endl;
+   process_solution();
 }
 
 //------------------------------------------------------------------------------
@@ -608,22 +717,24 @@ ScalarProblem<dim>::solve()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::process_solution(unsigned int step)
+ScalarProblem<dim>::process_solution()
 {
    // compute error in solution
    Vector<double> difference_per_cell(triangulation.n_active_cells());
-   VectorTools::integrate_difference(dof_handler,
+   VectorTools::integrate_difference(mapping, 
+                                     dof_handler,
                                      solution,
-                                     exact_solution,
+                                     *exact_solution,
                                      difference_per_cell,
                                      QGauss<dim>(2 * fe.degree + 1),
                                      VectorTools::L2_norm);
    const double L2_error = difference_per_cell.l2_norm();
 
    // compute error in gradient
-   VectorTools::integrate_difference(dof_handler,
+   VectorTools::integrate_difference(mapping, 
+                                     dof_handler,
                                      solution,
-                                     exact_solution,
+                                     *exact_solution,
                                      difference_per_cell,
                                      QGauss<dim>(2 * fe.degree + 1),
                                      VectorTools::H1_norm);
@@ -631,56 +742,10 @@ ScalarProblem<dim>::process_solution(unsigned int step)
 
    const unsigned int n_active_cells = triangulation.n_active_cells();
    const unsigned int n_dofs = dof_handler.n_dofs();
-   convergence_table.add_value("step", step);
-   convergence_table.add_value("cells", n_active_cells);
-   convergence_table.add_value("dofs", n_dofs);
-   convergence_table.add_value("L2", L2_error);
-   convergence_table.add_value("H1", H1_error);
-
-   convergence_table.set_scientific("L2", true);
-   convergence_table.set_scientific("H1", true);
-
-   std::cout << std::endl;
-}
-
-//------------------------------------------------------------------------------
-// Run with several refinements
-// Compute error and convergence rate
-//------------------------------------------------------------------------------
-template <int dim>
-void
-ScalarProblem<dim>::run()
-{
-   for(unsigned int step = 0; step < param->n_refine; ++step)
-   {
-      make_grid_and_dofs(step);
-      solve();
-      process_solution(step);
-   }
-
-   convergence_table.set_precision("L2", 3);
-   convergence_table.set_scientific("L2", true);
-   convergence_table.evaluate_convergence_rates("L2",
-                    ConvergenceTable::reduction_rate_log2);
-
-   convergence_table.set_precision("H1", 3);
-   convergence_table.set_scientific("H1", true);
-   convergence_table.evaluate_convergence_rates("H1",
-                    ConvergenceTable::reduction_rate_log2);
-
-   convergence_table.set_tex_caption("cells", "\\# cells");
-   convergence_table.set_tex_caption("dofs", "\\# dofs");
-   convergence_table.set_tex_caption("L2", "$L^2$-error");
-   convergence_table.set_tex_caption("H1", "$H^1$-error");
-
-   convergence_table.set_tex_format("cells", "r");
-   convergence_table.set_tex_format("dofs", "r");
-
-   std::cout << std::endl;
-   convergence_table.write_text(std::cout);
-
-   std::ofstream error_table_file("error.tex");
-   convergence_table.write_tex(error_table_file);
+   std::cout << n_active_cells << " "
+             << n_dofs << " "
+             << L2_error << " "
+             << H1_error << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -697,9 +762,6 @@ declare_parameters(ParameterHandler& prm)
                      "Number of grid refinements");
    prm.declare_entry("output step", "10", Patterns::Integer(0),
                      "Frequency to save solution");
-   prm.declare_entry("test case", "sine",
-                     Patterns::Anything(),
-                     "Test case");
    prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0),
                      "CFL number");
    prm.declare_entry("final time", "0.0", Patterns::Double(0),
@@ -722,11 +784,6 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
    param.n_cells = ph.get_integer("ncells");
    param.n_refine = ph.get_integer("nrefine");
    param.output_step = ph.get_integer("output step");
-
-   {
-      std::string value = ph.get("test case");
-      param.test_case = TestCaseList[value];
-   }
 
    param.cfl = ph.get_double("cfl");
    if(param.cfl == 0.0) param.cfl = 0.98 / (2 * param.degree + 1);
@@ -769,9 +826,11 @@ main(int argc, char** argv)
    Parameter param;
    parse_parameters(ph, param);
 
-   const auto initial_condition = InitialCondition<1>(param.test_case);
-   const auto exact_solution = Solution<1>(param.test_case, param.final_time);
-   ScalarProblem<1> problem(param, initial_condition, exact_solution);
+   param.xmin = -1.0; param.xmax = 1.0;
+   param.ymin = -1.0; param.ymax = 1.0;
+   const auto initial_condition = Solution<2>(0.0);
+   const auto exact_solution = Solution<2>(param.final_time);
+   ScalarProblem<2> problem(param, initial_condition, exact_solution);
    problem.run();
 
    return 0;
