@@ -725,6 +725,8 @@ template <int dim>
 void
 ScalarProblem<dim>::process_solution()
 {
+   const double area = (param->xmax - param->xmin) * (param->ymax - param->ymin);
+
    // compute error in solution
    Vector<double> difference_per_cell(triangulation.n_active_cells());
    VectorTools::integrate_difference(mapping, 
@@ -734,7 +736,7 @@ ScalarProblem<dim>::process_solution()
                                      difference_per_cell,
                                      QGauss<dim>(2 * fe.degree + 1),
                                      VectorTools::L2_norm);
-   const double L2_error = difference_per_cell.l2_norm();
+   const double L2_error = sqrt(difference_per_cell.norm_sqr() / area);
 
    // compute error in gradient
    VectorTools::integrate_difference(mapping, 
@@ -744,7 +746,7 @@ ScalarProblem<dim>::process_solution()
                                      difference_per_cell,
                                      QGauss<dim>(2 * fe.degree + 1),
                                      VectorTools::H1_norm);
-   const double H1_error = difference_per_cell.l2_norm();
+   const double H1_error = sqrt(difference_per_cell.norm_sqr() / area);
 
    const unsigned int n_active_cells = triangulation.n_active_cells();
    const unsigned int n_dofs = dof_handler.n_dofs();

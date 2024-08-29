@@ -8,6 +8,16 @@
 using namespace dealii;
 
 //------------------------------------------------------------------------------
+// Bring x into [xmin,xmax] by periodicity
+//------------------------------------------------------------------------------
+void periodic(const double xmin, const double xmax, double& x)
+{
+   const double L = xmax-xmin;
+   while(x < xmin) x += L;
+   while(x > xmax) x -= L;
+}
+
+//------------------------------------------------------------------------------
 // Exact solution
 //------------------------------------------------------------------------------
 template <int dim>
@@ -45,8 +55,8 @@ Solution<dim>::value(const Point<dim>&    p,
    double y = p[1] - time;
 
    // Apply periodicity
-   x = std::fmod(x - xmin, xmax - xmin) + xmin;
-   y = std::fmod(y - ymin, ymax - ymin) + ymin;
+   periodic(xmin, xmax, x);
+   periodic(ymin, ymax, y);
 
    double f = exp(-alpha*(x*x + y*y));
    return f;
@@ -66,8 +76,8 @@ Solution<dim>::gradient(const Point<dim>&    p,
    double y = p[1] - time;
 
    // Apply periodicity
-   x = std::fmod(x - xmin, xmax - xmin) + xmin;
-   y = std::fmod(y - ymin, ymax - ymin) + ymin;
+   periodic(xmin, xmax, x);
+   periodic(ymin, ymax, y);
 
    Tensor<1,dim> g;
    g[0] = f * (-2 * alpha * x);
