@@ -48,8 +48,8 @@ Solution<dim>::value(const Point<dim>&    p,
    x = std::fmod(x - xmin, xmax - xmin) + xmin;
    y = std::fmod(y - ymin, ymax - ymin) + ymin;
 
-   double value = exp(-alpha*(x*x + y*y));
-   return value;
+   double f = exp(-alpha*(x*x + y*y));
+   return f;
 }
 
 //------------------------------------------------------------------------------
@@ -69,10 +69,10 @@ Solution<dim>::gradient(const Point<dim>&    p,
    x = std::fmod(x - xmin, xmax - xmin) + xmin;
    y = std::fmod(y - ymin, ymax - ymin) + ymin;
 
-   Tensor<1,dim> value;
-   value[0] = f * (-2 * alpha * x);
-   value[1] = f * (-2 * alpha * y);
-   return value;
+   Tensor<1,dim> g;
+   g[0] = f * (-2 * alpha * x);
+   g[1] = f * (-2 * alpha * y);
+   return g;
 }
 
 #endif
