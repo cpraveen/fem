@@ -1,7 +1,8 @@
 reset
+set term qt font "Times New Roman,16"
 unset key
 set grid
-set yran[-1.1:1.1]
+#set yran[-1.1:1.1]
 filename(n) = sprintf("sol_%d.gpl",n)
 avgfilename(n) = sprintf("avg_%d.gpl",n)
 N=system("ls -1 sol*.gpl | wc -l")
