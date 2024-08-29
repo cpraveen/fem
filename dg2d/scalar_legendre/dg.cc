@@ -115,7 +115,9 @@ struct ScratchData
                            fe,
                            face_quadrature,
                            interface_update_flags),
-      solution_values(cell_quadrature.size())
+      solution_values(cell_quadrature.size()),
+      left_state(face_quadrature.size()),
+      right_state(face_quadrature.size())
    {
    }
 
@@ -128,13 +130,17 @@ struct ScratchData
                              scratch_data.fe_interface_values.get_fe(),
                              scratch_data.fe_interface_values.get_quadrature(),
                              scratch_data.fe_interface_values.get_update_flags()),
-         solution_values(scratch_data.fe_values.get_quadrature().size())
+         solution_values(scratch_data.fe_values.get_quadrature().size()),
+         left_state(scratch_data.fe_interface_values.get_quadrature().size()),
+         right_state(scratch_data.fe_interface_values.get_quadrature().size())
    {
    }
 
    FEValues<dim> fe_values;
    FEInterfaceValues<dim> fe_interface_values;
    std::vector<double> solution_values;
+   std::vector<double> left_state;
+   std::vector<double> right_state;
 };
 
 //------------------------------------------------------------------------------
@@ -436,7 +442,8 @@ void ScalarProblem<dim>::face_worker(const Iterator &cell,
    const unsigned int n_q_points = fe_face_values.get_quadrature().size();
    const auto &q_points = fe_face_values.get_quadrature_points();
 
-   std::vector<double> left_state(n_q_points), right_state(n_q_points);
+   auto &left_state = scratch_data.left_state;
+   auto &right_state = scratch_data.right_state;
    fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
    fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
 
@@ -557,7 +564,6 @@ void
 ScalarProblem<dim>::apply_TVD_limiter()
 {
    if(fe.degree == 0) return;
-   AssertThrow(false, ExcNotImplemented());
 
    const double sqrt_3 = std::sqrt(3.0);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
@@ -583,7 +589,7 @@ ScalarProblem<dim>::apply_TVD_limiter()
       double dby = average[c]  - average[cb];
       double dfy = average[ct] - average[c];
       double Dy = solution(dof_indices[fe.degree+1]);
-      double Dy_new = minmod(sqrt_3 * Dy, dby, dfx, Mh2) / sqrt_3;
+      double Dy_new = minmod(sqrt_3 * Dy, dby, dfy, Mh2) / sqrt_3;
 
       if(std::fabs(Dx - Dx_new) > 1.0e-6 || std::fabs(Dy - Dy_new) > 1.0e-6)
       {

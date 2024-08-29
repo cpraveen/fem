@@ -1,3 +1,7 @@
+//------------------------------------------------------------------------------
+// Linear advection with velocity = (1,1) in [-1,1] x [-1,1] and periodic bc.
+//------------------------------------------------------------------------------
+
 #ifndef __TEST_DATA_H__
 #define __TEST_DATA_H__
 
@@ -21,6 +25,11 @@ public:
    Tensor<1, dim> gradient(const Point<dim>&    p,
                            const unsigned int  component = 0) const override;
 private:
+   const double xmin = -1.0;
+   const double xmax =  1.0;
+   const double ymin = -1.0;
+   const double ymax =  1.0;
+   const double alpha = 20.0;
    const double time;
 };
 
@@ -32,9 +41,14 @@ double
 Solution<dim>::value(const Point<dim>&    p,
                      const unsigned int) const
 {
-   double x = p[0];
-   double y = p[1];
-   double value = exp(-20*(x*x + y*y));
+   double x = p[0] - time;
+   double y = p[1] - time;
+
+   // Apply periodicity
+   x = std::fmod(x - xmin, xmax - xmin) + xmin;
+   y = std::fmod(y - ymin, ymax - ymin) + ymin;
+
+   double value = exp(-alpha*(x*x + y*y));
    return value;
 }
 
@@ -46,7 +60,18 @@ Tensor<1, dim>
 Solution<dim>::gradient(const Point<dim>&    p,
                         const unsigned int) const
 {
+   double f = value(p);
+
+   double x = p[0] - time;
+   double y = p[1] - time;
+
+   // Apply periodicity
+   x = std::fmod(x - xmin, xmax - xmin) + xmin;
+   y = std::fmod(y - ymin, ymax - ymin) + ymin;
+
    Tensor<1,dim> value;
+   value[0] = f * (-2 * alpha * x);
+   value[1] = f * (-2 * alpha * y);
    return value;
 }
 

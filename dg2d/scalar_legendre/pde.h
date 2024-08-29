@@ -12,7 +12,7 @@ std::map<std::string, FluxType> FluxTypeList{{"central", FluxType::central},
 //------------------------------------------------------------------------------
 // 2d velocity field
 //------------------------------------------------------------------------------
-void velocity(const Point<2> &p, Tensor<1, 2> &v)
+void velocity(const Point<2> &/*p*/, Tensor<1, 2> &v)
 {
    v[0] = 1.0;
    v[1] = 1.0;
