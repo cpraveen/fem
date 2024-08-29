@@ -304,7 +304,7 @@ template <int dim>
 void
 ScalarProblem<dim>::assemble_rhs()
 {
-   QGaussLobatto<dim>  quadrature_formula(fe.degree + 2);
+   QGauss<dim>  quadrature_formula(fe.degree + 1);
    FEValues<dim> fe_values(fe, quadrature_formula,
                            update_values   | update_gradients |
                            update_quadrature_points |
