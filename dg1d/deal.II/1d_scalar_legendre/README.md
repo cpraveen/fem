@@ -1,4 +1,16 @@
-# 1-d linear scalar advection using DG
+# 1-d linear scalar PDE using DG
+
+To solve constant linear advection equation
+
+```shell
+cp linadv/*.h .
+```
+
+To solve Burgers equation
+
+```shell
+cp burgers/*.h .
+```
 
 Create Makefile (this only needs to be done once)
 
