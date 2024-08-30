@@ -732,7 +732,12 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
       if(search != TestCaseList.end())
          param.test_case = search->second;
       else
+      {
+         std::cout << "Available test cases\n";
+         for(const auto& v : TestCaseList)
+            std::cout << v.first << std::endl;
          AssertThrow(false, ExcMessage("Unknown test case"));
+      }
    }
 
    param.cfl = ph.get_double("cfl");
@@ -748,7 +753,12 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
       if(search != FluxTypeList.end())
          param.flux_type = search->second;
       else
+      {
+         std::cout << "Available num fluxes\n";
+         for(const auto& v : FluxTypeList)
+            std::cout << v.first << std::endl;
          AssertThrow(false, ExcMessage("Unknown flux type"));
+      }
    }
 
    {
