@@ -5,16 +5,30 @@
 #ifndef __TEST_DATA_H__
 #define __TEST_DATA_H__
 
+#define XMIN  (-1.0)
+#define XMAX  (+1.0)
+#define YMIN  (-1.0)
+#define YMAX  (+1.0)
+
 using namespace dealii;
 
 //------------------------------------------------------------------------------
-// Bring x into [xmin,xmax] by periodicity
+// 2d velocity field
 //------------------------------------------------------------------------------
-void periodic(const double xmin, const double xmax, double& x)
+void velocity(const Point<2> & /*p*/, Tensor<1, 2> &v)
 {
-   const double L = xmax-xmin;
-   while(x < xmin) x += L;
-   while(x > xmax) x -= L;
+   v[0] = 1.0;
+   v[1] = 1.0;
+}
+
+//------------------------------------------------------------------------------
+// Bring x into [a,b] by periodicity
+//------------------------------------------------------------------------------
+void periodic(const double a, const double b, double& x)
+{
+   const double L = b - a;
+   while(x < a) x += L;
+   while(x > b) x -= L;
 }
 
 //------------------------------------------------------------------------------
@@ -35,10 +49,10 @@ public:
    Tensor<1, dim> gradient(const Point<dim>&    p,
                            const unsigned int  component = 0) const override;
 private:
-   const double xmin = -1.0;
-   const double xmax =  1.0;
-   const double ymin = -1.0;
-   const double ymax =  1.0;
+   const double xmin = XMIN;
+   const double xmax = XMAX;
+   const double ymin = YMIN;
+   const double ymax = YMAX;
    const double alpha = 20.0;
    const double time;
 };

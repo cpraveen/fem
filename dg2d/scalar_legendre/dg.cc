@@ -834,8 +834,8 @@ main(int argc, char** argv)
    Parameter param;
    parse_parameters(ph, param);
 
-   param.xmin = -1.0; param.xmax = 1.0;
-   param.ymin = -1.0; param.ymax = 1.0;
+   param.xmin = XMIN; param.xmax = XMAX;
+   param.ymin = YMIN; param.ymax = YMAX;
    const auto initial_condition = Solution<2>(0.0);
    const auto exact_solution = Solution<2>(param.final_time);
    ScalarProblem<2> problem(param, initial_condition, exact_solution);
