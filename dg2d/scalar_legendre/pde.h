@@ -1,3 +1,9 @@
+//------------------------------------------------------------------------------
+// PDE of the form
+//    u_t + div(f(u,x)) = 0,   f(u,x) = v(x) u
+// The velocity field must be defined as a function
+//     void velocity(const Point<dim>& p, Tensor<1,dim>& v)
+//------------------------------------------------------------------------------
 #ifndef __PDE_H__
 #define __PDE_H__
 
@@ -10,7 +16,7 @@ std::map<std::string, FluxType> FluxTypeList{{"central", FluxType::central},
                                              {"upwind",  FluxType::upwind}};
 
 //------------------------------------------------------------------------------
-// Flux of the PDE model: f(u)
+// Flux of the PDE model: f(u,x)
 //------------------------------------------------------------------------------
 template <int dim>
 void
