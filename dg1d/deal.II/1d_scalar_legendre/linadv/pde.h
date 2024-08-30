@@ -19,7 +19,7 @@ std::map<std::string, FluxType> FluxTypeList{{"central", FluxType::central},
 // Flux of the PDE model: f(u)
 //------------------------------------------------------------------------------
 double
-physical_flux(const double u)
+physical_flux(const double u, const Point<1>& /*p*/)
 {
    return speed * u;
 }
@@ -28,7 +28,7 @@ physical_flux(const double u)
 // Maximum wave speed: |df/du(u)|
 //------------------------------------------------------------------------------
 double
-max_speed(const double /*u*/)
+max_speed(const double /*u*/, const Point<1>& /*p*/)
 {
    return fabs(speed);
 }
@@ -37,45 +37,47 @@ max_speed(const double /*u*/)
 // Central flux
 //------------------------------------------------------------------------------
 void
-CentralFlux(const double left_state,
-            const double right_state,
-            double& flux)
+CentralFlux(const double    ul,
+            const double    ur,
+            const Point<1>& /*p*/,
+            double&         flux)
 {
-   flux = 0.5 * speed * (left_state + right_state);
+   flux = 0.5 * speed * (ul + ur);
 }
 
 //------------------------------------------------------------------------------
 // Upwind flux
 //------------------------------------------------------------------------------
 void
-UpwindFlux(const double left_state,
-           const double right_state,
-           double& flux)
+UpwindFlux(const double    ul,
+           const double    ur,
+           const Point<1>& /*p*/,
+           double&         flux)
 {
-   flux  = speed * ((speed > 0) ? left_state : right_state);
+   flux  = speed * ((speed > 0) ? ul : ur);
 }
 
 //------------------------------------------------------------------------------
 // Compute flux across cell faces
 //------------------------------------------------------------------------------
 void
-numerical_flux(const FluxType flux_type,
-               const double left_state,
-               const double right_state,
+numerical_flux(const FluxType  flux_type,
+               const double    ul,
+               const double    ur,
+               const Point<1>& p,
                double& flux)
 {
    switch(flux_type)
    {
       case FluxType::central:
-         CentralFlux(left_state, right_state, flux);
+         CentralFlux(ul, ur, p, flux);
          break;
 
       case FluxType::upwind:
-         UpwindFlux(left_state, right_state, flux);
+         UpwindFlux(ul, ur, p, flux);
          break;
 
       default:
-         std::cout << "Unknown flux_type !!!\n";
-         abort();
+         AssertThrow(false, ExcMessage("Unknown flux type"));
    }
 }

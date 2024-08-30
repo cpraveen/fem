@@ -305,7 +305,8 @@ ScalarProblem<dim>::assemble_rhs()
       cell_rhs  = 0.0;
       for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
       {
-         double flux = physical_flux(solution_values[q_point]);
+         double flux = physical_flux(solution_values[q_point],
+                                     fe_values.quadrature_point(q_point));
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
          {
             cell_rhs(i) += (fe_values.shape_grad(i, q_point)[0] *
@@ -332,7 +333,8 @@ ScalarProblem<dim>::assemble_rhs()
       fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
       fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
       double num_flux;
-      numerical_flux(param->flux_type, left_state[0], right_state[0], num_flux);
+      numerical_flux(param->flux_type, left_state[0], right_state[0], 
+                     cell->face(1)->center(), num_flux);
       for(unsigned int i = 0; i < n_face_dofs; ++i)
       {
          auto ig = face_dof_indices[i];
@@ -354,7 +356,8 @@ ScalarProblem<dim>::compute_averages()
 {
    FEValues<dim> fe_values(fe, cell_quadrature,
                            update_JxW_values);
-   std::vector<types::global_dof_index> dof_indices(fe.dofs_per_cell);
+   const unsigned int   dofs_per_cell = fe.dofs_per_cell;
+   std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
@@ -362,7 +365,7 @@ ScalarProblem<dim>::compute_averages()
       cell->get_dof_indices(dof_indices);
       double integral = 0.0;
       double measure = 0.0;
-      for(unsigned int q = 0; q < fe.dofs_per_cell; ++q)
+      for(unsigned int q = 0; q < dofs_per_cell; ++q)
       {
          integral += solution(dof_indices[q]) * fe_values.JxW(q);
          measure += fe_values.JxW(q);
@@ -497,7 +500,8 @@ ScalarProblem<dim>::compute_dt()
    for(auto &cell : dof_handler.active_cell_iterators())
    {
       auto c = cell->user_index();
-      double dtcell = cell->measure() / (max_speed(average[c]) + 1.0e-20);
+      double dtcell = cell->measure() 
+                      / (max_speed(average[c], cell->center()) + 1.0e-20);
       dt = std::min(dt, dtcell);
    }
 
@@ -727,7 +731,11 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("test case");
-      param.test_case = TestCaseList[value];
+      auto search = TestCaseList.find(value);
+      if(search != TestCaseList.end())
+         param.test_case = search->second;
+      else
+         AssertThrow(false, ExcMessage("Unknown test case"));
    }
 
    param.cfl = ph.get_double("cfl");
@@ -739,7 +747,11 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("numflux");
-      param.flux_type = FluxTypeList[value];
+      auto search = FluxTypeList.find(value);
+      if(search != FluxTypeList.end())
+         param.flux_type = search->second;
+      else
+         AssertThrow(false, ExcMessage("Unknown flux type"));
    }
 
    {

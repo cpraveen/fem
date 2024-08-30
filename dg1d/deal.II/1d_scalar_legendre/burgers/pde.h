@@ -15,7 +15,7 @@ std::map<std::string, FluxType> FluxTypeList{{"central", FluxType::central},
 // Flux of the PDE model: f(u)
 //------------------------------------------------------------------------------
 double
-physical_flux(const double u)
+physical_flux(const double u, const Point<1>& p = Point<1>(0.0))
 {
    return 0.5 * std::pow(u, 2);
 }
@@ -24,7 +24,7 @@ physical_flux(const double u)
 // Maximum wave speed: |df/du(u)|
 //------------------------------------------------------------------------------
 double
-max_speed(const double u)
+max_speed(const double u, const Point<1>& /*p*/)
 {
    return std::fabs(u);
 }
@@ -33,36 +33,39 @@ max_speed(const double u)
 // Central flux
 //------------------------------------------------------------------------------
 void
-CentralFlux(const double left_state,
-            const double right_state,
-            double&      flux)
+CentralFlux(const double    ul,
+            const double    ur, 
+            const Point<1>& /*p*/,
+            double&         flux)
 {
-   flux = 0.5 * (physical_flux(left_state) + physical_flux(right_state));
+   flux = 0.5 * (physical_flux(ul) + physical_flux(ur));
 }
 
 //------------------------------------------------------------------------------
 // Roe flux
 //------------------------------------------------------------------------------
 void
-RoeFlux(const double left_state,
-        const double right_state,
-        double&      flux)
+RoeFlux(const double    ul,
+        const double    ur,
+        const Point<1>& /*p*/,
+        double&         flux)
 {
-   double speed = 0.5 * (left_state + right_state);
-   flux = 0.5 * (physical_flux(left_state) + physical_flux(right_state))
-          - 0.5 * std::fabs(speed) * (right_state - left_state);
+   double speed = 0.5 * (ul + ur);
+   flux = 0.5 * (physical_flux(ul) + physical_flux(ur))
+          - 0.5 * std::fabs(speed) * (ur - ul);
 }
 
 //------------------------------------------------------------------------------
 // Godunov flux
 //------------------------------------------------------------------------------
 void
-GodunovFlux(const double left_state,
-            const double right_state,
-            double&      flux)
+GodunovFlux(const double    ul,
+            const double    ur,
+            const Point<1>& /*p*/,
+            double&         flux)
 {
-   double u1 = std::max(0.0, left_state);
-   double u2 = std::min(0.0, right_state);
+   double u1 = std::max(0.0, ul);
+   double u2 = std::min(0.0, ur);
    flux = std::max(physical_flux(u1), physical_flux(u2));
 }
 
@@ -70,40 +73,42 @@ GodunovFlux(const double left_state,
 // Rusanov flux
 //------------------------------------------------------------------------------
 void
-RusanovFlux(const double left_state,
-            const double right_state,
-            double&      flux)
+RusanovFlux(const double    ul,
+            const double    ur,
+            const Point<1>& /*p*/,
+            double&         flux)
 {
-   double lambda = std::max(std::fabs(left_state), std::fabs(right_state));
-   flux = 0.5 * (physical_flux(left_state) + physical_flux(right_state))
-          - 0.5 * lambda * (right_state - left_state);
+   double lambda = std::max(std::fabs(ul), std::fabs(ur));
+   flux = 0.5 * (physical_flux(ul) + physical_flux(ur))
+          - 0.5 * lambda * (ur - ul);
 }
 
 //------------------------------------------------------------------------------
 // Compute flux across cell faces
 //------------------------------------------------------------------------------
 void
-numerical_flux(const FluxType flux_type,
-               const double   left_state,
-               const double   right_state,
-               double&        flux)
+numerical_flux(const FluxType  flux_type,
+               const double    ul,
+               const double    ur,
+               const Point<1>& p,
+               double&         flux)
 {
    switch(flux_type)
    {
       case FluxType::central:
-         CentralFlux(left_state, right_state, flux);
+         CentralFlux(ul, ur, p, flux);
          break;
 
       case FluxType::roe:
-         RoeFlux(left_state, right_state, flux);
+         RoeFlux(ul, ur, p, flux);
          break;
 
       case FluxType::godunov:
-         GodunovFlux(left_state, right_state, flux);
+         GodunovFlux(ul, ur, p, flux);
          break;
 
       case FluxType::rusanov:
-         RusanovFlux(left_state, right_state, flux);
+         RusanovFlux(ul, ur, p, flux);
          break;
 
       default:

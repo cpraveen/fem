@@ -120,16 +120,16 @@ private:
    const InitialCondition<dim> initial_condition;
    const Solution<dim>         exact_solution;
 
-   Triangulation<dim>   triangulation;
-   FE_DGP<dim>          fe;
-   DoFHandler<dim>      dof_handler;
-   Vector<double>       solution;
-   Vector<double>       solution_old;
-   Vector<double>       rhs;
-   Vector<double>       imm;
-   Vector<double>       average;
-   std::vector<bool>    troubled_cell;
-   ConvergenceTable     convergence_table;
+   Triangulation<dim>          triangulation;
+   FE_DGP<dim>                 fe;
+   DoFHandler<dim>             dof_handler;
+   Vector<double>              solution;
+   Vector<double>              solution_old;
+   Vector<double>              rhs;
+   Vector<double>              imm;
+   Vector<double>              average;
+   std::vector<bool>           troubled_cell;
+   ConvergenceTable            convergence_table;
 };
 
 //------------------------------------------------------------------------------
@@ -326,6 +326,7 @@ ScalarProblem<dim>::assemble_rhs()
    for(auto & cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
+      cell->get_dof_indices(dof_indices);
 
       // Compute conserved variables at quadrature points
       fe_values.get_function_values(solution,  solution_values);
@@ -334,17 +335,17 @@ ScalarProblem<dim>::assemble_rhs()
       cell_rhs  = 0.0;
       for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
       {
-         double flux = physical_flux(solution_values[q_point]);
+         double flux = physical_flux(solution_values[q_point],
+                                     fe_values.quadrature_point(q_point));
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
          {
             cell_rhs(i) += (fe_values.shape_grad(i, q_point)[0] *
-                            flux*
+                            flux *
                             fe_values.JxW(q_point));
          }
       }
 
       // Add cell residual to rhs
-      cell->get_dof_indices(dof_indices);
       for(unsigned int i = 0; i < dofs_per_cell; ++i)
       {
          auto ig = dof_indices[i];
@@ -362,7 +363,8 @@ ScalarProblem<dim>::assemble_rhs()
       fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
       fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
       double num_flux;
-      numerical_flux(param->flux_type, left_state[0], right_state[0], num_flux);
+      numerical_flux(param->flux_type, left_state[0], right_state[0], 
+                     cell->face(1)->center(), num_flux);
       for(unsigned int i = 0; i < n_face_dofs; ++i)
       {
          auto ig = face_dof_indices[i];
@@ -499,7 +501,8 @@ ScalarProblem<dim>::compute_dt()
    for(auto &cell : dof_handler.active_cell_iterators())
    {
       auto c = cell->user_index();
-      double dtcell = cell->measure() / (max_speed(average[c]) + 1.0e-20);
+      double dtcell = cell->measure() 
+                      / (max_speed(average[c], cell->center()) + 1.0e-20);
       dt = std::min(dt, dtcell);
    }
 
@@ -725,7 +728,11 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("test case");
-      param.test_case = TestCaseList[value];
+      auto search = TestCaseList.find(value);
+      if(search != TestCaseList.end())
+         param.test_case = search->second;
+      else
+         AssertThrow(false, ExcMessage("Unknown test case"));
    }
 
    param.cfl = ph.get_double("cfl");
@@ -737,7 +744,11 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("numflux");
-      param.flux_type = FluxTypeList[value];
+      auto search = FluxTypeList.find(value);
+      if(search != FluxTypeList.end())
+         param.flux_type = search->second;
+      else
+         AssertThrow(false, ExcMessage("Unknown flux type"));
    }
 
    {
