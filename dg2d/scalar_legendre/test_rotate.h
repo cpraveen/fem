@@ -1,14 +1,16 @@
 //------------------------------------------------------------------------------
 // Linear advection with velocity = (-y,x) in [-1,1] x [-1,1].
+// Time period = 2*pi
 //------------------------------------------------------------------------------
 
 #ifndef __TEST_DATA_H__
 #define __TEST_DATA_H__
 
-#define XMIN  (-1.0)
-#define XMAX  (+1.0)
-#define YMIN  (-1.0)
-#define YMAX  (+1.0)
+#define XMIN       (-1.0)
+#define XMAX       (+1.0)
+#define YMIN       (-1.0)
+#define YMAX       (+1.0)
+#define FINAL_TIME (2.0*M_PI)
 
 using namespace dealii;
 
@@ -43,7 +45,7 @@ private:
    const double xmax = XMAX;
    const double ymin = YMIN;
    const double ymax = YMAX;
-   const double alpha = 20.0;
+   const double alpha = 50.0;
    const double x0 = 0.5;
    const double y0 = 0.0;
    const double time;
@@ -60,8 +62,7 @@ Solution<dim>::value(const Point<dim>&    p,
    double x = p[0];
    double y = p[1];
    double r = p.norm();
-   double dtheta = r * time;
-   double theta = atan2(y, x) - dtheta;
+   double theta = atan2(y, x) - time;
    x = r * cos(theta);
    y = r * sin(theta);
 
@@ -83,8 +84,7 @@ Solution<dim>::gradient(const Point<dim>&    p,
    double x = p[0];
    double y = p[1];
    double r = p.norm();
-   double dtheta = r * time;
-   double theta = atan2(y, x) - dtheta;
+   double theta = atan2(y, x) - time;
    x = r * cos(theta);
    y = r * sin(theta);
 
@@ -93,9 +93,12 @@ Solution<dim>::gradient(const Point<dim>&    p,
 
    double f = exp(-alpha*(x*x + y*y));
 
-   Tensor<1,dim> g;
-   g[0] = f * (-2 * alpha * x);
-   g[1] = f * (-2 * alpha * y);
+   Tensor<1,dim> gp, g;
+   gp[0] = f * (-2 * alpha * x);
+   gp[1] = f * (-2 * alpha * y);
+
+   g[0] = cos(time) * gp[0] - sin(time) * gp[1];
+   g[1] = sin(time) * gp[0] + cos(time) * gp[1];
    return g;
 }
 

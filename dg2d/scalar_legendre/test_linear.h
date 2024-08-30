@@ -1,14 +1,16 @@
 //------------------------------------------------------------------------------
 // Linear advection with velocity = (1,1) in [-1,1] x [-1,1] and periodic bc.
+// Time period = 2
 //------------------------------------------------------------------------------
 
 #ifndef __TEST_DATA_H__
 #define __TEST_DATA_H__
 
-#define XMIN  (-1.0)
-#define XMAX  (+1.0)
-#define YMIN  (-1.0)
-#define YMAX  (+1.0)
+#define XMIN       (-1.0)
+#define XMAX       (+1.0)
+#define YMIN       (-1.0)
+#define YMAX       (+1.0)
+#define FINAL_TIME (2.0)
 
 using namespace dealii;
 

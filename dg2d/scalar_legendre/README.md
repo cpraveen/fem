@@ -1,5 +1,12 @@
 # 2d scalar conservation law
 
+There are two test cases available.
+
+* `test_linear.h`: advection along straight line, period = 2
+* `test_rotate.h`: advection along circles, period = 2*pi
+
+Copy one of these files as `test_data.h`.
+
 Create Makefile (this only needs to be done once)
 
 ```shell

@@ -797,7 +797,9 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
    if(param.cfl == 0.0) param.cfl = 0.98 / (2 * param.degree + 1);
    if(param.cfl < 0.0) param.cfl = param.cfl / (2 * param.degree + 1);
 
-   param.final_time = ph.get_double("final time");
+   double final_time = ph.get_double("final time");
+   if(final_time > 0.0)
+      param.final_time = final_time;
    param.Mlim = ph.get_double("tvb parameter");
 
    {
@@ -832,10 +834,11 @@ main(int argc, char** argv)
    ph.print_parameters(std::cout, ParameterHandler::Text);
 
    Parameter param;
-   parse_parameters(ph, param);
-
+   param.final_time = FINAL_TIME;
    param.xmin = XMIN; param.xmax = XMAX;
    param.ymin = YMIN; param.ymax = YMAX;
+   parse_parameters(ph, param);
+
    const auto initial_condition = Solution<2>(0.0);
    const auto exact_solution = Solution<2>(param.final_time);
    ScalarProblem<2> problem(param, initial_condition, exact_solution);
