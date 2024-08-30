@@ -13,6 +13,7 @@ std::map<std::string, FluxType> FluxTypeList{{"central", FluxType::central},
 
 //------------------------------------------------------------------------------
 // Hesthaven DG book: Example 5.3
+// Period = 1.561182113270
 //------------------------------------------------------------------------------
 double speed(const Point<1>& p)
 {
