@@ -1,5 +1,7 @@
 # 1-d linear scalar PDE using DG
 
+This uses Legendre polynomials as basis functions.
+
 To solve constant linear advection equation
 
 ```shell

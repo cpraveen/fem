@@ -694,9 +694,9 @@ declare_parameters(ParameterHandler& prm)
    prm.declare_entry("basis", "gl",
                      Patterns::Selection("gl|gll"),
                      "GL vs GLL points");
-   prm.declare_entry("degree", "0", Patterns::Integer(0, 6),
+   prm.declare_entry("degree", "0", Patterns::Integer(0),
                      "Polynomial degree");
-   prm.declare_entry("ncells", "100", Patterns::Integer(10),
+   prm.declare_entry("ncells", "100", Patterns::Integer(2),
                      "Number of elements");
    prm.declare_entry("nrefine", "1", Patterns::Integer(1, 10),
                      "Number of grid refinements");
