@@ -46,10 +46,10 @@ enum class LimiterType {none, tvd};
 //------------------------------------------------------------------------------
 struct Parameter
 {
+   double       xmin, xmax;
    int          degree;
    double       cfl;
    double       final_time;
-   TestCase     test_case;
    unsigned int n_cells;
    unsigned int n_refine;
    unsigned int output_step;
@@ -92,9 +92,9 @@ template <int dim>
 class ScalarProblem
 {
 public:
-   ScalarProblem(Parameter& param,
-                 const InitialCondition<dim>& initial_condition,
-                 const Solution<dim>&          exact_solution);
+   ScalarProblem(Parameter&           param,
+                 const Function<dim>& initial_condition,
+                 const Function<dim>& exact_solution);
    void run();
 
 private:
@@ -114,11 +114,11 @@ private:
 
    Parameter*           param;
    double               dt;
-   double               xmin, xmax, dx;
+   double               dx;
    unsigned int         n_rk_stages;
 
-   const InitialCondition<dim> initial_condition;
-   const Solution<dim>         exact_solution;
+   const Function<dim>*        initial_condition;
+   const Function<dim>*        exact_solution;
 
    Triangulation<dim>          triangulation;
    FE_DGP<dim>                 fe;
@@ -136,22 +136,19 @@ private:
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim>
-ScalarProblem<dim>::ScalarProblem(Parameter&                   param,
-                                  const InitialCondition<dim>& initial_condition,
-                                  const Solution<dim>&         exact_solution)
+ScalarProblem<dim>::ScalarProblem(Parameter&           param,
+                                  const Function<dim>& initial_condition,
+                                  const Function<dim>& exact_solution)
    :
    param(&param),
-   initial_condition(initial_condition),
-   exact_solution(exact_solution),
+   initial_condition(&initial_condition),
+   exact_solution(&exact_solution),
    fe(param.degree),
    dof_handler(triangulation)
 {
    AssertThrow(dim == 1, ExcIndexRange(dim, 0, 1));
 
    n_rk_stages = 3;
-
-   xmin = initial_condition.xmin;
-   xmax = initial_condition.xmax;
 }
 
 //------------------------------------------------------------------------------
@@ -164,7 +161,8 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    if(step == 0)
    {
       std::cout << "Making initial grid ...\n";
-      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, xmin, xmax);
+      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
+                                           param->xmin, param->xmax);
       typedef typename Triangulation<dim>::cell_iterator Iter;
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
       GridTools::collect_periodic_faces(triangulation,
@@ -178,7 +176,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    {
       triangulation.refine_global(1);
    }
-   dx = (xmax - xmin) / triangulation.n_active_cells();
+   dx = (param->xmax - param->xmin) / triangulation.n_active_cells();
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
@@ -276,7 +274,7 @@ ScalarProblem<dim>::initialize()
       for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
       {
          // Get primitive variable at quadrature point
-         double initial_value = initial_condition.value(fe_values.quadrature_point(q_point));
+         double initial_value = initial_condition->value(fe_values.quadrature_point(q_point));
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
          {
             cell_rhs(i) += fe_values.shape_value(i, q_point) *
@@ -617,7 +615,7 @@ ScalarProblem<dim>::process_solution(unsigned int step)
    Vector<double> difference_per_cell(triangulation.n_active_cells());
    VectorTools::integrate_difference(dof_handler,
                                      solution,
-                                     exact_solution,
+                                     *exact_solution,
                                      difference_per_cell,
                                      QGauss<dim>(2 * fe.degree + 1),
                                      VectorTools::L2_norm);
@@ -626,7 +624,7 @@ ScalarProblem<dim>::process_solution(unsigned int step)
    // compute error in gradient
    VectorTools::integrate_difference(dof_handler,
                                      solution,
-                                     exact_solution,
+                                     *exact_solution,
                                      difference_per_cell,
                                      QGauss<dim>(2 * fe.degree + 1),
                                      VectorTools::H1_norm);
@@ -725,21 +723,6 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
    param.n_cells = ph.get_integer("ncells");
    param.n_refine = ph.get_integer("nrefine");
    param.output_step = ph.get_integer("output step");
-
-   {
-      std::string value = ph.get("test case");
-      auto search = TestCaseList.find(value);
-      if(search != TestCaseList.end())
-         param.test_case = search->second;
-      else
-      {
-         std::cout << "Available test cases\n";
-         for(const auto& v : TestCaseList)
-            std::cout << v.first << std::endl;
-         AssertThrow(false, ExcMessage("Unknown test case"));
-      }
-   }
-
    param.cfl = ph.get_double("cfl");
    if(param.cfl == 0.0) param.cfl = 0.98 / (2 * param.degree + 1);
    if(param.cfl < 0.0) param.cfl = param.cfl / (2 * param.degree + 1);
@@ -790,8 +773,11 @@ main(int argc, char** argv)
    Parameter param;
    parse_parameters(ph, param);
 
-   const auto initial_condition = InitialCondition<1>(param.test_case);
-   const auto exact_solution = Solution<1>(param.test_case, param.final_time);
+   auto test_case = get_test_case(ph.get("test case"));
+   const InitialCondition<1> initial_condition(test_case);
+   const Solution<1> exact_solution(test_case, param.final_time);
+   param.xmin = initial_condition.xmin;
+   param.xmax = initial_condition.xmax;
    ScalarProblem<1> problem(param, initial_condition, exact_solution);
    problem.run();
 

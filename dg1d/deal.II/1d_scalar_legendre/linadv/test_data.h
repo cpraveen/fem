@@ -6,6 +6,22 @@ std::map<std::string, TestCase> TestCaseList{{"sine",   TestCase::sine},
                                              {"hat",    TestCase::hat},
                                              {"trihat", TestCase::trihat},
                                              {"exp",    TestCase::exp}};
+
+//------------------------------------------------------------------------------
+TestCase get_test_case(std::string value)
+{
+   auto search = TestCaseList.find(value);
+   if (search != TestCaseList.end())
+      return search->second;
+   else
+   {
+      std::cout << "Available test cases\n";
+      for (const auto &v : TestCaseList)
+         std::cout << v.first << std::endl;
+      AssertThrow(false, ExcMessage("Unknown test case"));
+   }
+}
+
 //------------------------------------------------------------------------------
 // Initial condition
 //------------------------------------------------------------------------------
