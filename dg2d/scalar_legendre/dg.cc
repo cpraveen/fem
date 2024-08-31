@@ -60,6 +60,7 @@ struct Parameter
    LimiterType  limiter_type;
    double       Mlim;
    FluxType     flux_type;
+   bool         periodic;
 };
 
 //------------------------------------------------------------------------------
@@ -178,9 +179,10 @@ template <int dim>
 class ScalarProblem
 {
 public:
-   ScalarProblem(Parameter&           param,
-                 const Function<dim>& initial_condition,
-                 const Function<dim>& exact_solution);
+   ScalarProblem(Parameter&     param,
+                 Function<dim>& initial_condition,
+                 Function<dim>& boundary_condition,
+                 Function<dim>& exact_solution);
    void run();
 
 private:
@@ -202,6 +204,12 @@ private:
                     CopyData &copy_data);
 
    template <class Iterator>
+   void boundary_worker(const Iterator &cell,
+                        const unsigned int &f,
+                        ScratchData<dim> &scratch_data,
+                        CopyData &copy_data);
+
+   template <class Iterator>
    void face_worker(const Iterator &cell,
                     const unsigned int &f,
                     const unsigned int &sf,
@@ -212,11 +220,12 @@ private:
                     CopyData &copy_data);
 
    Parameter*           param;
-   double               dt;
+   double               time, stage_time, dt;
    unsigned int         n_rk_stages;
 
-   const Function<dim>*  initial_condition;
-   const Function<dim>*  exact_solution;
+   Function<dim>*       initial_condition;
+   Function<dim>*       boundary_condition;
+   Function<dim>*       exact_solution;
 
    Triangulation<dim>   triangulation;
    FE_DGP<dim>          fe;
@@ -234,12 +243,14 @@ private:
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim>
-ScalarProblem<dim>::ScalarProblem(Parameter&           param,
-                                  const Function<dim>& initial_condition,
-                                  const Function<dim>& exact_solution)
+ScalarProblem<dim>::ScalarProblem(Parameter&     param,
+                                  Function<dim>& initial_condition,
+                                  Function<dim>& boundary_condition,
+                                  Function<dim>& exact_solution)
    :
    param(&param),
    initial_condition(&initial_condition),
+   boundary_condition(&boundary_condition),
    exact_solution(&exact_solution),
    fe(param.degree),
    dof_handler(triangulation)
@@ -259,19 +270,22 @@ ScalarProblem<dim>::make_grid_and_dofs()
    std::cout << "Making initial grid ...\n";
    GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
                                         param->xmin, param->xmax, true);
-   typedef typename Triangulation<dim>::cell_iterator Iter;
-   std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
-   GridTools::collect_periodic_faces(triangulation,
-                                     0,
-                                     1,
-                                     0,
-                                     periodicity_vector);
-   GridTools::collect_periodic_faces(triangulation,
-                                     2,
-                                     3,
-                                     1,
-                                     periodicity_vector);
-   triangulation.add_periodicity(periodicity_vector);
+   if(param->periodic)
+   {
+      typedef typename Triangulation<dim>::cell_iterator Iter;
+      std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
+      GridTools::collect_periodic_faces(triangulation,
+                                       0,
+                                       1,
+                                       0,
+                                       periodicity_vector);
+      GridTools::collect_periodic_faces(triangulation,
+                                       2,
+                                       3,
+                                       1,
+                                       periodicity_vector);
+      triangulation.add_periodicity(periodicity_vector);
+   }
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
@@ -476,6 +490,46 @@ void ScalarProblem<dim>::face_worker(const Iterator &cell,
 }
 
 //------------------------------------------------------------------------------
+template <int dim>
+template <class Iterator>
+void ScalarProblem<dim>::boundary_worker(const Iterator &cell,
+                                         const unsigned int &f,
+                                         ScratchData<dim> &scratch_data,
+                                         CopyData &copy_data)
+{
+   scratch_data.fe_interface_values.reinit(cell, f);
+   const auto &fe_face_values 
+      = scratch_data.fe_interface_values.get_fe_face_values(0);
+
+   const unsigned int n_face_dofs = fe_face_values.get_fe().n_dofs_per_cell();
+   const unsigned int n_q_points = fe_face_values.get_quadrature().size();
+   const auto &q_points = fe_face_values.get_quadrature_points();
+
+   auto &left_state = scratch_data.left_state;
+   auto &right_state = scratch_data.right_state;
+   fe_face_values.get_function_values(solution, left_state);
+   boundary_condition->value_list(q_points, right_state);
+   auto &cell_rhs = copy_data.cell_rhs;
+
+   for (unsigned int q = 0; q < n_q_points; ++q)
+   {
+      double num_flux;
+      numerical_flux(param->flux_type,
+                     left_state[q],
+                     right_state[q],
+                     q_points[q],
+                     fe_face_values.normal_vector(q),
+                     num_flux);
+      for (unsigned int i = 0; i < n_face_dofs; ++i)
+      {
+         cell_rhs(i) += -num_flux *
+                         fe_face_values.shape_value(i, q) *
+                         fe_face_values.JxW(q);
+      }
+   }
+}
+
+//------------------------------------------------------------------------------
 // Assemble system rhs
 //------------------------------------------------------------------------------
 template <int dim>
@@ -496,13 +550,22 @@ ScalarProblem<dim>::assemble_rhs()
        [&](const Iterator &cell,
            const unsigned int f,
            const unsigned int sf,
-           const typename DoFHandler<dim>::active_cell_iterator &ncell,
+           const Iterator &ncell,
            const unsigned int nf,
            const unsigned int nsf,
            ScratchData<dim> &scratch_data,
            CopyData &copy_data)
    {
       this->face_worker(cell, f, sf, ncell, nf, nsf, scratch_data, copy_data);
+   };
+
+   auto boundary_worker =
+       [&](const Iterator &cell,
+           const unsigned int f,
+           ScratchData<dim> &scratch_data,
+           CopyData &copy_data)
+   {
+      this->boundary_worker(cell, f, scratch_data, copy_data);
    };
 
    auto copier = [&](const CopyData &cd)
@@ -527,6 +590,7 @@ ScalarProblem<dim>::assemble_rhs()
                                  cell_quadrature,
                                  face_quadrature);
 
+   boundary_condition->set_time(stage_time);
    rhs = 0.0;
    MeshWorker::mesh_loop(dof_handler.begin_active(),
                          dof_handler.end(),
@@ -535,8 +599,9 @@ ScalarProblem<dim>::assemble_rhs()
                          scratch_data,
                          CopyData(),
                          MeshWorker::assemble_own_cells |
+                         MeshWorker::assemble_boundary_faces |
                          MeshWorker::assemble_own_interior_faces_once,
-                         nullptr,
+                         boundary_worker,
                          face_worker);
 
    // Multiply by inverse mass matrix
@@ -650,8 +715,10 @@ ScalarProblem<dim>::update(const unsigned int rk_stage)
    for(unsigned int i = 0; i < dof_handler.n_dofs(); ++i)
    {
       solution(i)  = a_rk[rk_stage] * solution_old(i) +
-                     b_rk[rk_stage] * (solution(i) + dt* rhs(i));
+                     b_rk[rk_stage] * (solution(i) + dt * rhs(i));
    }
+
+   stage_time = a_rk[rk_stage] * time + b_rk[rk_stage] * (stage_time + dt);
 }
 
 //------------------------------------------------------------------------------
@@ -693,12 +760,13 @@ ScalarProblem<dim>::run()
    compute_averages();
    output_results(0.0);
 
-   double time = 0.0;
+   time = 0.0;
    unsigned int iter = 0;
 
    while(time < param->final_time)
    {
       solution_old  = solution;
+      stage_time = time;
 
       compute_dt();
       if(time + dt > param->final_time) dt = param->final_time - time;
@@ -786,6 +854,9 @@ declare_parameters(ParameterHandler& prm)
                      "Numerical flux");
    prm.declare_entry("tvb parameter", "0.0", Patterns::Double(0),
                      "TVB parameter");
+   prm.declare_entry("periodic", "true",
+                     Patterns::Bool(),
+                     "Periodic boundaries");
 }
 
 //------------------------------------------------------------------------------
@@ -843,9 +914,13 @@ main(int argc, char** argv)
    param.ymin = YMIN; param.ymax = YMAX;
    parse_parameters(ph, param);
 
-   const auto initial_condition = Solution<2>(0.0);
-   const auto exact_solution = Solution<2>(param.final_time);
-   ScalarProblem<2> problem(param, initial_condition, exact_solution);
+   auto initial_condition = Solution<2>(0.0);
+   auto boundary_condition = Functions::ZeroFunction<2>();
+   auto exact_solution = Solution<2>(param.final_time);
+   ScalarProblem<2> problem(param, 
+                            initial_condition, 
+                            boundary_condition, 
+                            exact_solution);
    problem.run();
 
    return 0;
