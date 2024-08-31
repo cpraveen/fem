@@ -114,7 +114,7 @@ private:
    void process_solution(unsigned int step);
 
    Parameter*           param;
-   double               dt;
+   double               time, stage_time, dt;
    double               xmin, xmax, dx;
    unsigned int         n_rk_stages;
 
@@ -517,6 +517,8 @@ ScalarProblem<dim>::update(const unsigned int rk_stage)
       solution(i)  = a_rk[rk_stage] * solution_old(i) +
                      b_rk[rk_stage] * (solution(i) + dt* rhs(i));
    }
+
+   stage_time = a_rk[rk_stage] * time + b_rk[rk_stage] * (stage_time + dt);
 }
 
 //------------------------------------------------------------------------------
@@ -574,12 +576,13 @@ ScalarProblem<dim>::solve()
    compute_averages();
    output_results(0.0);
 
-   double time = 0.0;
+   time = 0.0;
    unsigned int iter = 0;
 
    while(time < param->final_time)
    {
       solution_old  = solution;
+      stage_time = time;
 
       compute_dt();
       if(time + dt > param->final_time) dt = param->final_time - time;
