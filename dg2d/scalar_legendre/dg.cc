@@ -268,8 +268,11 @@ void
 ScalarProblem<dim>::make_grid_and_dofs()
 {
    std::cout << "Making initial grid ...\n";
-   GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
-                                        param->xmin, param->xmax, true);
+   const Point<dim> p1(param->xmin, param->ymin);
+   const Point<dim> p2(param->xmax, param->ymax);
+   std::vector<unsigned int> ncells2d({param->n_cells,param->n_cells});
+   GridGenerator::subdivided_hyper_rectangle(triangulation, ncells2d,
+                                             p1, p2, true);
    if(param->periodic)
    {
       typedef typename Triangulation<dim>::cell_iterator Iter;
@@ -909,10 +912,12 @@ main(int argc, char** argv)
    ph.print_parameters(std::cout, ParameterHandler::Text);
 
    Parameter param;
-   param.final_time = FINAL_TIME;
+   param.final_time = FINAL_TIME; // override this in input file
+   parse_parameters(ph, param);
+
+   // xmin,xmax,... are not in input file, they are set here using test_data.h
    param.xmin = XMIN; param.xmax = XMAX;
    param.ymin = YMIN; param.ymax = YMAX;
-   parse_parameters(ph, param);
 
    auto initial_condition = Solution<2>();
    auto boundary_condition = Functions::ZeroFunction<2>();

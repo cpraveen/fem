@@ -39,7 +39,6 @@ Now solve the rotating problem in one quarter domain with boundary conditions. M
 ```c++
    param.xmin = 0.0; param.xmax = XMAX;
    param.ymin = 0.0; param.ymax = YMAX;
-   parse_parameters(ph, param);
 
    param.final_time = 0.5 * M_PI;
    param.periodic = false;
