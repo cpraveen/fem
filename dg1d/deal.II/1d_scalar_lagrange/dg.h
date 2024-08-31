@@ -28,7 +28,6 @@
 #include <iostream>
 
 #include "pde.h"
-#include "test_data.h"
 
 #define sign(a)   (((a) > 0.0) ? 1 : -1)
 
@@ -47,6 +46,7 @@ enum class LimiterType {none, tvd};
 struct Parameter
 {
    double       xmin, xmax;
+   std::string  basis;
    int          degree;
    double       cfl;
    double       final_time;
@@ -93,6 +93,7 @@ class ScalarProblem
 {
 public:
    ScalarProblem(Parameter&           param,
+                 Quadrature<1>&       quadrature_1d,
                  const Function<dim>& initial_condition,
                  const Function<dim>& exact_solution);
    void run();
@@ -114,14 +115,15 @@ private:
 
    Parameter*           param;
    double               dt;
-   double               dx;
+   double               xmin, xmax, dx;
    unsigned int         n_rk_stages;
 
+   const Quadrature<dim>       cell_quadrature;
    const Function<dim>*        initial_condition;
    const Function<dim>*        exact_solution;
 
    Triangulation<dim>          triangulation;
-   FE_DGP<dim>                 fe;
+   FE_DGQArbitraryNodes<dim>   fe;
    DoFHandler<dim>             dof_handler;
    Vector<double>              solution;
    Vector<double>              solution_old;
@@ -137,13 +139,15 @@ private:
 //------------------------------------------------------------------------------
 template <int dim>
 ScalarProblem<dim>::ScalarProblem(Parameter&           param,
+                                  Quadrature<1>&       quadrature_1d,
                                   const Function<dim>& initial_condition,
                                   const Function<dim>& exact_solution)
    :
    param(&param),
+   cell_quadrature(quadrature_1d),
    initial_condition(&initial_condition),
    exact_solution(&exact_solution),
-   fe(param.degree),
+   fe(quadrature_1d),
    dof_handler(triangulation)
 {
    AssertThrow(dim == 1, ExcIndexRange(dim, 0, 1));
@@ -161,8 +165,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    if(step == 0)
    {
       std::cout << "Making initial grid ...\n";
-      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
-                                           param->xmin, param->xmax);
+      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, xmin, xmax);
       typedef typename Triangulation<dim>::cell_iterator Iter;
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
       GridTools::collect_periodic_faces(triangulation,
@@ -176,7 +179,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    {
       triangulation.refine_global(1);
    }
-   dx = (param->xmax - param->xmin) / triangulation.n_active_cells();
+   dx = (xmax - xmin) / triangulation.n_active_cells();
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
@@ -217,31 +220,17 @@ ScalarProblem<dim>::assemble_mass_matrix()
    std::cout << "Constructing mass matrix ...\n";
    std::cout << "  Quadrature using " << fe.degree + 1 << " points\n";
 
-   QGauss<dim>  quadrature_formula(fe.degree + 1);
-   FEValues<dim> fe_values(fe, quadrature_formula,
-                           update_values | update_JxW_values);
-   const unsigned int   dofs_per_cell = fe.dofs_per_cell;
-   const unsigned int   n_q_points    = quadrature_formula.size();
-   Vector<double>   cell_matrix(dofs_per_cell);
-   std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
-
-   imm = 0.0;
+   FEValues<dim> fe_values(fe, cell_quadrature,
+                           update_JxW_values);
+   std::vector<types::global_dof_index> dof_indices(fe.dofs_per_cell);
 
    // Cell iterator
    for(auto & cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
-      cell_matrix = 0.0;
-
-      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-         for(unsigned int i = 0; i < dofs_per_cell; ++i)
-            cell_matrix(i) += fe_values.shape_value(i, q_point) *
-                              fe_values.shape_value(i, q_point) *
-                              fe_values.JxW(q_point);
-
       cell->get_dof_indices(dof_indices);
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         imm[dof_indices[i]] = 1.0 / cell_matrix(i);
+      for(unsigned int i = 0; i < fe.dofs_per_cell; ++i)
+         imm[dof_indices[i]] = 1.0 / fe_values.JxW(i);
    }
 }
 
@@ -253,43 +242,22 @@ template <int dim>
 void
 ScalarProblem<dim>::initialize()
 {
-   std::cout << "Projecting initial condition ...\n";
+   std::cout << "Interpolate initial condition ...\n";
 
-   QGauss<dim>  quadrature_formula(2 * fe.degree + 1);
-   FEValues<dim> fe_values(fe, quadrature_formula,
-                           update_values   |
-                           update_quadrature_points |
-                           update_JxW_values);
+   FEValues<dim> fe_values(fe, cell_quadrature,
+                           update_quadrature_points);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
-   const unsigned int   n_q_points    = quadrature_formula.size();
-   Vector<double>       cell_rhs(dofs_per_cell);
+   const unsigned int   n_q_points    = cell_quadrature.size();
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
       fe_values.reinit(cell);
-      cell_rhs  = 0.0;
-
-      // integral over cell
-      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-      {
-         // Get primitive variable at quadrature point
-         double initial_value = initial_condition->value(fe_values.quadrature_point(q_point));
-         for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         {
-            cell_rhs(i) += fe_values.shape_value(i, q_point) *
-                           initial_value *
-                           fe_values.JxW(q_point);
-         }
-      }
-
-      // Multiply by inverse mass matrix and add to rhs
       cell->get_dof_indices(dof_indices);
-      unsigned int ig;
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
+      for(unsigned int q = 0; q < n_q_points; ++q)
       {
-         ig = dof_indices[i];
-         solution(ig) = imm(ig) * cell_rhs(i);
+         double initial_value = initial_condition->value(fe_values.quadrature_point(q));
+         solution(dof_indices[q]) = initial_value;
       }
    }
 
@@ -302,13 +270,12 @@ template <int dim>
 void
 ScalarProblem<dim>::assemble_rhs()
 {
-   QGauss<dim>  quadrature_formula(fe.degree + 1);
-   FEValues<dim> fe_values(fe, quadrature_formula,
-                           update_values   | update_gradients |
+   FEValues<dim> fe_values(fe, cell_quadrature,
+                           update_gradients |
                            update_quadrature_points |
                            update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
-   const unsigned int   n_q_points    = quadrature_formula.size();
+   const unsigned int   n_q_points    = cell_quadrature.size();
    std::vector<double>  solution_values(n_q_points);
 
    // for getting neighbor cell solution using trapezoidal rule
@@ -327,7 +294,8 @@ ScalarProblem<dim>::assemble_rhs()
       cell->get_dof_indices(dof_indices);
 
       // Compute conserved variables at quadrature points
-      fe_values.get_function_values(solution,  solution_values);
+      for(unsigned int i = 0; i < dofs_per_cell; ++i)
+         solution_values[i] = solution(dof_indices[i]);
 
       // Flux integral over cell
       cell_rhs  = 0.0;
@@ -382,13 +350,23 @@ template <int dim>
 void
 ScalarProblem<dim>::compute_averages()
 {
+   FEValues<dim> fe_values(fe, cell_quadrature,
+                           update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
+      fe_values.reinit(cell);
       cell->get_dof_indices(dof_indices);
-      average[cell->user_index()] = solution(dof_indices[0]);
+      double integral = 0.0;
+      double measure = 0.0;
+      for(unsigned int q = 0; q < dofs_per_cell; ++q)
+      {
+         integral += solution(dof_indices[q]) * fe_values.JxW(q);
+         measure += fe_values.JxW(q);
+      }
+      average[cell->user_index()] = integral / measure;
    }
 }
 
@@ -399,6 +377,7 @@ template <int dim>
 void
 ScalarProblem<dim>::mark_troubled_cells()
 {
+   AssertThrow(false, ExcNotImplemented());
    const double EPS = 1.0e-14;
    QTrapezoid<dim>  quadrature_formula;
    FEValues<dim> fe_values(fe, quadrature_formula, update_values);
@@ -449,29 +428,47 @@ ScalarProblem<dim>::apply_TVD_limiter()
 {
    if(fe.degree == 0) return;
 
+   const double EPS = 1.0e-6;
+   QTrapezoid<dim> quadrature_formula;
+   FEValues<dim> fe_values(fe, quadrature_formula, update_values);
+   std::vector<double> face_values(2), limited_face_values(2);
+
    const double Mh2 = param->Mlim * dx * dx;
-   const double sqrt_3 = std::sqrt(3.0);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
+   const auto xi = fe.get_unit_support_points();
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
+      fe_values.reinit(cell);
+      fe_values.get_function_values(solution, face_values);
+
       auto c  = cell->user_index();
       auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
       auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
-      cell->get_dof_indices(dof_indices);
 
-      double db = average[c]  - average[cl];
+      double db = average[c] - average[cl];
       double df = average[cr] - average[c];
 
-      double Dx = solution(dof_indices[1]);
-      double Dx_new = minmod(sqrt_3* Dx, db, df, Mh2) / sqrt_3;
+      double DF = face_values[1] - average[c];
+      double DB = average[c] - face_values[0];
 
-      if(std::fabs(Dx - Dx_new) > 1.0e-6)
+      double dl = minmod(DB, db, df, Mh2);
+      double dr = minmod(DF, db, df, Mh2);
+
+      limited_face_values[0] = average[c] - dl;
+      limited_face_values[1] = average[c] + dr;
+      bool c0 = std::fabs(limited_face_values[0] - face_values[0]) 
+                          > EPS * std::fabs(face_values[0]);
+      bool c1 = std::fabs(limited_face_values[1] - face_values[1]) 
+                          > EPS * std::fabs(face_values[1]);
+
+      if(c0 || c1)
       {
-         solution(dof_indices[1]) = Dx_new;
-         for(unsigned int i = 2; i < dofs_per_cell; ++i)
-            solution(dof_indices[i]) = 0;
+         double Dx = 0.5 * ( dl + dr); // limited average slope
+         cell->get_dof_indices(dof_indices);
+         for(unsigned int i=0; i<fe.dofs_per_cell; ++i)
+            solution(dof_indices[i]) = average[c] + (xi[i][0] - 0.5) * Dx;
       }
    }
 }
@@ -690,6 +687,9 @@ ScalarProblem<dim>::run()
 void
 declare_parameters(ParameterHandler& prm)
 {
+   prm.declare_entry("basis", "gl",
+                     Patterns::Selection("gl|gll"),
+                     "GL vs GLL points");
    prm.declare_entry("degree", "0", Patterns::Integer(0),
                      "Polynomial degree");
    prm.declare_entry("ncells", "100", Patterns::Integer(2),
@@ -719,6 +719,7 @@ declare_parameters(ParameterHandler& prm)
 void
 parse_parameters(const ParameterHandler& ph, Parameter& param)
 {
+   param.basis = ph.get("basis");
    param.degree = ph.get_integer("degree");
    param.n_cells = ph.get_integer("ncells");
    param.n_refine = ph.get_integer("nrefine");
@@ -750,36 +751,4 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
       else if (value == "tvd") param.limiter_type = LimiterType::tvd;
       else AssertThrow(false, ExcMessage("Unknown limiter"));
    }
-}
-
-//------------------------------------------------------------------------------
-// Main function
-//------------------------------------------------------------------------------
-int
-main(int argc, char** argv)
-{
-   ParameterHandler ph;
-   declare_parameters(ph);
-   if(argc < 2)
-   {
-      std::cout << "Specify input parameter file\n";
-      std::cout << "It should contain following parameters.\n\n";
-      ph.print_parameters(std::cout, ParameterHandler::Text);
-      return 0;
-   }
-   ph.parse_input(argv[1]);
-   ph.print_parameters(std::cout, ParameterHandler::Text);
-
-   Parameter param;
-   parse_parameters(ph, param);
-
-   auto test_case = get_test_case(ph.get("test case"));
-   const InitialCondition<1> initial_condition(test_case);
-   const Solution<1> exact_solution(test_case, param.final_time);
-   param.xmin = initial_condition.xmin;
-   param.xmax = initial_condition.xmax;
-   ScalarProblem<1> problem(param, initial_condition, exact_solution);
-   problem.run();
-
-   return 0;
 }

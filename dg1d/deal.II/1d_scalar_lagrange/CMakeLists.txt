@@ -1,5 +1,5 @@
 # Set the name of the project and target:
-set(TARGET "dg")
+set(TARGET "main")
 
 # Declare all source files the target consists of. Here, this is only
 # the one step-X.cc file, but as you expand your project you may wish
@@ -11,7 +11,7 @@ set(TARGET "dg")
 # or switch altogether to the large project CMakeLists.txt file discussed
 # in the "CMake in user projects" page accessible from the "User info"
 # page of the documentation.
-set(TARGET_SRC ${TARGET}.cc pde.h test_data.h)
+set(TARGET_SRC ${TARGET}.cc dg.h pde.h test_data.h)
 
 # Usually, you will not need to modify anything beyond this point...
 
