@@ -514,12 +514,11 @@ void ScalarProblem<dim>::boundary_worker(const Iterator &cell,
    for (unsigned int q = 0; q < n_q_points; ++q)
    {
       double num_flux;
-      numerical_flux(param->flux_type,
-                     left_state[q],
-                     right_state[q],
-                     q_points[q],
-                     fe_face_values.normal_vector(q),
-                     num_flux);
+      UpwindFlux(left_state[q],
+                 right_state[q],
+                 q_points[q],
+                 fe_face_values.normal_vector(q),
+                 num_flux);
       for (unsigned int i = 0; i < n_face_dofs; ++i)
       {
          cell_rhs(i) += -num_flux *
@@ -798,6 +797,7 @@ void
 ScalarProblem<dim>::process_solution()
 {
    const double area = (param->xmax - param->xmin) * (param->ymax - param->ymin);
+   exact_solution->set_time(time);
 
    // compute error in solution
    Vector<double> difference_per_cell(triangulation.n_active_cells());

@@ -30,12 +30,7 @@ template <int dim>
 class Solution : public Function<dim>
 {
 public:
-   Solution(double time)
-      :
-      Function<dim>(),
-      time(time)
-   {}
-
+   Solution() = default;
    double value(const Point<dim>&    p,
                 const unsigned int  component = 0) const override;
    Tensor<1, dim> gradient(const Point<dim>&    p,
@@ -48,7 +43,6 @@ private:
    const double alpha = 50.0;
    const double x0 = 0.5;
    const double y0 = 0.0;
-   const double time;
 };
 
 //------------------------------------------------------------------------------
@@ -59,6 +53,7 @@ double
 Solution<dim>::value(const Point<dim>&    p,
                      const unsigned int) const
 {
+   double time = this->get_time();
    double x = p[0];
    double y = p[1];
    double r = p.norm();
@@ -81,6 +76,7 @@ Tensor<1, dim>
 Solution<dim>::gradient(const Point<dim>&    p,
                         const unsigned int) const
 {
+   double time = this->get_time();
    double x = p[0];
    double y = p[1];
    double r = p.norm();
