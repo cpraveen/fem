@@ -29,7 +29,7 @@
 
 #include "pde.h"
 
-#define sign(a)   (((a) > 0.0) ? 1 : -1)
+#define dsign(a)   (((a) > 0.0) ? 1 : -1)
 
 using namespace dealii;
 
@@ -67,9 +67,9 @@ minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
    double aa = std::fabs(a);
    if(aa < Mh2) return a;
 
-   int sa = sign(a);
-   int sb = sign(b);
-   int sc = sign(c);
+   int sa = dsign(a);
+   int sb = dsign(b);
+   int sc = dsign(c);
 
    double result;
 

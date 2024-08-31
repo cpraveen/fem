@@ -61,15 +61,15 @@ Add include file
 Define functions
 
 ```c++
-const FunctionParser<1> initial_condition("sin(2*pi*x)");
-const FunctionParser<1> exact_solution("sin(2*pi*(x-t)");
+FunctionParser<1> initial_condition("sin(2*pi*x)");
+FunctionParser<1> exact_solution("sin(2*pi*(x-t)");
 exact_solution.set_time(param.final_time);
 param.xmin = 0.0; param.xmax = 1.0;
 ```
 
 The gradient is computed using finite differences, so do not depend on it.
 
-## Using SymbolicFunction
+### Using SymbolicFunction
 
 Add include file
 
@@ -80,8 +80,8 @@ Add include file
 Define functions
 
 ```c++
-const SymbolicFunction<1> initial_condition("sin(2*pi*x)");
-const SymbolicFunction<1> exact_solution("sin(2*pi*(x-t)");
+Functions::SymbolicFunction<1> initial_condition("sin(2*pi*x)");
+Functions::SymbolicFunction<1> exact_solution("sin(2*pi*(x-t)");
 exact_solution.set_time(param.final_time);
 param.xmin = 0.0; param.xmax = 1.0;
 ```
@@ -91,18 +91,26 @@ param.xmin = 0.0; param.xmax = 1.0;
 We need to assemble on boundary faces. We will need `FEFaceValues` to do this.
 
 ```c++
+   FEFaceValues<dim> fe_bface_values(fe,
+                                     Quadrature<dim-1> (Point<dim>(0.0)),
+                                     update_values);
+```
+
+In cell loop, distinguish between boundary and other faces
+
+```c++
 if(cell->face(0)->at_boundary() && periodic == false)
 {
    // assemble boundary flux
-   fe_face_values.reinit(cell, 0);
+   fe_bface_values.reinit(cell, 0);
 }
 else if(cell->face(1)->at_boundary() && periodic == false)
 {
    // assemble boundary flux
-   fe_face_values.reinit(cell, 1);
+   fe_bface_values.reinit(cell, 1);
 }
 else
 {
-   // assemble on right face
+   // assemble on right face, as we already do
 }
 ```
