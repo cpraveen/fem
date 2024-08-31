@@ -914,9 +914,9 @@ main(int argc, char** argv)
    param.ymin = YMIN; param.ymax = YMAX;
    parse_parameters(ph, param);
 
-   auto initial_condition = Solution<2>(0.0);
+   auto initial_condition = Solution<2>();
    auto boundary_condition = Functions::ZeroFunction<2>();
-   auto exact_solution = Solution<2>(param.final_time);
+   auto exact_solution = Solution<2>();
    ScalarProblem<2> problem(param, 
                             initial_condition, 
                             boundary_condition, 
