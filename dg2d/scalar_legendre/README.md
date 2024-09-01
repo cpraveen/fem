@@ -58,3 +58,8 @@ Also try with a time independent boundary condition
 ```
 
 For t > pi/2, we get stationary solution.
+
+### Gamma-shaped domain
+
+1. Make Gamma shaped domain without the lower-right quadrant. You can do this by creating two hyper_rectangle grids and merging them using merge_triangulation. Solve with Dirichlet bc upto time $t=1.5*pi$.
+1. You can also use Gmsh to make the grid, see the file `fem/deal.II/ex06/Gamma.geo`. See how to generate and read the mesh file by studying `ex06` example.
