@@ -28,7 +28,7 @@ rm -f *.vtu
 visit -o sol*.vtu
 ```
 
-## Dirichlet bc: test_rotate.h
+## Exercise: Dirichlet bc, test_rotate.h
 
 Copy `test_rotate.h` as `test_data.h`.
 
@@ -59,7 +59,20 @@ Also try with a time independent boundary condition
 
 For t > pi/2, we get stationary solution.
 
-### Gamma-shaped domain
+## Exercise: Gamma-shaped domain
 
-1. Make Gamma shaped domain without the lower-right quadrant. You can do this by creating two hyper_rectangle grids and merging them using merge_triangulation. Solve with Dirichlet bc upto time $t=1.5*pi$.
+1. Make Gamma shaped domain without the lower-right quadrant. You can do this by creating two hyper_rectangle grids and merging them using merge_triangulation. Solve rotating Gaussian problem with Dirichlet bc upto time $t=1.5*pi$.
 1. You can also use Gmsh to make the grid, see the file `fem/deal.II/ex06/Gamma.geo`. See how to generate and read the mesh file by studying `ex06` example.
+
+## Exercise: Locally refined grid
+
+Refine the initial grid along the path taken by the gaussian pulse. Here is an example code to do the refinement
+
+```c++
+for(auto &cell : triangulation.active_cell_iterators())
+{
+   double r = cell->center().norm();
+   if(0.25 < r && r < 0.75) cell->set_refine_flag();
+}
+triangulation.execute_coarsening_and_refinement();
+```
