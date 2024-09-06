@@ -55,9 +55,20 @@ Also try with a time independent boundary condition
 #include <deal.II/base/function_parser.h>
 
    auto boundary_condition = FunctionParser<2>("exp(-50*((x-0.5)^2 + y^2))");
+   auto exact_solution = Functions::ZeroFunction<2>(); // Dummy
 ```
 
 For t > pi/2, we get stationary solution.
+
+Now try with a discontinuous boundary condition
+
+```c++
+   auto initial_condition = Functions::ZeroFunction<2>();
+   auto boundary_condition = FunctionParser<2>("(0.25 < x && x < 0.75)");
+   auto exact_solution = Functions::ZeroFunction<2>(); // Dummy
+```
+
+Or you can implement the exact solution properly.
 
 ## Exercise: Gamma-shaped domain
 
