@@ -8,38 +8,38 @@ Set `grid` in `run` function.
 
 For `grid = 2`, generate grid
 
-```
+```shell
 gmsh -2 annulus.geo
 ```
 
 Compile
 
-```
+```shell
 make release
 make
 ```
 
 Run
 
-```
+```shell
 mpirun -np 4 ./dg
 ```
 
 See solution
 
-```
+```shell
 visit -o solution.visit
 ```
 
 or
 
-```
+```shell
 paraview solution.pvd
 ```
 
 You can save in high order format by setting
 
-```
+```shell
 flags.write_higher_order_cells = true
 ```
 
@@ -49,17 +49,17 @@ but this only works in paraview.
 
 Write a function
 
-```
+```c++
 template <int dim>
 void refine_grid(Triangulation<dim> &triangulation, double r0, double r1)
 {
-
+   // Fill this function
 }
 ```
 
 which refines all cells whose vertices lie between radial distance `r0 <= r <= r1`. After the grid is set up, call this function two times
 
-```
+```c++
 refine_grid(triangulation, 0.25, 0.75);
 refine_grid(triangulation, 0.40, 0.60);
 ```

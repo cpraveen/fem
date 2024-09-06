@@ -91,9 +91,9 @@ public:
    :
    test_case (test_case)
    {};
-   virtual void value_list (const std::vector<Point<dim>> &points,
-                            std::vector<double> &values,
-                            const unsigned int component=0) const;
+   void value_list (const std::vector<Point<dim>> &points,
+                    std::vector<double> &values,
+                    const unsigned int component=0) const override;
 private:
    TestCase test_case;
 };
@@ -101,8 +101,8 @@ private:
 // Computes boundary condition value at a list of boundary points
 template <int dim>
 void InitialCondition<dim>::value_list(const std::vector<Point<dim>> &points,
-                                     std::vector<double> &values,
-                                     const unsigned int) const
+                                       std::vector<double> &values,
+                                       const unsigned int) const
 {
    Assert(values.size()==points.size(),
           ExcDimensionMismatch(values.size(),points.size()));
@@ -147,16 +147,16 @@ class BoundaryValues: public Function<dim>
 {
   public:
     BoundaryValues () {};
-    virtual void value_list (const std::vector<Point<dim>> &points,
-			                    std::vector<double> &values,
-			                    const unsigned int component=0) const;
+    void value_list (const std::vector<Point<dim>> &points,
+			            std::vector<double> &values,
+			            const unsigned int component=0) const override;
 };
 
 // Computes boundary condition value at a list of boundary points
 template <int dim>
 void BoundaryValues<dim>::value_list(const std::vector<Point<dim>> &points,
-				       std::vector<double> &values,
-				       const unsigned int) const
+				                         std::vector<double> &values,
+				                         const unsigned int) const
 {
    Assert(values.size()==points.size(),
           ExcDimensionMismatch(values.size(),points.size()));
