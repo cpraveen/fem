@@ -4,6 +4,12 @@
 > 
 > https://bitbucket.org/cpraveen/deal_ii/src/master/dg/2d_scalar_unsteady_unstr/
 
+This can work on both Cartesian and quad meshes. It can run in parallel using parallel vectors from Petsc or Trilinos. Deal.II must have been compiled with Petsc/Trilinos for this to work.
+
+In this code, we use `MeshWorker::loop` for assembly unlike in some other codes where we used `MeshWorker::mesh_loop`.
+
+## Run the code
+
 Set `grid` in `run` function.
 
 For `grid = 2`, generate grid
@@ -37,13 +43,15 @@ or
 paraview solution.pvd
 ```
 
-You can save in high order format by setting
+You can save the solution in high order format by setting
 
 ```shell
 flags.write_higher_order_cells = true
 ```
 
 but this only works in paraview.
+
+With Visit, you can see the mesh partitions by plotting `Add -> Subset -> domains`.
 
 ## Exercise
 

@@ -335,10 +335,7 @@ Step12<dim>::assemble_mass_matrix()
    mass_matrix = 0;
 
    // Cell iterator
-   typename DoFHandler<dim>::active_cell_iterator
-   cell = dof_handler.begin_active(),
-   endc = dof_handler.end();
-   for(unsigned int c = 0; cell != endc; ++cell, ++c)
+   for(auto &cell : dof_handler.active_cell_iterators())
       if(cell->is_locally_owned())
       {
          fe_values.reinit(cell);
@@ -382,11 +379,7 @@ Step12<dim>::set_initial_condition()
    std::vector<double> cell_vector(dofs_per_cell);
    InitialCondition<dim> initial_condition(test_case);
 
-   typename DoFHandler<dim>::active_cell_iterator
-   cell = dof_handler.begin_active(),
-   endc = dof_handler.end();
-
-   for(; cell != endc; ++cell)
+   for(auto &cell : dof_handler.active_cell_iterators())
       if(cell->is_locally_owned())
       {
          cell->get_dof_indices(local_dof_indices);
@@ -466,10 +459,7 @@ Step12<dim>::compute_dt()
    dt = 1.0e20;
 
    // Cell iterator
-   typename DoFHandler<dim>::active_cell_iterator
-   cell = dof_handler.begin_active(),
-   endc = dof_handler.end();
-   for(; cell != endc; ++cell)
+   for(auto &cell : dof_handler.active_cell_iterators())
    {
       double h = cell->diameter() / std::sqrt(2.0);
       const Point<dim>& cell_center = cell->center();
@@ -516,10 +506,7 @@ Step12<dim>::assemble_rhs(RHSIntegrator<dim>& rhs_integrator)
    // Multiply by inverse mass matrix
    const unsigned int dofs_per_cell = fe.dofs_per_cell;
    std::vector<unsigned int> local_dof_indices(dofs_per_cell);
-   typename DoFHandler<dim>::active_cell_iterator
-   cell = dof_handler.begin_active(),
-   endc = dof_handler.end();
-   for(; cell != endc; ++cell)
+   for(auto &cell : dof_handler.active_cell_iterators())
       if(cell->is_locally_owned())
       {
          cell->get_dof_indices(local_dof_indices);
@@ -639,14 +626,10 @@ Step12<dim>::compute_min_max()
 {
    std::vector<unsigned int> dof_indices(fe.dofs_per_cell);
 
-   typename DoFHandler<dim>::active_cell_iterator
-   cell = dof_handler.begin_active(),
-   endc = dof_handler.end();
-
    sol_min =  1.0e20; sol_max = -1.0e20;
    h_min   =  1.0e20; h_max   = -1.0e20;
 
-   for(; cell != endc; ++cell)
+   for(auto &cell : dof_handler.active_cell_iterators())
       if(cell->is_locally_owned())
       {
          cell->get_dof_indices(dof_indices);
