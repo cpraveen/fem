@@ -1,0 +1,60 @@
+\documentclass[12pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper}                   		% ... or a4paper or a5paper or ... 
+%\geometry{landscape}                		% Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+								% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bm}
+
+\newcommand{\vel}{\bm{v}}
+\newcommand{\dt}{\Delta t}
+\newcommand{\idt}{\frac{1}{\dt}}
+\newcommand{\vtest}{\bm{\phi}}
+\newcommand{\ptest}{\psi}
+
+\newcommand{\ip}[1]{\left( #1 \right)}
+
+\title{Brief Article}
+\author{The Author}
+%\date{}							% Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+\section{Finite element method}
+\subsection{Backward Euler scheme}
+\[
+\frac{\vel^n - \vel^{n-1}}{\dt} + \vel^{n-1} \cdot \nabla \vel^{n} + \nabla p^n = \nu \Delta \vel^n, \qquad \nabla \cdot \vel^n = 0
+\]
+
+\[
+\idt \ip{\vel^n - \vel^{n-1}, \vtest} + \ip{\vel^{n-1} \cdot \nabla \vel^{n}, \vtest} - \ip{p, \nabla\cdot\vtest} + \nu \ip{\nabla\vel^n, \nabla\vtest} = 0
+\]
+
+\[
+- \ip{\nabla \cdot \vel^n, \ptest} = 0
+\]
+
+\[
+\begin{aligned}
+\idt \sum_j \ip{\vtest_i, \vtest_j} v_j^n & + \sum_j \ip{\vel^{n-1} \cdot \nabla \vtest_j, \vtest_i} v_j^n \\
+& - \sum_j \ip{\psi_j, \nabla\cdot\vtest_i} p_j^n + \nu \sum_j \ip{\nabla\vtest_j, \nabla\vtest_i} v_j^n = \idt \sum_j \ip{\vtest_i, \vtest_j} v_j^{n-1}
+\end{aligned}
+\]
+
+\[
+- \sum_j \ip{\nabla \cdot \vtest_j, \ptest_i} v_j^n = 0
+\]
+
+\[
+\begin{bmatrix}
+\idt M + F^{n-1} + A & B \\
+B^\top & 0 \end{bmatrix}
+\begin{bmatrix}
+v^n \\ p^n \end{bmatrix} = \begin{bmatrix}
+\idt M v^{n-1} \\ 0 \end{bmatrix}
+\]
+
+\end{document}  

@@ -1,0 +1,11 @@
+set reference velocity = 1.0
+set reference length = 0.1
+set reynolds no = 100.0
+
+set pressure degree = 1
+set mesh file       = turek.msh
+set linear solver   = umfpack
+
+set time step = 0.01
+set no of iterations = 1000000
+set final time = 40.0
