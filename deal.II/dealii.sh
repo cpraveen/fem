@@ -1,3 +1,4 @@
+# You can change this location to something else if you want.
 DEAL_II_DIR=$HOME/deal.II
 
 cmake \

@@ -35,7 +35,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 
 ## Installing deal.II
 
-The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming `v9.3.3` but change this to the actual version you are using.
+The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming `v9.6.0` but change this to the actual version you are using.
 
 ### Prepare your system
 
@@ -51,6 +51,30 @@ We need `cmake` to generate makefiles and we also use `wget` below to download s
 ```shell
 sudo apt install gfortran gnuplot cmake wget
 ```
+
+If you want to run parallel codes, or use Petsc/Trilinos, you need an MPI library. Check if you already have MPI
+
+```shell
+which mpirun
+```
+
+If not present, then install openmpi (You can also use mpich)
+
+```shell
+sudo apt install openmpi-bin openmpi-common openmpi-doc
+```
+
+### Automated installation
+
+A bash script that can automate the above installation process is also included. Do the following steps
+
+```shell
+cd $HOME
+wget https://raw.githubusercontent.com/cpraveen/fem/master/deal.II/dealii_basic.sh
+sh ./dealii_basic.sh
+```
+
+This will install deal.II into the directory `$HOME/deal.II`; you can change the location of install directory by editing the bash script.
 
 ### Manual download and install
 
@@ -72,9 +96,9 @@ To compile deal.II, follow these steps. A sample `dealii.sh` script is included 
 
 ```shell
 cd $HOME
-wget https://github.com/dealii/dealii/releases/download/v9.3.3/dealii-9.3.3.tar.gz
-tar zxvf dealii-9.3.3.tar.gz
-cd dealii-9.3.3
+wget https://github.com/dealii/dealii/releases/download/v9.6.0/dealii-9.6.0.tar.gz
+tar zxvf dealii-9.6.0.tar.gz
+cd dealii-9.6.0
 wget https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 mkdir -p build && cd build
 sh ../dealii.sh
@@ -97,33 +121,21 @@ make -j4      # -jN,  N = number of CPU cores on your computer
 make install
 ```
 
-Now you can delete the directory where you compiled and also the source file
+It is good to keep the build files in case you want to re-compile later. Otherwise, you can delete the directory where you compiled and also the source file
 
 ```shell
 cd $HOME
-rm -rf dealii-9.3.3
-rm dealii-9.3.3.tar.gz
+rm -rf dealii-9.6.0
+rm dealii-9.6.0.tar.gz
 ```
 
 Also, download and install the offline documentation by following these steps.
 
 ```shell
 cd $DEAL_II_DIR
-wget https://github.com/dealii/dealii/releases/download/v9.3.3/dealii-9.3.3-offline_documentation.tar.gz
-tar zxvf dealii-9.3.3-offline_documentation.tar.gz
-rm dealii-9.3.3-offline_documentation.tar.gz
+wget https://github.com/dealii/dealii/releases/download/v9.6.0/dealii-9.6.0-offline_documentation.tar.gz
+tar zxvf dealii-9.6.0-offline_documentation.tar.gz
+rm dealii-9.6.0-offline_documentation.tar.gz
 ```
 
 Now you can open `$DEAL_II_DIR/doc/index.html` in your web browser and view the documentation.
-
-## Automated installation
-
-A bash script that can automate the above installation process is also included. Do the following steps
-
-```shell
-cd $HOME
-wget https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii_basic.sh
-sh ./dealii_basic.sh
-```
-
-This will install deal.II into the directory `$HOME/deal.II`; you can change the location of install directory by editing the bash script.

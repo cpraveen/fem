@@ -2,8 +2,13 @@
 These codes are prepared as material for teaching finite element method.
 
 * deal.II: Examples using deal.II library in C++
-* fenics: Examples using Fenics in Python
-* dg1d: A simple 1-D DG code in Python/C for scalar/euler equations
+* fenics: Examples using Fenics in Python (fenics is dead)
+* dolfinx: rewriting fenics codes in dolfinx
+* dg1d: 
+  * python: A simple 1-D DG code in Python scalar/euler equations
+  * c: A simple 1-D DG code euler equations (very old, not well written)
+  * deal.II: well they are in c++
+* dg2d: 2-D codes written in deal.II
 
 ## How to get the code ?
 
