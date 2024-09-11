@@ -71,7 +71,7 @@ A bash script that can automate the above installation process is also included.
 ```shell
 cd $HOME
 wget https://raw.githubusercontent.com/cpraveen/fem/master/deal.II/dealii_basic.sh
-sh ./dealii_basic.sh
+bash ./dealii_basic.sh
 ```
 
 This will install deal.II into the directory `$HOME/deal.II`; you can change the location of install directory by editing the bash script.
@@ -101,7 +101,7 @@ tar zxvf dealii-9.6.0.tar.gz
 cd dealii-9.6.0
 wget https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 mkdir -p build && cd build
-sh ../dealii.sh
+bash ../dealii.sh
 ```
 
 This creates Makefile etc., and the contents of the `build`  directory look something like this
