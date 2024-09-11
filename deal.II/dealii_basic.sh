@@ -1,5 +1,4 @@
-# Exit on error
-set -e
+#!/bin/bash
 
 # Set deal.II version
 V=9.6.0
@@ -17,7 +16,36 @@ NPROC=2
 #http_proxy=http://192.168.1.1:3128
 #https_proxy=$http_proxy
 
-# DONT CHANGE ANYTHING BELOW THIS LINE
+#-------------------------------------------------------------------------------
+# DONT CHANGE ANYTHING BELOW THIS LINE UNLESS YOU ARE AN EXPERT
+#-------------------------------------------------------------------------------
+
+# Exit on error
+set -e
+
+echo "To install with MPI, you need mpicc, mpic++, mpif90"
+read -p "Install with MPI ? (y/n/ctr-c) " MPI
+if [[ "$MPI" == "y" ]]; then
+   if ! command -v  mpicc &> /dev/null
+   then
+      echo "mpicc not found"
+      MPI=n
+   fi
+   if ! command -v  mpic++ &> /dev/null
+   then
+      echo "mpic++ not found"
+      MPI=n
+   fi
+   if ! command -v  mpif90 &> /dev/null
+   then
+      echo "mpif90 not found"
+      MPI=n
+   fi
+   if [[ "$MPI" == "n" ]]; then
+      echo "Missing MPI"
+      exit
+   fi
+fi
 
 mkdir -p $DEAL_II_DIR
 mkdir -p $DEAL_II_DIR/dealii-build
@@ -33,6 +61,7 @@ tar zxvf dealii-${V}.tar.gz > install.log
 cd dealii-${V} && rm -rf build && mkdir -p build && cd build
 echo "==> Run cmake"
 
+if [[ "$MPI" == "n" ]]; then
 # Without MPI
 cmake \
    -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
@@ -43,19 +72,22 @@ cmake \
    -DDEAL_II_COMPONENT_EXAMPLES=ON  \
    -DDEAL_II_COMPILE_EXAMPLES=OFF \
    ..
+fi
 
+if [[ "$MPI" == "y" ]]; then
 # With MPI
-#cmake \
-#   -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
-#   -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
-#   -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
-#   -DDEAL_II_WITH_MPI=ON \
-#   -DCMAKE_C_COMPILER=mpicc  \
-#   -DCMAKE_CXX_COMPILER=mpic++  \
-#   -DCMAKE_Fortran_COMPILER=mpif90  \
-#   -DDEAL_II_COMPONENT_EXAMPLES=ON  \
-#   -DDEAL_II_COMPILE_EXAMPLES=OFF \
-#   ..
+cmake \
+   -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
+   -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
+   -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
+   -DDEAL_II_WITH_MPI=ON \
+   -DCMAKE_C_COMPILER=mpicc  \
+   -DCMAKE_CXX_COMPILER=mpic++  \
+   -DCMAKE_Fortran_COMPILER=mpif90  \
+   -DDEAL_II_COMPONENT_EXAMPLES=ON  \
+   -DDEAL_II_COMPILE_EXAMPLES=OFF \
+   ..
+fi
 
 echo "==> Compiling"
 make -j $NPROC
