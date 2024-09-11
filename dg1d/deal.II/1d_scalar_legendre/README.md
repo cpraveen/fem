@@ -97,7 +97,7 @@ BC   : u(0,t) = sin(-2*pi*t)
 Exact: u(x,t) = sin(2*pi*(x-t))
 ```
 
-We need to assemble flux on boundary faces and we will use upwind flux. We will need `FEFaceValues` to do this. A boundary face has only one neighbor and we can get the `FEFaceValues` from `FEInterfaceValues`.
+We need to assemble flux on boundary faces and we will use upwind flux.
 
 In cell loop, distinguish between boundary and other faces
 
@@ -105,12 +105,10 @@ In cell loop, distinguish between boundary and other faces
 if(cell->face(0)->at_boundary() && periodic == false)
 {
    // assemble left boundary flux
-   auto &fe_bface_values = fe_face_values.get_fe_face_values(0);
 }
 else if(cell->face(1)->at_boundary() && periodic == false)
 {
    // assemble right boundary flux
-   auto &fe_bface_values = fe_face_values.get_fe_face_values(0);
 }
 else
 {

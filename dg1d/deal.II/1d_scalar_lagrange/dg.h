@@ -108,14 +108,13 @@ private:
    void compute_dt();
    void apply_limiter();
    void apply_TVD_limiter();
-   void mark_troubled_cells();
    void update(const unsigned int rk_stage);
    void output_results(const double time) const;
    void process_solution(unsigned int step);
 
    Parameter*           param;
    double               time, stage_time, dt;
-   double               xmin, xmax, dx;
+   double               dx;
    unsigned int         n_rk_stages;
 
    const Quadrature<dim>       cell_quadrature;
@@ -130,7 +129,6 @@ private:
    Vector<double>              rhs;
    Vector<double>              imm;
    Vector<double>              average;
-   std::vector<bool>           troubled_cell;
    ConvergenceTable            convergence_table;
 };
 
@@ -165,7 +163,8 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    if(step == 0)
    {
       std::cout << "Making initial grid ...\n";
-      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, xmin, xmax);
+      GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
+                                           param->xmin, param->xmax);
       typedef typename Triangulation<dim>::cell_iterator Iter;
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
       GridTools::collect_periodic_faces(triangulation,
@@ -179,7 +178,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    {
       triangulation.refine_global(1);
    }
-   dx = (xmax - xmin) / triangulation.n_active_cells();
+   dx = (param->xmax - param->xmin) / triangulation.n_active_cells();
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
@@ -205,7 +204,6 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
    imm.reinit(dof_handler.n_dofs());
 
    average.reinit(triangulation.n_active_cells());
-   troubled_cell.resize(triangulation.n_active_cells());
 }
 
 //------------------------------------------------------------------------------
@@ -281,10 +279,15 @@ ScalarProblem<dim>::assemble_rhs()
    // for getting neighbor cell solution using trapezoidal rule
    Vector<double>       cell_rhs(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
+   std::vector<types::global_dof_index> dof_indices_nbr(dofs_per_cell);
 
-   FEInterfaceValues<dim> fe_face_values(fe,
-                                         Quadrature<dim-1> (Point<dim>(0.0)),
-                                         update_values);
+   FEFaceValues<dim> fe_face_values0(fe,
+                                     Quadrature<dim-1> (Point<dim>(0.0)),
+                                     update_values);
+   FEFaceValues<dim> fe_face_values1(fe,
+                                     Quadrature<dim-1> (Point<dim>(0.0)),
+                                     update_values);
+   std::vector<double> left_state(1), right_state(1);
 
    rhs = 0.0;
 
@@ -313,30 +316,25 @@ ScalarProblem<dim>::assemble_rhs()
 
       // Add cell residual to rhs
       for(unsigned int i = 0; i < dofs_per_cell; ++i)
-      {
-         auto ig = dof_indices[i];
-         rhs(ig) += cell_rhs(i);
-      }
+         rhs(dof_indices[i]) += cell_rhs(i);
 
       // Add face residual to rhs
       // assemble flux at right face only since we have periodic bc
       auto ncell = cell->neighbor_or_periodic_neighbor(1);
-      fe_face_values.reinit(cell, 1, 0,
-                            ncell, cell->neighbor_of_neighbor(1), 0);
-      const unsigned int n_face_dofs = fe_face_values.n_current_interface_dofs();
-      const auto& face_dof_indices = fe_face_values.get_interface_dof_indices();
-      std::vector<double> left_state(1), right_state(1);
-      fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
-      fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
+      fe_face_values0.reinit(cell, 1);
+      fe_face_values1.reinit(ncell, cell->neighbor_of_neighbor(1));
+      fe_face_values0.get_function_values(solution, left_state);
+      fe_face_values1.get_function_values(solution, right_state);
       double num_flux;
-      numerical_flux(param->flux_type, left_state[0], right_state[0], 
+      numerical_flux(param->flux_type, left_state[0], right_state[0],
                      cell->face(1)->center(), num_flux);
-      for(unsigned int i = 0; i < n_face_dofs; ++i)
-      {
-         auto ig = face_dof_indices[i];
-         rhs(ig) += -num_flux *
-                    fe_face_values.jump_in_shape_values(i, 0);
-      }
+      // Add to left cell
+      for(unsigned int i = 0; i < dofs_per_cell; ++i)
+         rhs(dof_indices[i]) -= num_flux * fe_face_values0.shape_value(i, 0);
+      // Add to right cell
+      ncell->get_dof_indices(dof_indices_nbr);
+      for(unsigned int i = 0; i < dofs_per_cell; ++i)
+         rhs(dof_indices_nbr[i]) += num_flux * fe_face_values1.shape_value(i, 0);
    }
 
    // Multiply by inverse mass matrix
@@ -368,55 +366,6 @@ ScalarProblem<dim>::compute_averages()
       }
       average[cell->user_index()] = integral / measure;
    }
-}
-
-//------------------------------------------------------------------------------
-// Use TVB limiter to identify troubled cells
-//------------------------------------------------------------------------------
-template <int dim>
-void
-ScalarProblem<dim>::mark_troubled_cells()
-{
-   AssertThrow(false, ExcNotImplemented());
-   const double EPS = 1.0e-14;
-   QTrapezoid<dim>  quadrature_formula;
-   FEValues<dim> fe_values(fe, quadrature_formula, update_values);
-   std::vector<double> face_values(2), limited_face_values(2);
-
-   unsigned int n_troubled_cells = 0;
-   for(auto & cell : dof_handler.active_cell_iterators())
-   {
-      fe_values.reinit(cell);
-      fe_values.get_function_values(solution, face_values);
-
-      auto c = cell->user_index();
-      auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
-      auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
-
-      double db = average[c]  - average[cl];
-      double df = average[cr] - average[c];
-
-      double DF = face_values[1] - average[c];
-      double DB = average[c] - face_values[0];
-
-      double dl = minmod(DB, db, df);
-      double dr = minmod(DF, db, df);
-
-      limited_face_values[0] = average[c] - dl;
-      limited_face_values[1] = average[c] + dr;
-      bool c0 = std::fabs(limited_face_values[0] - face_values[0])
-                > EPS * std::fabs(face_values[0]);
-      bool c1 = std::fabs(limited_face_values[1] - face_values[1])
-                > EPS * std::fabs(face_values[1]);
-
-      troubled_cell[c] = false;
-      if(c0 || c1)
-      {
-         troubled_cell[c] = true;
-         ++n_troubled_cells;
-      }
-   }
-   //std::cout << "No of troubled cells = " << n_troubled_cells << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -553,8 +502,7 @@ ScalarProblem<dim>::output_results(const double time) const
    {
       Point<dim> x = cell->center();
       auto c = cell->user_index();
-      int tc = (troubled_cell[c] ? 1 : 0);
-      fo << x(0) << " " << average[c] << "  " << tc << std::endl;
+      fo << x(0) << " " << average[c] << std::endl;
    }
 
    fo.close();
