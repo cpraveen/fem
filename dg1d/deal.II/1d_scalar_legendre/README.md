@@ -1,4 +1,4 @@
-# 1-d linear scalar PDE using DG
+# 1-d scalar PDE using DG
 
 This uses Legendre polynomials as basis functions.
 
@@ -86,28 +86,31 @@ exact_solution.set_time(param.final_time);
 param.xmin = 0.0; param.xmax = 1.0;
 ```
 
-## Extension: Dirichlet bc
+## Exercise: Dirichlet bc
 
-We need to assemble on boundary faces. We will need `FEFaceValues` to do this.
+Solve the following problem
 
-```c++
-   FEFaceValues<dim> fe_bface_values(fe,
-                                     Quadrature<dim-1> (Point<dim>(0.0)),
-                                     update_values);
+```text
+u_t + u_x = 0 for x in (0,1)
+IC   : u(x,0) = sin(2*pi*x)
+BC   : u(0,t) = sin(-2*pi*t)
+Exact: u(x,t) = sin(2*pi*(x-t))
 ```
+
+We need to assemble flux on boundary faces and we will use upwind flux. We will need `FEFaceValues` to do this. A boundary face has only one neighbor and we can get the `FEFaceValues` from `FEInterfaceValues`.
 
 In cell loop, distinguish between boundary and other faces
 
 ```c++
 if(cell->face(0)->at_boundary() && periodic == false)
 {
-   // assemble boundary flux
-   fe_bface_values.reinit(cell, 0);
+   // assemble left boundary flux
+   auto &fe_bface_values = fe_face_values.get_fe_face_values(0);
 }
 else if(cell->face(1)->at_boundary() && periodic == false)
 {
-   // assemble boundary flux
-   fe_bface_values.reinit(cell, 1);
+   // assemble right boundary flux
+   auto &fe_bface_values = fe_face_values.get_fe_face_values(0);
 }
 else
 {
