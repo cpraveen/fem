@@ -97,16 +97,18 @@ BC   : u(0,t) = sin(-2*pi*t)
 Exact: u(x,t) = sin(2*pi*(x-t))
 ```
 
+Do not apply periodicity to the mesh.
+
 We need to assemble flux on boundary faces and we will use upwind flux.
 
 In cell loop, distinguish between boundary and other faces
 
 ```c++
-if(cell->face(0)->at_boundary() && periodic == false)
+if(cell->face(0)->at_boundary() && param->periodic == false)
 {
    // assemble left boundary flux
 }
-else if(cell->face(1)->at_boundary() && periodic == false)
+else if(cell->face(1)->at_boundary() && param->periodic == false)
 {
    // assemble right boundary flux
 }

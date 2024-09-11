@@ -22,18 +22,18 @@ main(int argc, char** argv)
    Parameter param;
    parse_parameters(ph, param);
 
-   Quadrature<1> quadrature_1d;
+   Quadrature<1> cell_quadrature;
    if(param.basis == "gl")
-      quadrature_1d = QGauss<1>(param.degree+1);
+      cell_quadrature = QGauss<1>(param.degree+1);
    else
-      quadrature_1d = QGaussLobatto<1>(param.degree+1);
+      cell_quadrature = QGaussLobatto<1>(param.degree+1);
 
    auto test_case = get_test_case(ph.get("test case"));
    const InitialCondition<1> initial_condition(test_case);
    const Solution<1> exact_solution(test_case, param.final_time);
    param.xmin = initial_condition.xmin;
    param.xmax = initial_condition.xmax;
-   ScalarProblem<1> problem(param, quadrature_1d, initial_condition, exact_solution);
+   ScalarProblem<1> problem(param, cell_quadrature, initial_condition, exact_solution);
    problem.run();
 
    return 0;

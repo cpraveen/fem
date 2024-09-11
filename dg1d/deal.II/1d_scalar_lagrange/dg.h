@@ -93,7 +93,7 @@ class ScalarProblem
 {
 public:
    ScalarProblem(Parameter&           param,
-                 Quadrature<1>&       quadrature_1d,
+                 Quadrature<1>&       cell_quadrature,
                  const Function<dim>& initial_condition,
                  const Function<dim>& exact_solution);
    void run();
@@ -137,15 +137,15 @@ private:
 //------------------------------------------------------------------------------
 template <int dim>
 ScalarProblem<dim>::ScalarProblem(Parameter&           param,
-                                  Quadrature<1>&       quadrature_1d,
+                                  Quadrature<1>&       cell_quadrature,
                                   const Function<dim>& initial_condition,
                                   const Function<dim>& exact_solution)
    :
    param(&param),
-   cell_quadrature(quadrature_1d),
+   cell_quadrature(cell_quadrature),
    initial_condition(&initial_condition),
    exact_solution(&exact_solution),
-   fe(quadrature_1d),
+   fe(cell_quadrature),
    dof_handler(triangulation)
 {
    AssertThrow(dim == 1, ExcIndexRange(dim, 0, 1));
@@ -489,7 +489,7 @@ ScalarProblem<dim>::output_results(const double time) const
       data_out.build_patches(2 * fe.degree);
 
    std::string filename = "sol_" + Utilities::int_to_string(counter) + ".gpl";
-   std::cout << "Outout at t = " << time << "  " << filename << std::endl;
+   std::cout << "Output at t = " << time << "  " << filename << std::endl;
 
    std::ofstream output(filename);
    data_out.write_gnuplot(output);

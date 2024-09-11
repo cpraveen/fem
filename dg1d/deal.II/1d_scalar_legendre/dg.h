@@ -92,6 +92,7 @@ class ScalarProblem
 {
 public:
    ScalarProblem(Parameter&           param,
+                 Quadrature<1>&       cell_quadrature,
                  const Function<dim>& initial_condition,
                  const Function<dim>& exact_solution);
    void run();
@@ -115,6 +116,7 @@ private:
    double               dx;
    unsigned int         n_rk_stages;
 
+   const Quadrature<dim>       cell_quadrature;
    const Function<dim>*        initial_condition;
    const Function<dim>*        exact_solution;
 
@@ -134,10 +136,12 @@ private:
 //------------------------------------------------------------------------------
 template <int dim>
 ScalarProblem<dim>::ScalarProblem(Parameter&           param,
+                                  Quadrature<1>&       cell_quadrature,
                                   const Function<dim>& initial_condition,
                                   const Function<dim>& exact_solution)
    :
    param(&param),
+   cell_quadrature(cell_quadrature),
    initial_condition(&initial_condition),
    exact_solution(&exact_solution),
    fe(param.degree),
@@ -213,11 +217,10 @@ ScalarProblem<dim>::assemble_mass_matrix()
    std::cout << "Constructing mass matrix ...\n";
    std::cout << "  Quadrature using " << fe.degree + 1 << " points\n";
 
-   QGauss<dim>  quadrature_formula(fe.degree + 1);
-   FEValues<dim> fe_values(fe, quadrature_formula,
+   FEValues<dim> fe_values(fe, cell_quadrature,
                            update_values | update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
-   const unsigned int   n_q_points    = quadrature_formula.size();
+   const unsigned int   n_q_points    = cell_quadrature.size();
    Vector<double>   cell_matrix(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
@@ -298,13 +301,13 @@ template <int dim>
 void
 ScalarProblem<dim>::assemble_rhs()
 {
-   QGauss<dim>  quadrature_formula(fe.degree + 1);
-   FEValues<dim> fe_values(fe, quadrature_formula,
-                           update_values   | update_gradients |
+   FEValues<dim> fe_values(fe, cell_quadrature,
+                           update_values   | 
+                           update_gradients |
                            update_quadrature_points |
                            update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
-   const unsigned int   n_q_points    = quadrature_formula.size();
+   const unsigned int   n_q_points    = cell_quadrature.size();
    std::vector<double>  solution_values(n_q_points);
 
    // for getting neighbor cell solution using trapezoidal rule
@@ -491,7 +494,7 @@ ScalarProblem<dim>::output_results(const double time) const
       data_out.build_patches(2 * fe.degree);
 
    std::string filename = "sol_" + Utilities::int_to_string(counter) + ".gpl";
-   std::cout << "Outout at t = " << time << "  " << filename << std::endl;
+   std::cout << "Output at t = " << time << "  " << filename << std::endl;
 
    std::ofstream output(filename);
    data_out.write_gnuplot(output);
