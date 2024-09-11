@@ -1,7 +1,10 @@
+# Exit on error
+set -e
+
 # Set deal.II version
 V=9.6.0
 
-# Where do you want to install deal.II
+# Where do you want to install deal.II, you can change this.
 DEAL_II_DIR=$HOME/deal.II
 
 # For parallel compiling, set this to number of cores in your cpu
@@ -20,19 +23,40 @@ mkdir -p $DEAL_II_DIR
 mkdir -p $DEAL_II_DIR/dealii-build
 cd $DEAL_II_DIR/dealii-build
 
-echo "==> Downloading deal.II cmake script"
-wget -c https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
+#echo "==> Downloading deal.II cmake script"
+#wget -c https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 
 echo "==> Downloading deal.II sources"
 wget -c https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}.tar.gz
 echo "==> Extracting deal.II sources"
 tar zxvf dealii-${V}.tar.gz > install.log
-cd dealii-${V}
-rm -rf build
-mkdir -p build
-cd build
+cd dealii-${V} && rm -rf build && mkdir -p build && cd build
 echo "==> Run cmake"
-sh $DEAL_II_DIR/dealii-build/dealii.sh
+
+# Without MPI
+cmake \
+   -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
+   -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
+   -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
+   -DDEAL_II_WITH_MPI=OFF \
+   -DDEAL_II_WITH_VTK=OFF \
+   -DDEAL_II_COMPONENT_EXAMPLES=ON  \
+   -DDEAL_II_COMPILE_EXAMPLES=OFF \
+   ..
+
+# With MPI
+#cmake \
+#   -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
+#   -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
+#   -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
+#   -DDEAL_II_WITH_MPI=ON \
+#   -DCMAKE_C_COMPILER=mpicc  \
+#   -DCMAKE_CXX_COMPILER=mpic++  \
+#   -DCMAKE_Fortran_COMPILER=mpif90  \
+#   -DDEAL_II_COMPONENT_EXAMPLES=ON  \
+#   -DDEAL_II_COMPILE_EXAMPLES=OFF \
+#   ..
+
 echo "==> Compiling"
 make -j $NPROC
 echo "==> Install"
