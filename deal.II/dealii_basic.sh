@@ -61,32 +61,30 @@ tar zxvf dealii-${V}.tar.gz > install.log
 cd dealii-${V} && rm -rf build && mkdir -p build && cd build
 echo "==> Run cmake"
 
-if [[ "$MPI" == "n" ]]; then
-# Without MPI
-cmake \
-   -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
-   -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
-   -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
-   -DDEAL_II_WITH_MPI=OFF \
-   -DDEAL_II_WITH_VTK=OFF \
-   -DDEAL_II_COMPONENT_EXAMPLES=ON  \
-   -DDEAL_II_COMPILE_EXAMPLES=OFF \
-   ..
-fi
-
 if [[ "$MPI" == "y" ]]; then
-# With MPI
-cmake \
-   -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
-   -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
-   -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
-   -DDEAL_II_WITH_MPI=ON \
-   -DCMAKE_C_COMPILER=mpicc  \
-   -DCMAKE_CXX_COMPILER=mpic++  \
-   -DCMAKE_Fortran_COMPILER=mpif90  \
-   -DDEAL_II_COMPONENT_EXAMPLES=ON  \
-   -DDEAL_II_COMPILE_EXAMPLES=OFF \
-   ..
+   # With MPI
+   cmake \
+      -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
+      -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
+      -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
+      -DDEAL_II_WITH_MPI=ON \
+      -DCMAKE_C_COMPILER=mpicc  \
+      -DCMAKE_CXX_COMPILER=mpic++  \
+      -DCMAKE_Fortran_COMPILER=mpif90  \
+      -DDEAL_II_COMPONENT_EXAMPLES=ON  \
+      -DDEAL_II_COMPILE_EXAMPLES=OFF \
+      ..
+else
+   # Without MPI
+   cmake \
+      -DCMAKE_INSTALL_PREFIX=$DEAL_II_DIR \
+      -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
+      -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
+      -DDEAL_II_WITH_MPI=OFF \
+      -DDEAL_II_WITH_VTK=OFF \
+      -DDEAL_II_COMPONENT_EXAMPLES=ON  \
+      -DDEAL_II_COMPILE_EXAMPLES=OFF \
+      ..
 fi
 
 echo "==> Compiling"
