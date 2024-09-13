@@ -651,6 +651,9 @@ declare_parameters(ParameterHandler& prm)
                      "Number of grid refinements");
    prm.declare_entry("output step", "10", Patterns::Integer(0),
                      "Frequency to save solution");
+   prm.declare_entry("test case", "sine",
+                     Patterns::Anything(),
+                     "Test case");
    prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0),
                      "CFL number");
    prm.declare_entry("final time", "0.0", Patterns::Double(0),
