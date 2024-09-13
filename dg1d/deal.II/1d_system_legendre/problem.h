@@ -1,6 +1,7 @@
 namespace Problem
 {
    extern double xmin, xmax;
+   extern double final_time;
    extern bool periodic;
    void initial_value(const Point<1>& p, 
                       Vector<double>& u);

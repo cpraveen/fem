@@ -66,7 +66,7 @@ sudo apt install openmpi-bin openmpi-common openmpi-doc
 
 ### Automated installation
 
-A bash script that can automate the above installation process is also included. Do the following steps
+A bash script that can automate the installation of deal.II is also included. Do the following steps
 
 ```shell
 cd $HOME

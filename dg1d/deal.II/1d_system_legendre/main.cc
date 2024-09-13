@@ -20,6 +20,7 @@ main(int argc, char** argv)
    ph.print_parameters(std::cout, ParameterHandler::Text);
 
    Parameter param;
+   param.final_time = Problem::final_time; // will override if given in input
    parse_parameters(ph, param);
 
    QGauss<1> cell_quadrature(param.degree+1);

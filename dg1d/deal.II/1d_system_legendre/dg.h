@@ -339,16 +339,19 @@ ScalarProblem<dim>::assemble_rhs()
          }
       }
 
+      // Add cell residual to rhs
       for(unsigned int i = 0; i < dofs_per_cell; ++i)
          rhs(dof_indices[i]) += cell_rhs(i);
 
-      // Add cell residual to rhs
+      // Add face residual to rhs
       if(cell->face(0)->at_boundary() && Problem::periodic == false)
       {
          // left face is left boundary
+         // right state is known from solution
          const unsigned int f = 0;
          fe_face_values0.reinit(cell, f);
          fe_face_values0.get_function_values(solution, right_state);
+         // get left state from bc
          Problem::boundary_value(f, stage_time, right_state[0], left_state[0]);
          Vector<double> num_flux(nvar);
          PDE::numerical_flux(param->flux_type, left_state[0], right_state[0],
@@ -361,16 +364,19 @@ ScalarProblem<dim>::assemble_rhs()
                                    fe_face_values0.shape_value(i, 0);
          }
       }
-      else if(cell->face(1)->at_boundary() && Problem::periodic == false)
+
+      if(cell->face(1)->at_boundary() && Problem::periodic == false)
       {
          // right face is right boundary
+         // left state is known from solution
          const unsigned int f = 1;
          fe_face_values0.reinit(cell, f);
          fe_face_values0.get_function_values(solution, left_state);
-         Problem::boundary_value(1, stage_time, left_state[0], right_state[0]);
+         // get right state from bc
+         Problem::boundary_value(f, stage_time, left_state[0], right_state[0]);
          Vector<double> num_flux(nvar);
          PDE::numerical_flux(param->flux_type, left_state[0], right_state[0],
-                           cell->face(f)->center(), num_flux);
+                             cell->face(f)->center(), num_flux);
          // Add to left cell
          for (unsigned int i = 0; i < dofs_per_cell; ++i)
          {
@@ -378,11 +384,9 @@ ScalarProblem<dim>::assemble_rhs()
             rhs(dof_indices[i]) -= num_flux[c] *
                                    fe_face_values0.shape_value(i, 0);
          }
-         
       }
       else
       {
-         // Add face residual to rhs
          // assemble flux at right face only since we have periodic bc
          auto ncell = cell->neighbor_or_periodic_neighbor(1);
          fe_face_values0.reinit(cell, 1);
@@ -391,13 +395,13 @@ ScalarProblem<dim>::assemble_rhs()
          fe_face_values1.get_function_values(solution, right_state);
          Vector<double> num_flux(nvar);
          PDE::numerical_flux(param->flux_type, left_state[0], right_state[0],
-                           cell->face(1)->center(), num_flux);
+                             cell->face(1)->center(), num_flux);
          // Add to left cell
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
          {
             auto c = fe.system_to_component_index(i).first;
             rhs(dof_indices[i]) -= num_flux[c] * 
-                                 fe_face_values0.shape_value(i, 0);
+                                   fe_face_values0.shape_value(i, 0);
          }
          // Add to right cell
          ncell->get_dof_indices(dof_indices_nbr);
@@ -458,8 +462,18 @@ ScalarProblem<dim>::apply_TVD_limiter()
    for(auto & cell : dof_handler.active_cell_iterators())
    {
       auto c  = cell->user_index();
-      auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
-      auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
+      unsigned int cl, cr;
+      if(Problem::periodic)
+      {
+         cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
+         cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
+      }
+      else
+      {
+         cl = c;
+         cr = c;
+      }
+
       cell->get_dof_indices(dof_indices);
 
       unsigned int idx = 1;
@@ -669,7 +683,11 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
    if(param.cfl == 0.0) param.cfl = 0.98 / (2 * param.degree + 1);
    if(param.cfl < 0.0) param.cfl = param.cfl / (2 * param.degree + 1);
 
-   param.final_time = ph.get_double("final time");
+   {
+      double final_time = ph.get_double("final time");
+      if(final_time > 0.0)
+         param.final_time = final_time;
+   }
    param.Mlim = ph.get_double("tvb parameter");
 
    {
