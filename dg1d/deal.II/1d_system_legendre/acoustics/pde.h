@@ -6,14 +6,22 @@
 
 using namespace dealii;
 
+// Number of PDE in the system
 const unsigned int nvar = 2;
 
+//------------------------------------------------------------------------------
+// Extend namespace Problem with data specific to this pde
+// This data must be set in problem_data.h file.
+//------------------------------------------------------------------------------
 namespace Problem 
 {
    extern double rho;
    extern double bulk;
 }
 
+//------------------------------------------------------------------------------
+// Linear acoustics
+//------------------------------------------------------------------------------
 namespace PDE
 {
 
@@ -52,6 +60,9 @@ max_speed(const Vector<double>& /*u*/,
    return cc;
 }
 
+//------------------------------------------------------------------------------
+// R = matrix of right eigenvectors, columns are right eigenvectors
+// L = matrix of left eigenvectors = R^(-1), rows are left eigenvectors
 //------------------------------------------------------------------------------
 void 
 char_mat(const Vector<double>& /*u*/,
