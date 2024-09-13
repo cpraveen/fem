@@ -61,16 +61,23 @@ namespace PDE
 // L = matrix of left eigenvectors = R^(-1), rows are left eigenvectors
 //------------------------------------------------------------------------------
    void
-   char_mat(const Vector<double>& /*u*/,
+   char_mat(const Vector<double>& u,
             const Point<1>&       /*p*/,
             FullMatrix<double>&   R,
             FullMatrix<double>&   L)
    {
-      R(0, 0) = 1.0; R(0, 1) = 0.0;
-      R(1, 0) = 0.0; R(1, 1) = 1.0;
+      const double h = u[0];
+      const double v = u[1] / h;
+      const double c = sqrt(g * h);
+      const double lam1 = v - c;
+      const double lam2 = v + c;
 
-      L(0, 0) = 1.0; L(0, 1) = 0.0;
-      L(1, 0) = 0.0; L(1, 1) = 1.0;
+      R(0, 0) = 1.0;  R(0, 1) = 1.0;
+      R(1, 0) = lam1; R(1, 1) = lam2;
+
+      const double idet = 1.0/(lam2 - lam1);
+      L(0, 0) =  lam2 * idet; L(0, 1) = -1.0 * idet;
+      L(1, 0) = -lam1 * idet; L(1, 1) =  1.0 * idet;
    }
 
 //------------------------------------------------------------------------------
