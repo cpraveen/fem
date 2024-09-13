@@ -64,18 +64,36 @@ namespace PDE
 // L = matrix of left eigenvectors = R^(-1), rows are left eigenvectors
 //------------------------------------------------------------------------------
    void
-   char_mat(const Vector<double>& /*u*/,
+   char_mat(const Vector<double>& u,
             const Point<1>&       /*p*/,
             FullMatrix<double>&   R,
             FullMatrix<double>&   L)
    {
-      R(0, 0) = 1.0; R(0, 1) = 0.0; R(0, 2) = 0.0;
-      R(1, 0) = 0.0; R(1, 1) = 1.0; R(1, 2) = 0.0;
-      R(2, 0) = 0.0; R(2, 1) = 0.0; R(2, 2) = 1.0;
+      const double rho = u[0];
+      const double vel = u[1] / rho;
+      const double pre = (gamma - 1.0) * (u[2] - 0.5 * rho * pow(vel, 2));
+      const double H = (u[2] + pre) / rho;
+      const double a = sqrt(gamma * pre / rho);
 
-      L(0, 0) = 1.0; L(0, 1) = 0.0; L(0, 2) = 0.0;
-      L(1, 0) = 0.0; L(1, 1) = 1.0; L(1, 2) = 0.0;
-      L(2, 0) = 0.0; L(2, 1) = 0.0; L(2, 2) = 1.0;
+      R(0, 0) = 1.0;     R(0, 1) = 1.0;            R(0, 2) = 1.0;
+      R(1, 0) = vel-a;   R(1, 1) = vel;            R(1, 2) = vel+a;
+      R(2, 0) = H-vel*a; R(2, 1) = 0.5*pow(vel,2); R(2, 2) = H+vel*a;
+
+      const double M = vel/a;
+      const double M2 = pow(M,2);
+      const double g1 = gamma - 1.0;
+
+      L(0, 0) = 0.25*g1*M2 + 0.5*M;
+      L(1, 0) = 1.0 - 0.5*g1*M2;
+      L(2, 0) = 0.25*g1*M2 - 0.5*M;
+
+      L(0,1) = -0.5*g1*M/a - 0.5/a;
+      L(1,1) = g1*M/a;
+      L(2,1) = -0.5*g1*M/a + 0.5/a;
+
+      L(0,2) = 0.5*g1/pow(a,2);
+      L(1,2) = -g1/pow(a,2);
+      L(2,2) = 0.5*g1/pow(a,2);
    }
 
 //------------------------------------------------------------------------------
