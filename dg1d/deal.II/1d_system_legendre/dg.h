@@ -28,6 +28,7 @@
 #include <iostream>
 
 #include "pde.h"
+#include "problem.h"
 
 #define dsign(a)   (((a) > 0.0) ? 1 : -1)
 
@@ -45,7 +46,6 @@ enum class LimiterType {none, tvd};
 //------------------------------------------------------------------------------
 struct Parameter
 {
-   double       xmin, xmax;
    int          degree;
    double       cfl;
    double       final_time;
@@ -92,8 +92,7 @@ class ScalarProblem
 {
 public:
    ScalarProblem(Parameter&           param,
-                 Quadrature<1>&       cell_quadrature,
-                 const Function<dim>& exact_solution);
+                 Quadrature<1>&       cell_quadrature);
    void run();
 
 private:
@@ -115,8 +114,6 @@ private:
    unsigned int         n_rk_stages;
 
    const Quadrature<dim>       cell_quadrature;
-   const Function<dim>*        initial_condition;
-
    Triangulation<dim>          triangulation;
    FESystem<dim>               fe;
    DoFHandler<dim>             dof_handler;
@@ -132,12 +129,10 @@ private:
 //------------------------------------------------------------------------------
 template <int dim>
 ScalarProblem<dim>::ScalarProblem(Parameter&           param,
-                                  Quadrature<1>&       cell_quadrature,
-                                  const Function<dim>& initial_condition)
+                                  Quadrature<1>&       cell_quadrature)
    :
    param(&param),
    cell_quadrature(cell_quadrature),
-   initial_condition(&initial_condition),
    fe(FE_DGP<dim>(param.degree),nvar),
    dof_handler(triangulation)
 {
@@ -155,16 +150,20 @@ ScalarProblem<dim>::make_grid_and_dofs()
 {
    std::cout << "Making grid ...\n";
    GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
-                                        param->xmin, param->xmax);
-   typedef typename Triangulation<dim>::cell_iterator Iter;
-   std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
-   GridTools::collect_periodic_faces(triangulation,
-                                       0,
-                                       1,
-                                       0,
-                                       periodicity_vector);
-   triangulation.add_periodicity(periodicity_vector);
-   dx = (param->xmax - param->xmin) / triangulation.n_active_cells();
+                                        Problem::xmin, Problem::xmax);
+   if(Problem::periodic)
+   {
+      std::cout << "Applying periodicity to grid\n";
+      typedef typename Triangulation<dim>::cell_iterator Iter;
+      std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
+      GridTools::collect_periodic_faces(triangulation,
+                                          0,
+                                          1,
+                                          0,
+                                          periodicity_vector);
+      triangulation.add_periodicity(periodicity_vector);
+   }
+   dx = (Problem::xmax - Problem::xmin) / triangulation.n_active_cells();
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
@@ -262,8 +261,8 @@ ScalarProblem<dim>::initialize()
       {
          // Get primitive variable at quadrature point
          Vector<double> initial_value(nvar);
-         initial_condition->vector_value(fe_values.quadrature_point(q),
-                                         initial_value);
+         Problem::initial_value(fe_values.quadrature_point(q),
+                                initial_value);
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
          {
             const auto c = fe.system_to_component_index(i).first;

@@ -7,8 +7,15 @@
 using namespace dealii;
 
 const unsigned int nvar = 2;
-const double rho = 1.0;
-const double bulk = 1.0;
+
+namespace Problem 
+{
+   extern double rho;
+   extern double bulk;
+}
+
+const double rho = Problem::rho;
+const double bulk = Problem::bulk;
 const double zz = sqrt(rho*bulk);
 const double cc = sqrt(bulk/rho);
 

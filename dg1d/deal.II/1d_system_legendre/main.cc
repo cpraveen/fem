@@ -1,5 +1,5 @@
 #include "dg.h"
-#include "test_data.h"
+#include "problem_data.h"
 
 //------------------------------------------------------------------------------
 // Main function
@@ -24,10 +24,7 @@ main(int argc, char** argv)
 
    QGauss<1> cell_quadrature(param.degree+1);
 
-   const InitialCondition<1> initial_condition;
-   param.xmin = initial_condition.xmin;
-   param.xmax = initial_condition.xmax;
-   ScalarProblem<1> problem(param, cell_quadrature, initial_condition);
+   ScalarProblem<1> problem(param, cell_quadrature);
    problem.run();
 
    return 0;
