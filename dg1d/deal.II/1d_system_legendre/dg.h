@@ -46,15 +46,14 @@ enum class LimiterType {none, tvd};
 //------------------------------------------------------------------------------
 struct Parameter
 {
-   int          degree;
-   double       cfl;
-   double       final_time;
-   unsigned int n_cells;
-   unsigned int n_refine;
-   unsigned int output_step;
-   LimiterType  limiter_type;
-   double       Mlim;
-   FluxType     flux_type;
+   int           degree;
+   double        cfl;
+   double        final_time;
+   unsigned int  n_cells;
+   unsigned int  output_step;
+   LimiterType   limiter_type;
+   double        Mlim;
+   PDE::FluxType flux_type;
 };
 
 //------------------------------------------------------------------------------
@@ -328,9 +327,9 @@ ScalarProblem<dim>::assemble_rhs()
       for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
       {
          Vector<double> flux(nvar);
-         physical_flux(solution_values[q_point],
-                       fe_values.quadrature_point(q_point),
-                       flux);
+         PDE::physical_flux(solution_values[q_point],
+                            fe_values.quadrature_point(q_point),
+                            flux);
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
          {
             auto c = fe.system_to_component_index(i).first;
@@ -352,8 +351,8 @@ ScalarProblem<dim>::assemble_rhs()
       fe_face_values0.get_function_values(solution, left_state);
       fe_face_values1.get_function_values(solution, right_state);
       Vector<double> num_flux(nvar);
-      numerical_flux(param->flux_type, left_state[0], right_state[0],
-                     cell->face(1)->center(), num_flux);
+      PDE::numerical_flux(param->flux_type, left_state[0], right_state[0],
+                          cell->face(1)->center(), num_flux);
       // Add to left cell
       for(unsigned int i = 0; i < dofs_per_cell; ++i)
       {
@@ -431,7 +430,7 @@ ScalarProblem<dim>::apply_TVD_limiter()
          Dx[comp] = solution(dof_indices[idx]);
       }
 
-      char_mat(average[c], cell->center(), R, L);
+      PDE::char_mat(average[c], cell->center(), R, L);
       L.vmult(db1, db);
       L.vmult(df1, df);
       L.vmult(Dx1, Dx);
@@ -483,7 +482,7 @@ ScalarProblem<dim>::compute_dt()
    {
       auto c = cell->user_index();
       double dtcell = cell->measure() 
-                      / (max_speed(average[c], cell->center()) + 1.0e-20);
+                      / (PDE::max_speed(average[c], cell->center()) + 1.0e-20);
       dt = std::min(dt, dtcell);
    }
 
@@ -603,8 +602,6 @@ declare_parameters(ParameterHandler& prm)
                      "Polynomial degree");
    prm.declare_entry("ncells", "100", Patterns::Integer(2),
                      "Number of elements");
-   prm.declare_entry("nrefine", "1", Patterns::Integer(1, 10),
-                     "Number of grid refinements");
    prm.declare_entry("output step", "10", Patterns::Integer(0),
                      "Frequency to save solution");
    prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0),
@@ -627,7 +624,6 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 {
    param.degree = ph.get_integer("degree");
    param.n_cells = ph.get_integer("ncells");
-   param.n_refine = ph.get_integer("nrefine");
    param.output_step = ph.get_integer("output step");
    param.cfl = ph.get_double("cfl");
    if(param.cfl == 0.0) param.cfl = 0.98 / (2 * param.degree + 1);
@@ -638,13 +634,13 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("numflux");
-      auto search = FluxTypeList.find(value);
-      if(search != FluxTypeList.end())
+      auto search = PDE::FluxTypeList.find(value);
+      if(search != PDE::FluxTypeList.end())
          param.flux_type = search->second;
       else
       {
          std::cout << "Available num fluxes\n";
-         for(const auto& v : FluxTypeList)
+         for(const auto& v : PDE::FluxTypeList)
             std::cout << v.first << std::endl;
          AssertThrow(false, ExcMessage("Unknown flux type"));
       }

@@ -14,6 +14,9 @@ namespace Problem
    extern double bulk;
 }
 
+namespace PDE
+{
+
 const double rho = Problem::rho;
 const double bulk = Problem::bulk;
 const double zz = sqrt(rho*bulk);
@@ -121,4 +124,6 @@ void numerical_flux(const FluxType        flux_type,
    default:
       AssertThrow(false, ExcMessage("Unknown flux type"));
    }
+}
+
 }

@@ -1,6 +1,5 @@
 set degree        = 1
 set ncells        = 100
-set nrefine       = 1
 set output step   = 10
 set cfl           = 0.0
 set final time    = 1.0
