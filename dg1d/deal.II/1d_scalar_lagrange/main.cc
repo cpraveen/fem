@@ -33,8 +33,8 @@ main(int argc, char** argv)
    const Solution<1> exact_solution(test_case, param.final_time);
    param.xmin = initial_condition.xmin;
    param.xmax = initial_condition.xmax;
-   ScalarProblem<1> problem(param, cell_quadrature, initial_condition, exact_solution);
-   problem.run();
+   DGScalar<1> solver(param, cell_quadrature, initial_condition, exact_solution);
+   solver.run();
 
    return 0;
 }

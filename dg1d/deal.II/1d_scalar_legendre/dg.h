@@ -88,13 +88,13 @@ minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
 // Main class of the problem
 //------------------------------------------------------------------------------
 template <int dim>
-class ScalarProblem
+class DGScalar
 {
 public:
-   ScalarProblem(Parameter&           param,
-                 Quadrature<1>&       cell_quadrature,
-                 const Function<dim>& initial_condition,
-                 const Function<dim>& exact_solution);
+   DGScalar(Parameter&           param,
+            Quadrature<1>&       cell_quadrature,
+            const Function<dim>& initial_condition,
+            const Function<dim>& exact_solution);
    void run();
 
 private:
@@ -135,10 +135,10 @@ private:
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim>
-ScalarProblem<dim>::ScalarProblem(Parameter&           param,
-                                  Quadrature<1>&       cell_quadrature,
-                                  const Function<dim>& initial_condition,
-                                  const Function<dim>& exact_solution)
+DGScalar<dim>::DGScalar(Parameter&           param,
+                        Quadrature<1>&       cell_quadrature,
+                        const Function<dim>& initial_condition,
+                        const Function<dim>& exact_solution)
    :
    param(&param),
    cell_quadrature(cell_quadrature),
@@ -157,7 +157,7 @@ ScalarProblem<dim>::ScalarProblem(Parameter&           param,
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
+DGScalar<dim>::make_grid_and_dofs(unsigned int step)
 {
    if(step == 0)
    {
@@ -212,7 +212,7 @@ ScalarProblem<dim>::make_grid_and_dofs(unsigned int step)
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::assemble_mass_matrix()
+DGScalar<dim>::assemble_mass_matrix()
 {
    std::cout << "Constructing mass matrix ...\n";
    std::cout << "  Quadrature using " << fe.degree + 1 << " points\n";
@@ -250,7 +250,7 @@ ScalarProblem<dim>::assemble_mass_matrix()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::initialize()
+DGScalar<dim>::initialize()
 {
    std::cout << "Projecting initial condition ...\n";
 
@@ -299,7 +299,7 @@ ScalarProblem<dim>::initialize()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::assemble_rhs()
+DGScalar<dim>::assemble_rhs()
 {
    FEValues<dim> fe_values(fe, cell_quadrature,
                            update_values   | 
@@ -379,7 +379,7 @@ ScalarProblem<dim>::assemble_rhs()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::compute_averages()
+DGScalar<dim>::compute_averages()
 {
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
@@ -396,7 +396,7 @@ ScalarProblem<dim>::compute_averages()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::apply_TVD_limiter()
+DGScalar<dim>::apply_TVD_limiter()
 {
    if(fe.degree == 0) return;
 
@@ -432,7 +432,7 @@ ScalarProblem<dim>::apply_TVD_limiter()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::apply_limiter()
+DGScalar<dim>::apply_limiter()
 {
    if(fe.degree == 0 || param->limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
@@ -443,7 +443,7 @@ ScalarProblem<dim>::apply_limiter()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::compute_dt()
+DGScalar<dim>::compute_dt()
 {
    dt = 1.0e20;
 
@@ -463,7 +463,7 @@ ScalarProblem<dim>::compute_dt()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::update(const unsigned int rk_stage)
+DGScalar<dim>::update(const unsigned int rk_stage)
 {
    // Update conserved variables
    for(unsigned int i = 0; i < dof_handler.n_dofs(); ++i)
@@ -480,7 +480,7 @@ ScalarProblem<dim>::update(const unsigned int rk_stage)
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::output_results(const double time) const
+DGScalar<dim>::output_results(const double time) const
 {
    static unsigned int counter = 0;
 
@@ -520,7 +520,7 @@ ScalarProblem<dim>::output_results(const double time) const
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::solve()
+DGScalar<dim>::solve()
 {
    std::cout << "Solving 1-D scalar problem ...\n";
 
@@ -562,7 +562,7 @@ ScalarProblem<dim>::solve()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::process_solution(unsigned int step)
+DGScalar<dim>::process_solution(unsigned int step)
 {
    // compute error in solution
    Vector<double> difference_per_cell(triangulation.n_active_cells());
@@ -603,7 +603,7 @@ ScalarProblem<dim>::process_solution(unsigned int step)
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::run()
+DGScalar<dim>::run()
 {
    for(unsigned int step = 0; step < param->n_refine; ++step)
    {
