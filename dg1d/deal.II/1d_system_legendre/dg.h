@@ -462,16 +462,26 @@ ScalarProblem<dim>::apply_TVD_limiter()
    for(auto & cell : dof_handler.active_cell_iterators())
    {
       auto c  = cell->user_index();
+
       unsigned int cl, cr;
-      if(Problem::periodic)
+      // left cell
+      if(cell->face(0)->at_boundary() && Problem::periodic == false)
       {
-         cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
-         cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
+         cl = c; // TODO: assuming neumann-like bc
       }
       else
       {
-         cl = c;
-         cr = c;
+         cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
+      }
+
+      // right cell
+      if(cell->face(1)->at_boundary() && Problem::periodic == false)
+      {
+         cr = c; // TODO: assuming neumann-like bc
+      }
+      else
+      {
+         cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
       }
 
       cell->get_dof_indices(dof_indices);
