@@ -27,4 +27,16 @@ initial_value(const Point<1>& p,
    values[1] = 0.0;
 }
 
+//------------------------------------------------------------------------------
+// Boundary condition
+// Not implemented since we have periodic bc
+//------------------------------------------------------------------------------
+void boundary_value(const int /*id*/,
+                    const double /*t*/,
+                    const Vector<double> & /*ul*/,
+                    Vector<double> & /*ur*/)
+{
+   AssertThrow(false, ExcNotImplemented());
+}
+
 }

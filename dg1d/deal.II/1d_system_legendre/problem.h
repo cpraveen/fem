@@ -6,6 +6,6 @@ namespace Problem
                       Vector<double>& u);
    void boundary_value(const int       id, 
                        const double    t,
-                       Vector<double>& ul,
+                       const Vector<double>& ul,
                        Vector<double>& ur);
 }

@@ -11,7 +11,7 @@ set(TARGET "main")
 # or switch altogether to the large project CMakeLists.txt file discussed
 # in the "CMake in user projects" page accessible from the "User info"
 # page of the documentation.
-set(TARGET_SRC ${TARGET}.cc dg.h pde.h test_data.h)
+set(TARGET_SRC ${TARGET}.cc dg.h pde.h problem.h problem_data.h)
 
 # Usually, you will not need to modify anything beyond this point...
 
