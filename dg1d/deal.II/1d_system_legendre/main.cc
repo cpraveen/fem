@@ -25,8 +25,8 @@ main(int argc, char** argv)
 
    QGauss<1> cell_quadrature(param.degree+1);
 
-   ScalarProblem<1> problem(param, cell_quadrature);
-   problem.run();
+   DGSystem<1> solver(param, cell_quadrature);
+   solver.run();
 
    return 0;
 }

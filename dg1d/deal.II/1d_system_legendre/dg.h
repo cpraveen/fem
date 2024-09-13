@@ -87,11 +87,11 @@ minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
 // Main class of the problem
 //------------------------------------------------------------------------------
 template <int dim>
-class ScalarProblem
+class DGSystem
 {
 public:
-   ScalarProblem(Parameter&           param,
-                 Quadrature<1>&       cell_quadrature);
+   DGSystem(Parameter&     param,
+            Quadrature<1>& cell_quadrature);
    void run();
 
 private:
@@ -127,8 +127,8 @@ private:
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim>
-ScalarProblem<dim>::ScalarProblem(Parameter&           param,
-                                  Quadrature<1>&       cell_quadrature)
+DGSystem<dim>::DGSystem(Parameter&     param,
+                        Quadrature<1>& cell_quadrature)
    :
    param(&param),
    cell_quadrature(cell_quadrature),
@@ -145,7 +145,7 @@ ScalarProblem<dim>::ScalarProblem(Parameter&           param,
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::make_grid_and_dofs()
+DGSystem<dim>::make_grid_and_dofs()
 {
    std::cout << "Making grid ...\n";
    GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
@@ -197,7 +197,7 @@ ScalarProblem<dim>::make_grid_and_dofs()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::assemble_mass_matrix()
+DGSystem<dim>::assemble_mass_matrix()
 {
    std::cout << "Constructing mass matrix ...\n";
 
@@ -236,7 +236,7 @@ ScalarProblem<dim>::assemble_mass_matrix()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::initialize()
+DGSystem<dim>::initialize()
 {
    std::cout << "Projecting initial condition ...\n";
 
@@ -287,7 +287,7 @@ ScalarProblem<dim>::initialize()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::assemble_rhs()
+DGSystem<dim>::assemble_rhs()
 {
    FEValues<dim> fe_values(fe, cell_quadrature,
                            update_values   | 
@@ -423,7 +423,7 @@ ScalarProblem<dim>::assemble_rhs()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::compute_averages()
+DGSystem<dim>::compute_averages()
 {
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
@@ -444,7 +444,7 @@ ScalarProblem<dim>::compute_averages()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::apply_TVD_limiter()
+DGSystem<dim>::apply_TVD_limiter()
 {
    if(param->degree == 0) return;
 
@@ -527,7 +527,7 @@ ScalarProblem<dim>::apply_TVD_limiter()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::apply_limiter()
+DGSystem<dim>::apply_limiter()
 {
    if(param->degree == 0 || param->limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
@@ -538,7 +538,7 @@ ScalarProblem<dim>::apply_limiter()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::compute_dt()
+DGSystem<dim>::compute_dt()
 {
    dt = 1.0e20;
 
@@ -558,7 +558,7 @@ ScalarProblem<dim>::compute_dt()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::update(const unsigned int rk_stage)
+DGSystem<dim>::update(const unsigned int rk_stage)
 {
    // Update conserved variables
    for(unsigned int i = 0; i < dof_handler.n_dofs(); ++i)
@@ -575,7 +575,7 @@ ScalarProblem<dim>::update(const unsigned int rk_stage)
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::output_results(const double time) const
+DGSystem<dim>::output_results(const double time) const
 {
    static unsigned int counter = 0;
 
@@ -618,7 +618,7 @@ ScalarProblem<dim>::output_results(const double time) const
 //------------------------------------------------------------------------------
 template <int dim>
 void
-ScalarProblem<dim>::run()
+DGSystem<dim>::run()
 {
    std::cout << "Solving 1-D scalar problem ...\n";
 
