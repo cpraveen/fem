@@ -319,7 +319,9 @@ DGSystem<dim>::make_grid_and_dofs()
       triangulation.add_periodicity(periodicity_vector);
    }
 
+   // User specified transformation. NOTE: Cells must remain rectangles.
    problem->transform_grid(triangulation);
+
    if(param->n_refine > 0)
    {
       std::cout << "   Refining initial grid\n";
