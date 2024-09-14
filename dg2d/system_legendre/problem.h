@@ -8,7 +8,7 @@ namespace ProblemData
    const double xmax =  10.0;
    const double ymin = -10.0;
    const double ymax =  10.0;
-   const double final_time = 1.0;
+   const double final_time = 40.0 * sqrt(2);
    const bool periodic_x = true;
    const bool periodic_y = true;
 

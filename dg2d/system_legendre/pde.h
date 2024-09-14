@@ -63,8 +63,10 @@ namespace PDE
    inline void
    con2prim(const Vector<double>& u, Vector<double>& q)
    {
+      // density
       q[0] = u[0];
 
+      // velocity
       double v2 = 0.0;
       for(unsigned int d = 1; d <= dim; ++d)
       {
@@ -72,6 +74,7 @@ namespace PDE
          v2 += pow(q[d], 2);
       }
 
+      // pressure
       q[dim+1] = (gamma - 1.0) * (u[dim+1] - 0.5 * u[0] * v2);
    }
 

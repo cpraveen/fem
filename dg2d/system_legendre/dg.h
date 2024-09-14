@@ -772,6 +772,7 @@ void
 DGSystem<dim>::run()
 {
    std::cout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
+   std::cout << "Number of threas = " << MultithreadInfo::n_threads() << "\n";
 
    PDE::print_info();
    make_grid_and_dofs();
@@ -823,7 +824,7 @@ declare_parameters(ParameterHandler& prm)
                      "Number of grid refinements");
    prm.declare_entry("output step", "10", Patterns::Integer(0),
                      "Frequency to save solution");
-   prm.declare_entry("cfl", "0.0", Patterns::Double(0, 1.0),
+   prm.declare_entry("cfl", "0.0", Patterns::Double(),
                      "CFL number");
    prm.declare_entry("final time", "0.0", Patterns::Double(0),
                      "Final time");
@@ -850,8 +851,8 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
    param.output_step = ph.get_integer("output step");
 
    param.cfl = ph.get_double("cfl");
-   if(param.cfl == 0.0) param.cfl = 0.98 / (2 * param.degree + 1);
-   if(param.cfl < 0.0) param.cfl = param.cfl / (2 * param.degree + 1);
+   if(param.cfl == 0.0) param.cfl = 0.95 / (2 * param.degree + 1);
+   if(param.cfl < 0.0) param.cfl = abs(param.cfl) / (2 * param.degree + 1);
 
    double final_time = ph.get_double("final time");
    if(final_time > 0.0)
