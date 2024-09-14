@@ -882,7 +882,16 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    {
       std::string value = ph.get("numflux");
-      param.flux_type = FluxTypeList[value];
+      auto search = FluxTypeList.find(value);
+      if(search != FluxTypeList.end())
+         param.flux_type = search->second;
+      else
+      {
+         std::cout << "Available num fluxes\n";
+         for(const auto& v : FluxTypeList)
+            std::cout << v.first << std::endl;
+         AssertThrow(false, ExcMessage("Unknown flux type"));
+      }
    }
 
    {

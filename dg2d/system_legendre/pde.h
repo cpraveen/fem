@@ -40,7 +40,10 @@ namespace PDE
    //---------------------------------------------------------------------------
    template <int dim>
    inline void
-   con2prim(const Vector<double>& u, double& rho, Tensor<1,dim> vel, double& pre)
+   con2prim(const Vector<double>& u,
+            double&               rho,
+            Tensor<1,dim>&        vel,
+            double&               pre)
    {
       rho = u[0];
 
@@ -75,7 +78,10 @@ namespace PDE
    //---------------------------------------------------------------------------
    template <int dim>
    inline void
-   prim2prim(const Vector<double>& q, double& rho, Tensor<1,dim> vel, double& pre)
+   prim2prim(const Vector<double>& q,
+             double&               rho,
+             Tensor<1,dim>&        vel,
+             double&               pre)
    {
       rho = q[0];
       pre = q[dim+1];
