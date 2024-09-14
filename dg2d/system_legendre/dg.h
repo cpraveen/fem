@@ -90,11 +90,18 @@ minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
 }
 
 //------------------------------------------------------------------------------
+// Find cell size dx, dy; works for any orientation of cell
+//------------------------------------------------------------------------------
 template <typename CIterator>
 void cell_size(const CIterator &cell, double &dx, double &dy)
 {
-   dx = cell->face(1)->center()[0] - cell->face(0)->center()[0];
-   dy = cell->face(3)->center()[1] - cell->face(2)->center()[1];
+   const double dx1 = cell->face(1)->center()[0] - cell->face(0)->center()[0];
+   const double dx2 = cell->face(3)->center()[0] - cell->face(2)->center()[0];
+   dx = std::max(abs(dx1), abs(dx2));
+
+   const double dy1 = cell->face(1)->center()[1] - cell->face(0)->center()[1];
+   const double dy2 = cell->face(3)->center()[1] - cell->face(2)->center()[1];
+   dy = std::max(abs(dy1), abs(dy2));
 }
 
 //------------------------------------------------------------------------------
