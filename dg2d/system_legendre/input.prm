@@ -1,10 +1,9 @@
-set degree        = 1
-set ncells        = 100
-set nrefine       = 1
-set output step   = 100
-set cfl           = 0.25
-set limiter       = none    # none,tvd
-set numflux       = rusanov # see pde.h for available fluxes
-set tvb parameter = 100.0
+set degree         = 1
+set grid           = 100,100
+set output step    = 100
+set cfl            = 0.25
+set limiter        = none    # none,tvd
+set numflux        = rusanov # see pde.h for available fluxes
+set tvb parameter  = 100.0
 
-#set final time    = 2.0    # set this to override test_data.h
+#set final time    = 2.0    # set this to override problem.h

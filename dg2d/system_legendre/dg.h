@@ -7,6 +7,7 @@
 #include <deal.II/grid/tria_accessor.h>
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/grid_tools.h>
+#include <deal.II/grid/grid_in.h>
 
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_accessor.h>
@@ -54,7 +55,8 @@ struct Parameter
    int          degree;
    double       cfl;
    double       final_time;
-   unsigned int n_cells;
+   std::string  grid;
+   unsigned int n_cells_x, n_cells_y;
    unsigned int n_refine;
    unsigned int output_step;
    LimiterType  limiter_type;
@@ -266,12 +268,33 @@ void
 DGSystem<dim>::make_grid_and_dofs()
 {
    std::cout << "Making initial grid ...\n";
-   const Point<dim> p1(problem->get_xmin(), problem->get_ymin());
-   const Point<dim> p2(problem->get_xmax(), problem->get_ymax());
-   std::vector<unsigned int> ncells2d({param->n_cells,param->n_cells});
-   GridGenerator::subdivided_hyper_rectangle(triangulation, ncells2d,
-                                             p1, p2, true);
-   if(problem->get_periodic_x() || problem->get_periodic_y())
+   if(param->grid == "user")
+   {
+      std::cout << "   User specified code for grid generation ...\n";
+      problem->make_grid(triangulation);
+   }
+   else if(param->grid == "box")
+   {
+      std::cout << "   Making grid using subdivided_hyper_rectangle ...\n";
+      std::cout << "      Grid size = " << param->n_cells_x << " x " 
+                << param->n_cells_y << "\n";
+      const Point<dim> p1(problem->get_xmin(), problem->get_ymin());
+      const Point<dim> p2(problem->get_xmax(), problem->get_ymax());
+      std::vector<unsigned int> ncells2d({param->n_cells_x,param->n_cells_y});
+      GridGenerator::subdivided_hyper_rectangle(triangulation, ncells2d,
+                                                p1, p2, true);
+   }
+   else
+   {
+      std::cout << "Reading gmsh grid from file ...\n";
+      GridIn<dim> grid_in;
+      grid_in.attach_triangulation(triangulation);
+      std::ifstream gfile(param->grid);
+      AssertThrow(gfile.is_open(), ExcMessage("Grid file not found"));
+      grid_in.read_msh(gfile);
+   }
+
+   if(problem->get_periodic())
    {
       typedef typename Triangulation<dim>::cell_iterator Iter;
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
@@ -294,6 +317,13 @@ DGSystem<dim>::make_grid_and_dofs()
                                           periodicity_vector);
       }
       triangulation.add_periodicity(periodicity_vector);
+   }
+
+   problem->transform_grid(triangulation);
+   if(param->n_refine > 0)
+   {
+      std::cout << "   Refining initial grid\n";
+      triangulation.refine_global(param->n_refine);
    }
 
    unsigned int counter = 0;
@@ -825,9 +855,9 @@ declare_parameters(ParameterHandler& prm)
 {
    prm.declare_entry("degree", "0", Patterns::Integer(0, 6),
                      "Polynomial degree");
-   prm.declare_entry("ncells", "100", Patterns::Integer(10),
-                     "Number of elements");
-   prm.declare_entry("nrefine", "1", Patterns::Integer(1, 10),
+   prm.declare_entry("grid", "0", Patterns::Anything(),
+                     "Specify grid: 100,100 or user or foo.msh");
+   prm.declare_entry("initial refine", "0", Patterns::Integer(0),
                      "Number of grid refinements");
    prm.declare_entry("output step", "10", Patterns::Integer(0),
                      "Frequency to save solution");
@@ -853,8 +883,26 @@ void
 parse_parameters(const ParameterHandler& ph, Parameter& param)
 {
    param.degree = ph.get_integer("degree");
-   param.n_cells = ph.get_integer("ncells");
-   param.n_refine = ph.get_integer("nrefine");
+
+   auto grid = ph.get("grid");
+   AssertThrow(false, ExcMessage("Grid is not specified."));
+   auto grid_size = Utilities::split_string_list(grid, ",");
+   if(grid_size.size() == 2)
+   {
+      param.grid = "box";
+      param.n_cells_x = Utilities::string_to_int(grid_size[0]);
+      param.n_cells_y = Utilities::string_to_int(grid_size[1]);
+   }
+   else if(grid == "user")
+   {
+      param.grid = "user";
+   }
+   else
+   {
+      param.grid = grid; // gmsh grid file name
+   }
+
+   param.n_refine = ph.get_integer("initial refine");
    param.output_step = ph.get_integer("output step");
 
    param.cfl = ph.get_double("cfl");

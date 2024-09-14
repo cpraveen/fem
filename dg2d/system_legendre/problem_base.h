@@ -25,12 +25,9 @@ struct ProblemBase
       AssertThrow(false, ExcNotImplemented());
    }
 
+   // Transform grid but cells must remain rectangular. E.g., you can do some 
+   // local grid refinement.
    virtual void transform_grid(Triangulation<dim>& /*triangulation*/) const
-   {
-      // can be empty
-   }
-
-   virtual void set_manifolds(Triangulation<dim>& /*triangulation*/) const
    {
       // can be empty
    }
@@ -80,6 +77,11 @@ struct ProblemBase
    virtual bool get_periodic_y()
    {
       return ProblemData::periodic_y;
+   }
+
+   virtual bool get_periodic()
+   {
+      return (ProblemData::periodic_x && ProblemData::periodic_y);
    }
 
    virtual double get_final_time()
