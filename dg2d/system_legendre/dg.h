@@ -270,7 +270,7 @@ DGSystem<dim>::make_grid_and_dofs()
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
       if(problem->get_periodic_x())
       {
-         std::cout << "Applying periodic in x\n";
+         std::cout << "   Applying periodic in x\n";
          GridTools::collect_periodic_faces(triangulation,
                                           0,
                                           1,
@@ -279,7 +279,7 @@ DGSystem<dim>::make_grid_and_dofs()
       }
       if(problem->get_periodic_y())
       {
-         std::cout << "Applying periodic in y\n";
+         std::cout << "   Applying periodic in y\n";
          GridTools::collect_periodic_faces(triangulation,
                                           2,
                                           3,
@@ -463,6 +463,7 @@ void DGSystem<dim>::face_worker(const Iterator &cell,
    FEInterfaceValues<dim> &fe_face_values = scratch_data.fe_interface_values;
    fe_face_values.reinit(cell, f, sf, ncell, nf, nsf);
 
+   const unsigned int n_cell_dofs = fe_face_values.get_fe().n_dofs_per_cell();
    const unsigned int n_face_dofs = fe_face_values.n_current_interface_dofs();
    const unsigned int n_q_points = fe_face_values.get_quadrature().size();
    const auto &q_points = fe_face_values.get_quadrature_points();
@@ -489,7 +490,8 @@ void DGSystem<dim>::face_worker(const Iterator &cell,
                           num_flux);
       for (unsigned int i = 0; i < n_face_dofs; ++i)
       {
-         const auto c = fe_face_values.get_fe().system_to_component_index(i).first;
+         unsigned int ii = (i < n_cell_dofs) ? i : i - n_cell_dofs;
+         const auto c = fe_face_values.get_fe().system_to_component_index(ii).first;
          cell_rhs(i) -= num_flux[c] *
                         fe_face_values.jump_in_shape_values(i, q, c) *
                         fe_face_values.JxW(q);
@@ -771,6 +773,7 @@ DGSystem<dim>::run()
 {
    std::cout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
 
+   PDE::print_info();
    make_grid_and_dofs();
    assemble_mass_matrix();
    initialize();

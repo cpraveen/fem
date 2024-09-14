@@ -52,7 +52,7 @@ namespace PDE
       }
 
       const double E = u[dim + 1];
-      pre = (gamma - 1.0) * (E - 0.5 * rho* v2);
+      pre = (gamma - 1.0) * (E - 0.5 * rho * v2);
    }
 
    //---------------------------------------------------------------------------
@@ -99,10 +99,10 @@ namespace PDE
       }
 
       flux[0] = q[0] * vn;
-      for(unsigned int d = 1; d <= dim; ++d)
-         flux[d] = q[0] * q[d] * vn;
+      for(unsigned int d = 0; d < dim; ++d)
+         flux[d+1] = q[dim+1] * normal[d] + q[0] * q[d+1] * vn;
 
-      double E = q[dim+1] / (gamma - 1.0) + 0.5 * q[0] * v2;
+      const double E = q[dim+1] / (gamma - 1.0) + 0.5 * q[0] * v2;
       flux[dim + 1] = (E + q[dim+1]) * vn;
    }
 
@@ -116,7 +116,7 @@ namespace PDE
       for(unsigned int d = 0; d < dim; ++d)
          vn += q[d + 1] * normal[d];
 
-      return abs(vn) + sqrt(gamma* q[0] / q[dim + 1]);
+      return abs(vn) + sqrt(gamma * q[dim + 1] / q[0]);
    }
 
    //---------------------------------------------------------------------------
@@ -155,7 +155,7 @@ namespace PDE
       double rho, pre;
       Tensor<1,dim> vel;
       con2prim<dim>(u, rho, vel, pre);
-      const double c = sqrt(gamma* pre / rho);
+      const double c = sqrt(gamma * pre / rho);
 
       for(unsigned int d = 0; d < dim; ++d)
          speed[d] = abs(vel[d]) + c;
@@ -224,6 +224,12 @@ namespace PDE
                  Vector<double>&       /*flux*/)
    {
       AssertThrow(false, ExcNotImplemented());
+   }
+
+   //---------------------------------------------------------------------------
+   void print_info()
+   {
+      std::cout << "Ratio of specific heats, gamma = " << gamma << std::endl;
    }
 }
 
