@@ -355,14 +355,10 @@ namespace PDE
    class Postprocessor : public DataPostprocessor<dim>
    {
    public:
-      Postprocessor() = default;
-
       void
       evaluate_vector_field(const DataPostprocessorInputs::Vector<dim> &input_data,
                             std::vector<Vector<double>> &computed_quantities) const override;
-
       std::vector<std::string> get_names() const override;
-
       UpdateFlags get_needed_update_flags() const override;
    };
 

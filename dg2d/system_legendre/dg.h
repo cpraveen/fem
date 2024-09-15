@@ -862,11 +862,10 @@ DGSystem<dim>::output_results(const double time) const
 {
    static unsigned int counter = 0;
 
-   PDE::Postprocessor<dim> postprocessor;
-
    DataOut<dim> data_out;
    DataOutBase::VtkFlags flags(time, counter);
    data_out.set_flags(flags);
+   PDE::Postprocessor<dim> postprocessor;
    data_out.add_data_vector(dof_handler, solution, postprocessor);
    data_out.build_patches(mapping, param->degree+1);
 
