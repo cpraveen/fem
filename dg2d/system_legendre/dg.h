@@ -41,6 +41,7 @@
 using namespace dealii;
 
 // Coefficients for 3-stage SSP RK scheme of Shu-Osher
+const unsigned int n_rk_stages = 3;
 const double a_rk[3] = {0.0, 3.0 / 4.0, 1.0 / 3.0};
 const double b_rk[3] = {1.0, 1.0 / 4.0, 2.0 / 3.0};
 
@@ -229,7 +230,6 @@ private:
 
    Parameter*                  param;
    double                      time, stage_time, dt;
-   unsigned int                n_rk_stages;
    ProblemBase<dim>*           problem;
    Triangulation<dim>          triangulation;
    FESystem<dim>               fe;
@@ -256,8 +256,6 @@ DGSystem<dim>::DGSystem(Parameter&        param,
    dof_handler(triangulation)
 {
    AssertThrow(dim == 2, ExcIndexRange(dim, 0, 2));
-
-   n_rk_stages = 3;
 }
 
 //------------------------------------------------------------------------------
@@ -367,9 +365,9 @@ void
 DGSystem<dim>::assemble_mass_matrix()
 {
    std::cout << "Constructing mass matrix ...\n";
-   std::cout << "  Quadrature using " << fe.degree + 1 << " points\n";
+   std::cout << "  Quadrature using " << param->degree + 1 << " points\n";
 
-   QGauss<dim>  quadrature_formula(fe.degree + 1);
+   QGauss<dim>  quadrature_formula(param->degree + 1);
    FEValues<dim> fe_values(mapping, fe, quadrature_formula,
                            update_values | update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
@@ -407,7 +405,7 @@ DGSystem<dim>::initialize()
 {
    std::cout << "Projecting initial condition ...\n";
 
-   QGauss<dim>  quadrature_formula(2 * fe.degree + 1);
+   QGauss<dim>  quadrature_formula(2 * param->degree + 1);
    FEValues<dim> fe_values(mapping, fe, quadrature_formula,
                            update_values   |
                            update_quadrature_points |
@@ -634,7 +632,7 @@ DGSystem<dim>::assemble_rhs()
       }
    };
 
-   const unsigned int n_gauss_points = fe.degree + 1;
+   const unsigned int n_gauss_points = param->degree + 1;
    const QGauss<dim> cell_quadrature(n_gauss_points);
    const QGauss<dim-1> face_quadrature(n_gauss_points);
 
@@ -706,11 +704,10 @@ DGSystem<2>::apply_TVD_limiter()
       const double Mdy2 = param->Mlim * dy * dy;
       auto c  = cell->user_index();
 
-      // TODO: If periodic in only one directio, then following is not correct.
       unsigned int cl, cr, cb, ct;
 
       // left cell
-      if (cell->face(0)->at_boundary() && problem->get_periodic() == false)
+      if (cell->face(0)->at_boundary() && cell->has_periodic_neighbor(0) == false)
       {
          cl = c; // TODO: assuming neumann-like bc
       }
@@ -720,7 +717,7 @@ DGSystem<2>::apply_TVD_limiter()
       }
 
       // right cell
-      if (cell->face(1)->at_boundary() && problem->get_periodic() == false)
+      if (cell->face(1)->at_boundary() && cell->has_periodic_neighbor(1) == false)
       {
          cr = c; // TODO: assuming neumann-like bc
       }
@@ -730,7 +727,7 @@ DGSystem<2>::apply_TVD_limiter()
       }
 
       // bottom cell
-      if (cell->face(2)->at_boundary() && problem->get_periodic() == false)
+      if (cell->face(2)->at_boundary() && cell->has_periodic_neighbor(2) == false)
       {
          cb = c; // TODO: assuming neumann-like bc
       }
@@ -740,7 +737,7 @@ DGSystem<2>::apply_TVD_limiter()
       }
 
       // top cell
-      if (cell->face(3)->at_boundary() && problem->get_periodic() == false)
+      if (cell->face(3)->at_boundary() && cell->has_periodic_neighbor(3) == false)
       {
          ct = c; // TODO: assuming neumann-like bc
       }
@@ -795,7 +792,7 @@ template <int dim>
 void
 DGSystem<dim>::apply_limiter()
 {
-   if(fe.degree == 0 || param->limiter_type == LimiterType::none) return;
+   if(param->degree == 0 || param->limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
 }
 
@@ -853,7 +850,7 @@ DGSystem<dim>::output_results(const double time) const
    data_out.set_flags(flags);
    data_out.attach_dof_handler(dof_handler);
    data_out.add_data_vector(solution, "solution");
-   data_out.build_patches(mapping, fe.degree+1);
+   data_out.build_patches(mapping, param->degree+1);
 
    std::string filename = "sol_" + Utilities::int_to_string(counter,3) + ".vtu";
    std::ofstream output(filename);
