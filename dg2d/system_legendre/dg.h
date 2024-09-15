@@ -682,50 +682,110 @@ DGSystem<dim>::compute_averages()
 }
 
 //------------------------------------------------------------------------------
-// Apply TVD limiter
+// Apply TVD limiter: 2d case only
 //------------------------------------------------------------------------------
-template <int dim>
+template <>
 void
-DGSystem<dim>::apply_TVD_limiter()
+DGSystem<2>::apply_TVD_limiter()
 {
-   /*
-   if(fe.degree == 0) return;
+   if(param->degree == 0) return;
 
    const double sqrt_3 = std::sqrt(3.0);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
+   const unsigned int degree = param->degree;
+   const unsigned int dofs_per_comp = (degree*(degree+1))/2;
+   Vector<double> dbx(nvar), dfx(nvar), Dx(nvar), Dx_new(nvar);
+   Vector<double> dby(nvar), dfy(nvar), Dy(nvar), Dy_new(nvar);
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
       double dx, dy;
       cell_size(cell, dx, dy);
-      const double Mh2 = param->Mlim * dx * dx;
+      const double Mdx2 = param->Mlim * dx * dx;
+      const double Mdy2 = param->Mlim * dy * dy;
       auto c  = cell->user_index();
-      auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
-      auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
-      auto cb = cell->neighbor_or_periodic_neighbor(2)->user_index();
-      auto ct = cell->neighbor_or_periodic_neighbor(3)->user_index();
+
+      // TODO: If periodic in only one directio, then following is not correct.
+      unsigned int cl, cr, cb, ct;
+
+      // left cell
+      if (cell->face(0)->at_boundary() && problem->get_periodic() == false)
+      {
+         cl = c; // TODO: assuming neumann-like bc
+      }
+      else
+      {
+         cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
+      }
+
+      // right cell
+      if (cell->face(1)->at_boundary() && problem->get_periodic() == false)
+      {
+         cr = c; // TODO: assuming neumann-like bc
+      }
+      else
+      {
+         cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
+      }
+
+      // bottom cell
+      if (cell->face(2)->at_boundary() && problem->get_periodic() == false)
+      {
+         cb = c; // TODO: assuming neumann-like bc
+      }
+      else
+      {
+         cb = cell->neighbor_or_periodic_neighbor(2)->user_index();
+      }
+
+      // top cell
+      if (cell->face(3)->at_boundary() && problem->get_periodic() == false)
+      {
+         ct = c; // TODO: assuming neumann-like bc
+      }
+      else
+      {
+         ct = cell->neighbor_or_periodic_neighbor(3)->user_index();
+      }
+
       cell->get_dof_indices(dof_indices);
 
-      double dbx = average[c]  - average[cl];
-      double dfx = average[cr] - average[c];
-      double Dx = solution(dof_indices[1]);
-      double Dx_new = minmod(sqrt_3 * Dx, dbx, dfx, Mh2) / sqrt_3;
-
-      double dby = average[c]  - average[cb];
-      double dfy = average[ct] - average[c];
-      double Dy = solution(dof_indices[fe.degree+1]);
-      double Dy_new = minmod(sqrt_3 * Dy, dby, dfy, Mh2) / sqrt_3;
-
-      if(std::fabs(Dx - Dx_new) > 1.0e-6 || std::fabs(Dy - Dy_new) > 1.0e-6)
+      for(unsigned int i=0, j=0; i<nvar; ++i, j+=dofs_per_comp)
       {
-         for(unsigned int i = 1; i < dofs_per_cell; ++i)
+         dbx[i] = average[c][i]  - average[cl][i];
+         dfx[i] = average[cr][i] - average[c][i];
+         Dx[i] = solution(dof_indices[j+1]);
+
+         dby[i] = average[c][i]  - average[cb][i];
+         dfy[i] = average[ct][i] - average[c][i];
+         Dy[i] = solution(dof_indices[j+degree+1]);
+      }
+
+      // TODO: Transform to characteristic
+
+      bool tolimit = false;
+      for(unsigned int i=0; i<nvar; ++i)
+      {
+         Dx_new[i] = minmod(sqrt_3 * Dx[i], dbx[i], dfx[i], Mdx2) / sqrt_3;
+         Dy_new[i] = minmod(sqrt_3 * Dy[i], dby[i], dfy[i], Mdy2) / sqrt_3;
+         if(fabs(Dx[i] - Dx_new[i]) > 1.0e-6 * fabs(Dx[i]) || 
+            fabs(Dy[i] - Dy_new[i]) > 1.0e-6 * fabs(Dy[i]))
+            tolimit = true;
+      }
+
+      if(tolimit)
+      {
+         for(unsigned int i = 0; i < dofs_per_cell; ++i)
             solution(dof_indices[i]) = 0;
-         solution(dof_indices[1]) = Dx_new;
-         solution(dof_indices[fe.degree+1]) = Dy_new;
+         for(unsigned int i=0, j=0; i<nvar; ++i, j+=dofs_per_comp)
+         {
+            solution(dof_indices[j]) = average[c][i];
+            solution(dof_indices[j+1]) = Dx_new[i];
+            solution(dof_indices[j+degree+1]) = Dy_new[i];
+         }
       }
    }
-   */
 }
 
 //------------------------------------------------------------------------------

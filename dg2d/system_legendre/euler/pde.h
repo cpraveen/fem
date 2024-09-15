@@ -236,6 +236,18 @@ namespace PDE
    }
 
    //---------------------------------------------------------------------------
+   template <int dim>
+   void
+   char_mat(const Vector<double>& /*u*/,
+            const Point<dim>&     /*p*/,
+            const Tensor<1, dim>& /*normal*/,
+            FullMatrix<double>&   /*R*/,
+            FullMatrix<double>&   /*L*/)
+   {
+      AssertThrow(false, ExcNotImplemented());
+   }
+
+   //---------------------------------------------------------------------------
    void print_info()
    {
       std::cout << "Ratio of specific heats, gamma = " << gamma << std::endl;
