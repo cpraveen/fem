@@ -4,6 +4,8 @@
 #ifndef __PDE_H__
 #define __PDE_H__
 
+#include <deal.II/numerics/data_postprocessor.h>
+
 using namespace dealii;
 
 const unsigned int nvar = 4;
@@ -347,6 +349,71 @@ namespace PDE
    {
       std::cout << "Ratio of specific heats, gamma = " << gamma << std::endl;
    }
-}
 
+   //---------------------------------------------------------------------------
+   template <int dim>
+   class Postprocessor : public DataPostprocessor<dim>
+   {
+   public:
+      Postprocessor() = default;
+
+      void
+      evaluate_vector_field(const DataPostprocessorInputs::Vector<dim> &input_data,
+                            std::vector<Vector<double>> &computed_quantities) const override;
+
+      std::vector<std::string> get_names() const override;
+
+      UpdateFlags get_needed_update_flags() const override;
+   };
+
+   //---------------------------------------------------------------------------
+   template <int dim>
+   void
+   Postprocessor<dim>::evaluate_vector_field(const DataPostprocessorInputs::Vector<dim> &input_data,
+                                             std::vector<Vector<double>> &computed_quantities) const
+   {
+      const std::vector<Vector<double>> &uh = input_data.solution_values;
+      const unsigned int n_quadrature_points = uh.size();
+
+      Assert(computed_quantities.size() == n_quadrature_points,
+             ExcInternalError());
+
+      Assert(uh[0].size() == nvar,
+             ExcInternalError());
+
+      Assert(computed_quantities[0].size() == nvar,
+             ExcInternalError());
+
+      for (unsigned int q = 0; q < n_quadrature_points; ++q)
+      {
+         con2prim<dim>(uh[q], computed_quantities[q]);
+      }
+   }
+
+   //---------------------------------------------------------------------------
+   template <int dim>
+   std::vector<std::string>
+   Postprocessor<dim>::get_names() const
+   {
+      if (dim == 2)
+         return { "Density",
+                  "XVelocity",
+                  "YVelocity",
+                  "Pressure" };
+      else
+         return { "Density",
+                  "XVelocity",
+                  "YVelocity",
+                  "ZVelocity",
+                  "Pressure"};
+   }
+
+   //---------------------------------------------------------------------------
+   template <int dim>
+   UpdateFlags
+   Postprocessor<dim>::get_needed_update_flags() const
+   {
+      return update_values;
+   }
+}
 #endif

@@ -681,6 +681,7 @@ DGSystem<dim>::compute_averages()
 
 //------------------------------------------------------------------------------
 // Apply TVD limiter: 2d case only
+// TODO: Make it work on locally refined grids
 //------------------------------------------------------------------------------
 template <>
 void
@@ -861,11 +862,12 @@ DGSystem<dim>::output_results(const double time) const
 {
    static unsigned int counter = 0;
 
+   PDE::Postprocessor<dim> postprocessor;
+
    DataOut<dim> data_out;
    DataOutBase::VtkFlags flags(time, counter);
    data_out.set_flags(flags);
-   data_out.attach_dof_handler(dof_handler);
-   data_out.add_data_vector(solution, "solution");
+   data_out.add_data_vector(dof_handler, solution, postprocessor);
    data_out.build_patches(mapping, param->degree+1);
 
    std::string filename = "sol_" + Utilities::int_to_string(counter,3) + ".vtu";
@@ -960,7 +962,7 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
    param.degree = ph.get_integer("degree");
 
    auto grid = ph.get("grid");
-   AssertThrow(false, ExcMessage("Grid is not specified."));
+   AssertThrow(grid != "0", ExcMessage("Grid is not specified."));
    auto grid_size = Utilities::split_string_list(grid, ",");
    if(grid_size.size() == 2)
    {
