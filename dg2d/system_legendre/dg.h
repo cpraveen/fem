@@ -695,6 +695,9 @@ DGSystem<2>::apply_TVD_limiter()
    const unsigned int dofs_per_comp = (degree*(degree+1))/2;
    Vector<double> dbx(nvar), dfx(nvar), Dx(nvar), Dx_new(nvar);
    Vector<double> dby(nvar), dfy(nvar), Dy(nvar), Dy_new(nvar);
+   Vector<double> dbx1(nvar), dfx1(nvar), Dx1(nvar), Dx1_new(nvar);
+   Vector<double> dby1(nvar), dfy1(nvar), Dy1(nvar), Dy1_new(nvar);
+   FullMatrix<double> Rx(nvar,nvar), Lx(nvar,nvar), Ry(nvar,nvar), Ly(nvar,nvar);
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
@@ -760,19 +763,32 @@ DGSystem<2>::apply_TVD_limiter()
       }
 
       // TODO: Transform to characteristic
+      const auto drx = cell->face(1)->center() - cell->face(0)->center();
+      const auto ex = drx / drx.norm();
+      const auto dry = cell->face(3)->center() - cell->face(2)->center();
+      const auto ey = dry / dry.norm();
+      PDE::char_mat(average[c], cell->center(), ex, ey, Rx, Lx, Ry, Ly);
+      Lx.vmult(dbx1, dbx);
+      Lx.vmult(dfx1, dfx);
+      Lx.vmult(Dx1,  Dx);
+      Ly.vmult(dby1, dby);
+      Ly.vmult(dfy1, dfy);
+      Ly.vmult(Dy1,  Dy);
 
       bool tolimit = false;
       for(unsigned int i=0; i<nvar; ++i)
       {
-         Dx_new[i] = minmod(sqrt_3 * Dx[i], dbx[i], dfx[i], Mdx2) / sqrt_3;
-         Dy_new[i] = minmod(sqrt_3 * Dy[i], dby[i], dfy[i], Mdy2) / sqrt_3;
-         if(fabs(Dx[i] - Dx_new[i]) > 1.0e-6 * fabs(Dx[i]) || 
-            fabs(Dy[i] - Dy_new[i]) > 1.0e-6 * fabs(Dy[i]))
+         Dx1_new[i] = minmod(sqrt_3 * Dx1[i], dbx1[i], dfx1[i], Mdx2) / sqrt_3;
+         Dy1_new[i] = minmod(sqrt_3 * Dy1[i], dby1[i], dfy1[i], Mdy2) / sqrt_3;
+         if(fabs(Dx1[i] - Dx1_new[i]) > 1.0e-6 * fabs(Dx1[i]) || 
+            fabs(Dy1[i] - Dy1_new[i]) > 1.0e-6 * fabs(Dy1[i]))
             tolimit = true;
       }
 
       if(tolimit)
       {
+         Rx.vmult(Dx_new, Dx1_new);
+         Ry.vmult(Dy_new, Dy1_new);
          for(unsigned int i = 0; i < dofs_per_cell; ++i)
             solution(dof_indices[i]) = 0;
          for(unsigned int i=0, j=0; i<nvar; ++i, j+=dofs_per_comp)
