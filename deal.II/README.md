@@ -139,3 +139,18 @@ rm dealii-9.6.0-offline_documentation.tar.gz
 ```
 
 Now you can open `$DEAL_II_DIR/doc/index.html` in your web browser and view the documentation.
+
+## Using docker on Linux
+
+```shell
+docker run --rm -t -i dealii/dealii:latest
+```
+
+or better
+
+```shell
+cd fem
+docker run -ti -v $(pwd):/home/dealii/shared -w /home/dealii/shared  dealii/dealii:latest
+```
+
+The second form allows you to access the files in your `fem` directory.
