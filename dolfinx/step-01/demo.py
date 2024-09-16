@@ -4,7 +4,7 @@
 """
 from mpi4py import MPI
 from dolfinx import mesh
-from dolfinx.fem import FunctionSpace,Function,Constant,dirichletbc
+from dolfinx.fem import functionspace,Function,Constant,dirichletbc
 from dolfinx.fem import locate_dofs_topological
 from dolfinx.fem.petsc import LinearProblem
 from ufl import TrialFunction,TestFunction,dx,inner,grad
@@ -14,7 +14,7 @@ from dolfinx.io import VTKFile,XDMFFile
 domain = mesh.create_unit_square(MPI.COMM_WORLD, 20, 20, 
                                  mesh.CellType.triangle)
 degree = 1
-V = FunctionSpace(domain, ('CG', degree))
+V = functionspace(domain, ('CG', degree))
 u = TrialFunction(V)
 v = TestFunction(V)
 

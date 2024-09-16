@@ -6,7 +6,7 @@ is given by f(x,y) = (2*pi)^2 u(x,y). The BC g is obtained from exact solution.
 """
 from mpi4py import MPI
 from dolfinx import mesh
-from dolfinx.fem import FunctionSpace,Function,Constant,dirichletbc
+from dolfinx.fem import functionspace,Function,Constant,dirichletbc
 from dolfinx.fem import locate_dofs_topological
 from dolfinx.fem.petsc import LinearProblem
 from ufl import TrialFunction,TestFunction,dx,inner,grad,SpatialCoordinate
@@ -17,7 +17,7 @@ from numpy import pi,sin,cos
 domain = mesh.create_unit_square(MPI.COMM_WORLD, 20, 20, 
                                  mesh.CellType.triangle)
 degree = 1
-V = FunctionSpace(domain, ('CG', degree))
+V = functionspace(domain, ('CG', degree))
 u = TrialFunction(V)
 v = TestFunction(V)
 
