@@ -73,3 +73,7 @@ refine_grid(triangulation, 0.40, 0.60);
 ```
 
 See `step-1` in the deal.II tutorial. A solution is given in the file `refine_grid.cc` but do not look at it until you have attempted yourself.
+
+## TODO
+
+The code solves linear advection equation and this is hard-coded. Make this more general by extracting the PDE part to an include file as we have done in other examples.
