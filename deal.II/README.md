@@ -142,6 +142,10 @@ Now you can open `$DEAL_II_DIR/doc/index.html` in your web browser and view the 
 
 ## Using docker on Linux
 
+Docker images are available
+
+https://hub.docker.com/r/dealii/dealii
+
 ```shell
 docker run --rm -t -i dealii/dealii:latest
 ```
