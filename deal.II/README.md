@@ -64,6 +64,13 @@ If not present, then install openmpi (You can also use mpich)
 sudo apt install openmpi-bin openmpi-common openmpi-doc
 ```
 
+We will also need some visualization software which you should install from the following websites.
+
+* [VisIt](https://visit-dav.github.io/visit-website/index.html)
+* [Paraview](https://www.paraview.org)
+
+For grid generation, we need Gmsh, get it from [here](https://www.gmsh.info).
+
 ### Automated installation
 
 A bash script that can automate the installation of deal.II is also included. Do the following steps
