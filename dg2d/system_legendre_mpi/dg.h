@@ -341,7 +341,8 @@ DGSystem<dim>::make_grid_and_dofs()
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
-      cell->set_user_index(counter++);
+      if(cell->is_locally_owned() || cell->is_artificial())
+         cell->set_user_index(counter++);
 
    pcout << "   Number of active cells: "
          << triangulation.n_global_active_cells()
@@ -367,8 +368,7 @@ DGSystem<dim>::make_grid_and_dofs()
    solution_old.reinit(solution);
    rhs.reinit(solution);
    imm.reinit(solution);
-   // TODO: Check size of this array
-   average.resize(triangulation.n_active_cells(), Vector<double>(nvar));
+   average.resize(counter, Vector<double>(nvar));
 
    // We dont have any constraints in DG.
    constraints.clear();
