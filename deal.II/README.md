@@ -153,6 +153,14 @@ Docker images are available
 
 https://hub.docker.com/r/dealii/dealii
 
+Install
+
+```shell
+docker pull dealii/dealii
+```
+
+Run as
+
 ```shell
 docker run --rm -t -i dealii/dealii:latest
 ```

@@ -21,14 +21,19 @@
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/function.h>
 #include <deal.II/base/parameter_handler.h>
+#include <deal.II/base/conditional_ostream.h>
 
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/data_out.h>
 
 #include <deal.II/lac/vector.h>
 #include <deal.II/lac/affine_constraints.h>
+#include <deal.II/lac/la_parallel_vector.h>
 
 #include <deal.II/meshworker/mesh_loop.h>
+
+#include <deal.II/distributed/tria.h>
+
 
 #include <fstream>
 #include <iostream>
@@ -196,6 +201,9 @@ public:
    void run();
 
 private:
+   typedef parallel::distributed::Triangulation<dim> PTriangulation;
+   typedef LinearAlgebra::distributed::Vector<double> PVector;
+
    void make_grid_and_dofs();
    void initialize();
    void assemble_mass_matrix();
@@ -228,18 +236,20 @@ private:
                     ScratchData<dim> &scratch_data,
                     CopyData &copy_data);
 
+   const MPI_Comm              mpi_comm;
    Parameter*                  param;
    double                      time, stage_time, dt;
    ProblemBase<dim>*           problem;
-   Triangulation<dim>          triangulation;
+   ConditionalOStream          pcout;
+   PTriangulation              triangulation;
    FESystem<dim>               fe;
    DoFHandler<dim>             dof_handler;
-   MappingCartesian<dim>        mapping;
+   MappingCartesian<dim>       mapping;
    AffineConstraints<double>   constraints;
-   Vector<double>              solution;
-   Vector<double>              solution_old;
-   Vector<double>              rhs;
-   Vector<double>              imm;
+   PVector                     solution;
+   PVector                     solution_old;
+   PVector                     rhs;
+   PVector                     imm;
    std::vector<Vector<double>> average;
 };
 
@@ -250,8 +260,11 @@ template <int dim>
 DGSystem<dim>::DGSystem(Parameter&        param,
                         ProblemBase<dim>& problem)
    :
+   mpi_comm(MPI_COMM_WORLD),
    param(&param),
    problem(&problem),
+   pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm) == 0)),
+   triangulation(mpi_comm),
    fe(FE_DGP<dim>(param.degree),nvar),
    dof_handler(triangulation)
 {
@@ -265,17 +278,17 @@ template <int dim>
 void
 DGSystem<dim>::make_grid_and_dofs()
 {
-   std::cout << "Making initial grid ...\n";
+   pcout << "Making initial grid ...\n";
    if(param->grid == "user")
    {
-      std::cout << "   User specified code for grid generation ...\n";
+      pcout << "   User specified code for grid generation ...\n";
       problem->make_grid(triangulation);
    }
    else if(param->grid == "box")
    {
-      std::cout << "   Making grid using subdivided_hyper_rectangle ...\n";
-      std::cout << "      Grid size = " << param->n_cells_x << " x " 
-                << param->n_cells_y << "\n";
+      pcout << "   Making grid using subdivided_hyper_rectangle ...\n";
+      pcout << "      Grid size = " << param->n_cells_x << " x " 
+            << param->n_cells_y << "\n";
       const Point<dim> p1(problem->get_xmin(), problem->get_ymin());
       const Point<dim> p2(problem->get_xmax(), problem->get_ymax());
       std::vector<unsigned int> ncells2d({param->n_cells_x,param->n_cells_y});
@@ -284,7 +297,7 @@ DGSystem<dim>::make_grid_and_dofs()
    }
    else
    {
-      std::cout << "Reading gmsh grid from file ...\n";
+      pcout << "Reading gmsh grid from file ...\n";
       GridIn<dim> grid_in;
       grid_in.attach_triangulation(triangulation);
       std::ifstream gfile(param->grid);
@@ -294,11 +307,11 @@ DGSystem<dim>::make_grid_and_dofs()
 
    if(problem->get_periodic())
    {
-      typedef typename Triangulation<dim>::cell_iterator Iter;
+      typedef typename PTriangulation::cell_iterator Iter;
       std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
       if(problem->get_periodic_x())
       {
-         std::cout << "   Applying periodic in x\n";
+         pcout << "   Applying periodic in x\n";
          GridTools::collect_periodic_faces(triangulation,
                                           0,
                                           1,
@@ -307,7 +320,7 @@ DGSystem<dim>::make_grid_and_dofs()
       }
       if(problem->get_periodic_y())
       {
-         std::cout << "   Applying periodic in y\n";
+         pcout << "   Applying periodic in y\n";
          GridTools::collect_periodic_faces(triangulation,
                                           2,
                                           3,
@@ -322,7 +335,7 @@ DGSystem<dim>::make_grid_and_dofs()
 
    if(param->n_refine > 0)
    {
-      std::cout << "   Refining initial grid\n";
+      pcout << "   Refining initial grid\n";
       triangulation.refine_global(param->n_refine);
    }
 
@@ -330,24 +343,31 @@ DGSystem<dim>::make_grid_and_dofs()
    for(auto & cell : triangulation.active_cell_iterators())
       cell->set_user_index(counter++);
 
-   std::cout << "   Number of active cells: "
-             << triangulation.n_active_cells()
-             << std::endl
-             << "   Total number of cells: "
-             << triangulation.n_cells()
-             << std::endl;
+   pcout << "   Number of active cells: "
+         << triangulation.n_global_active_cells()
+         << std::endl
+         << "   Total number of cells: "
+         << triangulation.n_cells()
+         << std::endl;
 
    dof_handler.distribute_dofs(fe);
 
-   std::cout << "   Number of degrees of freedom: "
-             << dof_handler.n_dofs()
-             << std::endl;
+   pcout << "   Number of degrees of freedom: "
+         << dof_handler.n_dofs()
+         << std::endl;
+
+   IndexSet locally_owned_dofs;
+   IndexSet locally_relevant_dofs;
+   locally_owned_dofs = dof_handler.locally_owned_dofs();
+   DoFTools::extract_locally_relevant_dofs(dof_handler,
+                                           locally_relevant_dofs);
 
    // Solution variables
-   solution.reinit(dof_handler.n_dofs());
-   solution_old.reinit(dof_handler.n_dofs());
-   rhs.reinit(dof_handler.n_dofs());
-   imm.reinit(dof_handler.n_dofs());
+   solution.reinit(locally_owned_dofs, locally_relevant_dofs, mpi_comm);
+   solution_old.reinit(solution);
+   rhs.reinit(solution);
+   imm.reinit(solution);
+   // TODO: Check size of this array
    average.resize(triangulation.n_active_cells(), Vector<double>(nvar));
 
    // We dont have any constraints in DG.
@@ -364,8 +384,8 @@ template <int dim>
 void
 DGSystem<dim>::assemble_mass_matrix()
 {
-   std::cout << "Constructing mass matrix ...\n";
-   std::cout << "  Quadrature using " << param->degree + 1 << " points\n";
+   pcout << "Constructing mass matrix ...\n";
+   pcout << "  Quadrature using " << param->degree + 1 << " points\n";
 
    QGauss<dim>  quadrature_formula(param->degree + 1);
    FEValues<dim> fe_values(mapping, fe, quadrature_formula,
@@ -379,6 +399,7 @@ DGSystem<dim>::assemble_mass_matrix()
 
    // Cell iterator
    for(auto & cell : dof_handler.active_cell_iterators())
+   if(cell->is_locally_owned())
    {
       fe_values.reinit(cell);
       cell_matrix = 0.0;
@@ -393,6 +414,8 @@ DGSystem<dim>::assemble_mass_matrix()
       for(unsigned int i = 0; i < dofs_per_cell; ++i)
          imm[dof_indices[i]] = 1.0 / cell_matrix(i);
    }
+
+   imm.compress(VectorOperation::insert);
 }
 
 //------------------------------------------------------------------------------
@@ -403,7 +426,7 @@ template <int dim>
 void
 DGSystem<dim>::initialize()
 {
-   std::cout << "Projecting initial condition ...\n";
+   pcout << "Projecting initial condition ...\n";
 
    QGauss<dim>  quadrature_formula(2 * param->degree + 1);
    FEValues<dim> fe_values(mapping, fe, quadrature_formula,
@@ -416,6 +439,7 @@ DGSystem<dim>::initialize()
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
 
    for(auto & cell : dof_handler.active_cell_iterators())
+   if(cell->is_locally_owned())
    {
       fe_values.reinit(cell);
       cell_rhs  = 0.0;
@@ -446,6 +470,7 @@ DGSystem<dim>::initialize()
       }
    }
 
+   solution.compress(VectorOperation::insert);
 }
 
 //------------------------------------------------------------------------------
@@ -641,18 +666,25 @@ DGSystem<dim>::assemble_rhs()
                                  cell_quadrature,
                                  face_quadrature);
 
+   const auto iterator_range =
+        filter_iterators(dof_handler.active_cell_iterators(),
+                         IteratorFilters::LocallyOwnedCell());
+   solution.update_ghost_values();
    rhs = 0.0;
-   MeshWorker::mesh_loop(dof_handler.begin_active(),
-                         dof_handler.end(),
+   MeshWorker::mesh_loop(iterator_range,
                          cell_worker,
                          copier,
                          scratch_data,
                          CopyData(),
                          MeshWorker::assemble_own_cells |
                          MeshWorker::assemble_boundary_faces |
-                         MeshWorker::assemble_own_interior_faces_once,
+                         MeshWorker::assemble_own_interior_faces_once |
+                         MeshWorker::assemble_ghost_faces_once,
                          boundary_worker,
                          face_worker);
+
+   // Reduce over all MPI ranks
+   rhs.compress(VectorOperation::add);
 
    // Multiply by inverse mass matrix
    rhs.scale(imm);
@@ -670,6 +702,7 @@ DGSystem<dim>::compute_averages()
    const unsigned int dofs_per_comp = (param->degree * (param->degree + 1)) / 2;
 
    for(auto & cell : dof_handler.active_cell_iterators())
+   if(cell->is_locally_owned() || cell->is_ghost())
    {
       cell->get_dof_indices(dof_indices);
       const auto c = cell->user_index();
@@ -701,6 +734,7 @@ DGSystem<2>::apply_TVD_limiter()
    FullMatrix<double> Rx(nvar,nvar), Lx(nvar,nvar), Ry(nvar,nvar), Ly(nvar,nvar);
 
    for(auto & cell : dof_handler.active_cell_iterators())
+   if(cell->is_locally_owned())
    {
       double dx, dy;
       cell_size(cell, dx, dy);
@@ -823,6 +857,7 @@ DGSystem<dim>::compute_dt()
    dt = 1.0e20;
 
    for(auto &cell : dof_handler.active_cell_iterators())
+   if(cell->is_locally_owned())
    {
       auto c = cell->user_index();
       double dx, dy;
@@ -834,6 +869,7 @@ DGSystem<dim>::compute_dt()
    }
 
    dt *= param->cfl;
+   dt = Utilities::MPI::min(dt, mpi_comm);
 }
 
 //------------------------------------------------------------------------------
@@ -843,12 +879,11 @@ template <int dim>
 void
 DGSystem<dim>::update(const unsigned int rk_stage)
 {
-   // Update conserved variables
-   for(unsigned int i = 0; i < dof_handler.n_dofs(); ++i)
-   {
-      solution(i)  = a_rk[rk_stage] * solution_old(i) +
-                     b_rk[rk_stage] * (solution(i) + dt * rhs(i));
-   }
+   // solution = solution + dt * rhs
+   solution.add(dt, rhs);
+
+   // solution = b_rk * solution + a_rk * solution_old
+   solution.sadd(b_rk[rk_stage], a_rk[rk_stage], solution_old);
 
    stage_time = a_rk[rk_stage] * time + b_rk[rk_stage] * (stage_time + dt);
 }
@@ -861,19 +896,41 @@ void
 DGSystem<dim>::output_results(const double time) const
 {
    static unsigned int counter = 0;
+   static std::vector<XDMFEntry> xdmf_entries;
+   std::string mesh_filename = "mesh.h5";
+   std::string solution_filename = ("vars-" +
+                                   Utilities::int_to_string(counter, 4) +
+                                   ".h5");
+   bool write_mesh_file = (counter == 0) ? true : false;
 
    DataOut<dim> data_out;
-   DataOutBase::VtkFlags flags(time, counter);
-   data_out.set_flags(flags);
+   //DataOutBase::VtkFlags flags(time, counter);
+   //data_out.set_flags(flags);
    PDE::Postprocessor<dim> postprocessor;
    data_out.add_data_vector(dof_handler, solution, postprocessor);
    data_out.build_patches(mapping, param->degree+1);
 
-   std::string filename = "sol_" + Utilities::int_to_string(counter,3) + ".vtu";
-   std::ofstream output(filename);
-   data_out.write_vtu(output);
-   std::cout << "Outout at t = " << time << "  " << filename << std::endl;
+   DataOutBase::DataOutFilter data_filter(DataOutBase::DataOutFilterFlags(true, true));
+  // Filter the data and store it in data_filter
+  data_out.write_filtered_data(data_filter);
+  // Write the filtered data to HDF5
+  data_out.write_hdf5_parallel(data_filter,
+                               write_mesh_file,
+                               mesh_filename,
+                               solution_filename,
+                               mpi_comm);
+  // Create an XDMF entry detailing the HDF5 file
+  XDMFEntry new_xdmf_entry = data_out.create_xdmf_entry(data_filter,
+                                                        mesh_filename,
+                                                        solution_filename,
+                                                        time,
+                                                        mpi_comm);
+  // Add the XDMF entry to the list
+  xdmf_entries.push_back(new_xdmf_entry);
+  // Create an XDMF file from all stored entries
+  data_out.write_xdmf_file(xdmf_entries, "solution.xdmf", mpi_comm);
 
+  pcout << "Wrote " << solution_filename << " at t = " << time << "\n";
    ++counter;
 }
 
@@ -884,8 +941,8 @@ template <int dim>
 void
 DGSystem<dim>::run()
 {
-   std::cout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
-   std::cout << "Number of threas = " << MultithreadInfo::n_threads() << "\n";
+   pcout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
+   pcout << "Number of threas = " << MultithreadInfo::n_threads() << "\n";
 
    PDE::print_info();
    make_grid_and_dofs();
@@ -916,7 +973,7 @@ DGSystem<dim>::run()
       time += dt;
       ++iter;
       if(iter % param->output_step == 0) output_results(time);
-      std::cout << "Iter = " << iter 
+      pcout << "Iter = " << iter 
                 << " dt = " << dt
                 << " time = " << time << std::endl;
    }

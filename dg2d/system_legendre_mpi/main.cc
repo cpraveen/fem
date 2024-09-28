@@ -7,6 +7,10 @@
 int
 main(int argc, char** argv)
 {
+   // Number of threads to use
+   unsigned int n_threads = 1;
+   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, n_threads);
+
    Problem<2> problem;
 
    ParameterHandler ph;
@@ -19,7 +23,8 @@ main(int argc, char** argv)
       return 0;
    }
    ph.parse_input(argv[1]);
-   ph.print_parameters(std::cout, ParameterHandler::Text);
+   if(Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+      ph.print_parameters(std::cout, ParameterHandler::Text);
 
    Parameter param;
    param.final_time = problem.get_final_time(); // override this in input file
