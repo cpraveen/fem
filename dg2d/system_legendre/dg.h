@@ -34,7 +34,7 @@
 #include <iostream>
 
 #include "pde.h"
-#include "problem_base.h"
+#include "../models/problem_base.h"
 
 #define sign(a)   (((a) > 0.0) ? 1 : -1)
 
