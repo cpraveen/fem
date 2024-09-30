@@ -950,9 +950,6 @@ declare_parameters(ParameterHandler& prm)
                      "Numerical flux");
    prm.declare_entry("tvb parameter", "0.0", Patterns::Double(0),
                      "TVB parameter");
-   prm.declare_entry("periodic", "true",
-                     Patterns::Bool(),
-                     "Periodic boundaries");
 }
 
 //------------------------------------------------------------------------------
