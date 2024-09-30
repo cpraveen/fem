@@ -943,7 +943,7 @@ void
 DGSystem<dim>::run()
 {
    pcout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
-   pcout << "Number of threas = " << MultithreadInfo::n_threads() << "\n";
+   pcout << "Number of threads = " << MultithreadInfo::n_threads() << "\n";
 
    PDE::print_info();
    make_grid_and_dofs();
@@ -987,7 +987,7 @@ DGSystem<dim>::run()
 void
 declare_parameters(ParameterHandler& prm)
 {
-   prm.declare_entry("degree", "0", Patterns::Integer(0, 6),
+   prm.declare_entry("degree", "0", Patterns::Integer(0),
                      "Polynomial degree");
    prm.declare_entry("grid", "0", Patterns::Anything(),
                      "Specify grid: 100,100 or user or foo.msh");

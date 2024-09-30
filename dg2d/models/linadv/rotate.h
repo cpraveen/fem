@@ -38,4 +38,15 @@ struct Problem : ProblemBase<dim>
       const double y = p[1] - y0;
       u[0] = exp(-alpha * (x * x + y * y));
    }
+
+   // Not needed if we have periodic bc
+   void boundary_value(const int             /*boundary_id*/,
+                       const Point<dim>&     /*p*/,
+                       const double          /*t*/,
+                       const Tensor<1, dim>& /*normal*/,
+                       const Vector<double>& /*u*/,
+                       Vector<double>&       uout) const override
+   {
+      uout[0] = 0.0;
+   }
 };
