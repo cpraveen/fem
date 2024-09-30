@@ -587,6 +587,7 @@ void DGSystem<dim>::boundary_worker(const Iterator &cell,
       problem->boundary_value(cell->face(f)->boundary_id(),
                               q_points[q],
                               stage_time,
+                              fe_face_values.normal_vector(q),
                               left_state[q],
                               right_state[q]);
       Vector<double> num_flux(nvar);

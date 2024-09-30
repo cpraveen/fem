@@ -38,6 +38,7 @@ struct ProblemBase
    virtual void boundary_value(const int             /*boundary_id*/,
                                const Point<dim>&     /*p*/,
                                const double          /*t*/,
+                               const Tensor<1,dim>&  /*normal*/,
                                const Vector<double>& /*Uint*/,
                                Vector<double>&       /*Uout*/) const
    {
