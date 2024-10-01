@@ -955,6 +955,10 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
          {
             param.mapping = "q";
             param.mapping_degree = Utilities::string_to_int(values[1]);
+            AssertThrow(param.mapping_degree >= 1,
+                        ExcMessage("Need mapping degree >= 1"));
+            AssertThrow(param.mapping_degree <= param.degree,
+                        ExcMessage("Need mapping degree <= degree"));
          }
          else
          {
