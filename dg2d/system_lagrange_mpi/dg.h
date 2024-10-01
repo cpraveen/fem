@@ -511,7 +511,14 @@ void DGSystem<dim>::cell_worker(const Iterator &cell,
 
    auto &cell_rhs = copy_data.cell_rhs;
    auto &solution_values = scratch_data.solution_values;
-   fe_values.get_function_values(solution,  solution_values);
+   auto &dof_indices = copy_data.local_dof_indices;
+
+   for(unsigned int i=0; i<dofs_per_cell; ++i)
+   {
+      auto comp_i = fe_values.get_fe().system_to_component_index(i).first;
+      auto indx_i = fe_values.get_fe().system_to_component_index(i).second;
+      solution_values[indx_i][comp_i] = solution(dof_indices[i]);
+   }
 
    for (unsigned int q = 0; q < n_q_points; ++q)
    {
