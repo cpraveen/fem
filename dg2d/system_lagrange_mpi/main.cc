@@ -32,9 +32,17 @@ main(int argc, char** argv)
 
    Quadrature<1> quadrature_1d;
    if(param.basis == "gl")
+   {
       quadrature_1d = QGauss<1>(param.degree+1);
-   else
+   }
+   else if(param.basis == "gll")
+   {
       quadrature_1d = QGaussLobatto<1>(param.degree+1);
+   }
+   else
+   {
+      AssertThrow(false, ExcMessage("Unknown points"));
+   }
 
    DGSystem<2> solver(param, problem, quadrature_1d);
    solver.run();

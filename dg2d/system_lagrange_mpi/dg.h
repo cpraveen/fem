@@ -927,6 +927,7 @@ void
 parse_parameters(const ParameterHandler& ph, Parameter& param)
 {
    param.degree = ph.get_integer("degree");
+   param.basis = ph.get("basis");
 
    {
       auto value = ph.get("mapping");
