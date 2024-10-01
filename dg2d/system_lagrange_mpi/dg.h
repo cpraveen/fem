@@ -325,7 +325,12 @@ DGSystem<dim>::make_grid_and_dofs()
       triangulation.add_periodicity(periodicity_vector);
    }
 
+   // Attach any manifold
+   pcout << "   Setting manifolds\n";
+   problem->set_manifolds(triangulation);
+
    // User specified transformation
+   pcout << "   Transforming grid\n";
    problem->transform_grid(triangulation);
 
    if(param->n_refine > 0)

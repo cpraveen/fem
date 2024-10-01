@@ -318,6 +318,7 @@ DGSystem<dim>::make_grid_and_dofs()
    }
 
    // User specified transformation. NOTE: Cells must remain rectangles.
+   std::cout << "   Transforming grid\n";
    problem->transform_grid(triangulation);
 
    if(param->n_refine > 0)

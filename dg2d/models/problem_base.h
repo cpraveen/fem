@@ -25,9 +25,15 @@ struct ProblemBase
       AssertThrow(false, ExcNotImplemented());
    }
 
-   // Transform grid but cells must remain rectangular. E.g., you can do some 
-   // local grid refinement.
+   // Transform grid but cells must remain rectangular if you are using FE_DGP. 
+   // E.g., you can do some local grid refinement.
    virtual void transform_grid(Triangulation<dim>& /*triangulation*/) const
+   {
+      // can be empty
+   }
+
+   // Attach manifolds to define curved boundaries
+   virtual void set_manifolds(Triangulation<dim>& /*triangulation*/) const
    {
       // can be empty
    }
