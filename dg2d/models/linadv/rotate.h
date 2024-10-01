@@ -36,7 +36,7 @@ struct Problem : ProblemBase<dim>
    {
       const double x = p[0] - x0;
       const double y = p[1] - y0;
-      u[0] = exp(-alpha * (x * x + y * y));
+      u[0] = 1.0 + exp(-alpha * (x * x + y * y));
    }
 
    // Not needed if we have periodic bc
@@ -44,9 +44,9 @@ struct Problem : ProblemBase<dim>
                        const Point<dim>&     /*p*/,
                        const double          /*t*/,
                        const Tensor<1, dim>& /*normal*/,
-                       const Vector<double>& /*u*/,
+                       const Vector<double>& /*uin*/,
                        Vector<double>&       uout) const override
    {
-      uout[0] = 0.0;
+      uout[0] = 1.0;
    }
 };
