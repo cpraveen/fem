@@ -358,11 +358,11 @@ DGSystem<dim>::make_grid_and_dofs()
    DoFTools::extract_locally_relevant_dofs(dof_handler,
                                            locally_relevant_dofs);
 
-   // Solution variables
+   // Solution and rhs variables
    solution.reinit(locally_owned_dofs, locally_relevant_dofs, mpi_comm);
-   solution_old.reinit(solution);
+   solution_old.reinit(locally_owned_dofs, mpi_comm);
    rhs.reinit(solution);
-   imm.reinit(solution);
+   imm.reinit(solution_old);
    average.resize(counter, Vector<double>(nvar));
 
    // We dont have any constraints in DG.
