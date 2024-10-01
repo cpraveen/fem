@@ -682,7 +682,7 @@ DGSystem<dim>::assemble_rhs()
    const auto iterator_range =
         filter_iterators(dof_handler.active_cell_iterators(),
                          IteratorFilters::LocallyOwnedCell());
-   solution.update_ghost_values();
+
    rhs = 0.0;
    MeshWorker::mesh_loop(iterator_range,
                          cell_worker,
@@ -858,6 +858,7 @@ DGSystem<dim>::run()
    make_grid_and_dofs();
    assemble_mass_matrix();
    initialize();
+   solution.update_ghost_values();
    compute_averages();
    output_results(0.0);
 
@@ -876,6 +877,7 @@ DGSystem<dim>::run()
       {
          assemble_rhs();
          update(rk);
+         solution.update_ghost_values();
          compute_averages();
          apply_limiter();
       }
