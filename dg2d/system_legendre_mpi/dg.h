@@ -297,7 +297,7 @@ DGSystem<dim>::make_grid_and_dofs()
    }
    else
    {
-      pcout << "Reading gmsh grid from file ...\n";
+      pcout << "Reading gmsh grid from file " << param->grid << std::endl;
       GridIn<dim> grid_in;
       grid_in.attach_triangulation(triangulation);
       std::ifstream gfile(param->grid);
@@ -411,11 +411,16 @@ DGSystem<dim>::assemble_mass_matrix()
                               fe_values.JxW(q_point);
 
       cell->get_dof_indices(dof_indices);
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         imm[dof_indices[i]] = 1.0 / cell_matrix(i);
+      imm.add(dof_indices, cell_matrix);
    }
 
-   imm.compress(VectorOperation::insert);
+   imm.compress(VectorOperation::add);
+
+   // Invert mass matrix
+   for (unsigned int i = 0; i < imm.locally_owned_size(); ++i)
+   {
+      imm.local_element(i) = 1.0 / imm.local_element(i);
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -437,6 +442,8 @@ DGSystem<dim>::initialize()
    const unsigned int   n_q_points    = quadrature_formula.size();
    Vector<double>       cell_rhs(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
+
+   solution = 0.0;
 
    for(auto & cell : dof_handler.active_cell_iterators())
    if(cell->is_locally_owned())
@@ -462,15 +469,11 @@ DGSystem<dim>::initialize()
 
       // Multiply by inverse mass matrix and add to rhs
       cell->get_dof_indices(dof_indices);
-      unsigned int ig;
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
-      {
-         ig = dof_indices[i];
-         solution(ig) = imm(ig) * cell_rhs(i);
-      }
+      solution.add(dof_indices, cell_rhs);
    }
 
-   solution.compress(VectorOperation::insert);
+   solution.compress(VectorOperation::add);
+   solution.scale(imm);
 }
 
 //------------------------------------------------------------------------------
@@ -649,12 +652,12 @@ DGSystem<dim>::assemble_rhs()
    {
       this->constraints.distribute_local_to_global(cd.cell_rhs,
                                                    cd.local_dof_indices,
-                                                   rhs);
+                                                   this->rhs);
       for (auto &cdf : cd.face_data)
       {
          this->constraints.distribute_local_to_global(cdf.cell_rhs,
                                                       cdf.joint_dof_indices,
-                                                      rhs);
+                                                      this->rhs);
       }
    };
 
@@ -905,11 +908,9 @@ DGSystem<dim>::output_results(const double time) const
    bool write_mesh_file = (counter == 0) ? true : false;
 
    DataOut<dim> data_out;
-   //DataOutBase::VtkFlags flags(time, counter);
-   //data_out.set_flags(flags);
    PDE::Postprocessor<dim> postprocessor;
    data_out.add_data_vector(dof_handler, solution, postprocessor);
-   data_out.build_patches(mapping, param->degree+1);
+   data_out.build_patches(mapping, param->degree);
 
    DataOutBase::DataOutFilter data_filter(DataOutBase::DataOutFilterFlags(true, true));
   // Filter the data and store it in data_filter
@@ -1054,7 +1055,7 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
       {
          std::cout << "Available num fluxes\n";
          for (const auto &v : FluxTypeList)
-            std::cout << v.first << std::endl;
+            std::cout << "   * " << v.first << std::endl;
          AssertThrow(false, ExcMessage("Unknown flux type"));
       }
    }

@@ -284,7 +284,7 @@ DGSystem<dim>::make_grid_and_dofs()
    }
    else
    {
-      std::cout << "Reading gmsh grid from file ...\n";
+      std::cout << "Reading gmsh grid from file " << param->grid << std::endl;
       GridIn<dim> grid_in;
       grid_in.attach_triangulation(triangulation);
       std::ifstream gfile(param->grid);
@@ -624,12 +624,12 @@ DGSystem<dim>::assemble_rhs()
    {
       this->constraints.distribute_local_to_global(cd.cell_rhs,
                                                    cd.local_dof_indices,
-                                                   rhs);
+                                                   this->rhs);
       for (auto &cdf : cd.face_data)
       {
          this->constraints.distribute_local_to_global(cdf.cell_rhs,
                                                       cdf.joint_dof_indices,
-                                                      rhs);
+                                                      this->rhs);
       }
    };
 
@@ -868,7 +868,7 @@ DGSystem<dim>::output_results(const double time) const
    data_out.set_flags(flags);
    PDE::Postprocessor<dim> postprocessor;
    data_out.add_data_vector(dof_handler, solution, postprocessor);
-   data_out.build_patches(mapping, param->degree+1);
+   data_out.build_patches(mapping, param->degree);
 
    std::string filename = "sol_" + Utilities::int_to_string(counter,3) + ".vtu";
    std::ofstream output(filename);
@@ -997,7 +997,7 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
       {
          std::cout << "Available num fluxes\n";
          for (const auto &v : FluxTypeList)
-            std::cout << v.first << std::endl;
+            std::cout << "   * " << v.first << std::endl;
          AssertThrow(false, ExcMessage("Unknown flux type"));
       }
    }

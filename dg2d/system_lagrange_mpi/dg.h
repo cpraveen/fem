@@ -8,6 +8,7 @@
 #include <deal.II/grid/tria_iterator.h>
 #include <deal.II/grid/grid_tools.h>
 #include <deal.II/grid/grid_in.h>
+#include <deal.II/grid/manifold_lib.h>
 
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_accessor.h>
@@ -291,7 +292,7 @@ DGSystem<dim>::make_grid_and_dofs()
    }
    else
    {
-      pcout << "Reading gmsh grid from file ...\n";
+      pcout << "Reading gmsh grid from file " << param->grid << std::endl;
       GridIn<dim> grid_in;
       grid_in.attach_triangulation(triangulation);
       std::ifstream gfile(param->grid);
@@ -367,6 +368,19 @@ DGSystem<dim>::make_grid_and_dofs()
    // We dont have any constraints in DG.
    constraints.clear();
    constraints.close();
+
+   pcout << "Mapping type   = " << param->mapping << std::endl;
+   pcout << "Mapping degree = " << param->mapping_degree << std::endl;
+
+   // check support point order
+   for(unsigned int i=0; i<fe.dofs_per_cell; ++i)
+   {
+      auto ind_i = fe.system_to_component_index(i).second;
+      auto q_point = cell_quadrature.point(ind_i);
+      auto value = fe.shape_value(i, q_point);
+      AssertThrow(fabs(value-1.0) < 1.0e-13, 
+                  ExcMessage("Support point order assumption wrong"));
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -427,11 +441,16 @@ DGSystem<dim>::assemble_mass_matrix()
                               fe_values.JxW(q_point);
 
       cell->get_dof_indices(dof_indices);
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         imm[dof_indices[i]] = 1.0 / cell_matrix(i);
+      imm.add(dof_indices, cell_matrix);
    }
 
-   imm.compress(VectorOperation::insert);
+   imm.compress(VectorOperation::add);
+
+   // Invert mass matrix
+   for (unsigned int i = 0; i < imm.locally_owned_size(); ++i)
+   {
+      imm.local_element(i) = 1.0 / imm.local_element(i);
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -646,12 +665,12 @@ DGSystem<dim>::assemble_rhs()
    {
       this->constraints.distribute_local_to_global(cd.cell_rhs,
                                                    cd.local_dof_indices,
-                                                   rhs);
+                                                   this->rhs);
       for (auto &cdf : cd.face_data)
       {
          this->constraints.distribute_local_to_global(cdf.cell_rhs,
                                                       cdf.joint_dof_indices,
-                                                      rhs);
+                                                      this->rhs);
       }
    };
 
@@ -797,11 +816,9 @@ DGSystem<dim>::output_results(const double time) const
    bool write_mesh_file = (counter == 0) ? true : false;
 
    DataOut<dim> data_out;
-   //DataOutBase::VtkFlags flags(time, counter);
-   //data_out.set_flags(flags);
    PDE::Postprocessor<dim> postprocessor;
    data_out.add_data_vector(dof_handler, solution, postprocessor);
-   data_out.build_patches(mapping(), param->degree+1);
+   data_out.build_patches(mapping(), param->degree);
 
    DataOutBase::DataOutFilter data_filter(DataOutBase::DataOutFilterFlags(true, true));
   // Filter the data and store it in data_filter
@@ -977,7 +994,7 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
       {
          std::cout << "Available num fluxes\n";
          for (const auto &v : FluxTypeList)
-            std::cout << v.first << std::endl;
+            std::cout << "   * " << v.first << std::endl;
          AssertThrow(false, ExcMessage("Unknown flux type"));
       }
    }
