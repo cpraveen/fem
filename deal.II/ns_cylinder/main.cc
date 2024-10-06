@@ -295,7 +295,9 @@ NS<dim>::NS (ParameterHandler &prm)
    // Set cylinder boundary description
    Point<dim> center (0.0, 0.0);
    static const SphericalManifold<dim> boundary_description (center);
-   triangulation.set_manifold (2, boundary_description);
+   triangulation.set_all_manifold_ids(0);
+   triangulation.set_all_manifold_ids_on_boundary(2, 1);
+   triangulation.set_manifold(1, boundary_description);
    
    std::string grid_output_file = "grid.eps";
    std::ofstream grid_output(grid_output_file);
