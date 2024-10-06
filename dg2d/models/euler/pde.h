@@ -228,13 +228,14 @@ namespace PDE
    //---------------------------------------------------------------------------
    template <int dim>
    void
-   boundary_flux(const Vector<double>& /*ul*/,
-                 const Vector<double>& /*ur*/,
+   boundary_flux(const Vector<double>& ul,
+                 const Vector<double>& ur,
                  const Point<dim>&     /*p*/,
-                 const Tensor<1, dim>& /*normal*/,
-                 Vector<double>&       /*flux*/)
+                 const Tensor<1, dim>& normal,
+                 Vector<double>&       flux)
    {
-      AssertThrow(false, ExcNotImplemented());
+      // TODO: put steger-warming flux here
+      rusanov_flux(ul, ur, normal, flux);
    }
 
    //---------------------------------------------------------------------------
