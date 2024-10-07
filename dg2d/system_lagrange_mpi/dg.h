@@ -357,9 +357,8 @@ DGSystem<dim>::make_grid_and_dofs()
          << dof_handler.n_dofs()
          << std::endl;
 
-   IndexSet locally_owned_dofs;
+   const auto& locally_owned_dofs = dof_handler.locally_owned_dofs();
    IndexSet locally_relevant_dofs;
-   locally_owned_dofs = dof_handler.locally_owned_dofs();
    DoFTools::extract_locally_relevant_dofs(dof_handler,
                                            locally_relevant_dofs);
 
@@ -377,7 +376,9 @@ DGSystem<dim>::make_grid_and_dofs()
    pcout << "Mapping type   = " << param->mapping << std::endl;
    pcout << "Mapping degree = " << param->mapping_degree << std::endl;
 
-   // check support point order
+   // check support point order. We assume that the order of cell_quadrature
+   // points is same as the order of lagrange basis points. This allows us to 
+   // directly get solution at quadrature points without using get_function_values.
    for(unsigned int i=0; i<fe.dofs_per_cell; ++i)
    {
       auto ind_i = fe.system_to_component_index(i).second;

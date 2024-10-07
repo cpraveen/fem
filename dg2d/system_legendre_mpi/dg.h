@@ -358,9 +358,8 @@ DGSystem<dim>::make_grid_and_dofs()
          << dof_handler.n_dofs()
          << std::endl;
 
-   IndexSet locally_owned_dofs;
+   const auto& locally_owned_dofs = dof_handler.locally_owned_dofs();
    IndexSet locally_relevant_dofs;
-   locally_owned_dofs = dof_handler.locally_owned_dofs();
    DoFTools::extract_locally_relevant_dofs(dof_handler,
                                            locally_relevant_dofs);
 

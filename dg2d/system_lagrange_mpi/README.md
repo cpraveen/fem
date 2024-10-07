@@ -28,3 +28,7 @@ The problem is described in Section 7.13.6 of this book
 http://www.ossanworld.com/cfdbooks/download_idolikecfd_free_2nd_edition.html
 
 Generate a mesh for this problem using Gmsh and set up the problem file. Run it for a long enough time that steady solution is reached.
+
+## Exercise: output solution in pvtu format
+
+Save solution in vtu format using `write_vtu_with_pvtu_record` function for parallel codes.
