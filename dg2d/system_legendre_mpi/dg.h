@@ -342,7 +342,7 @@ DGSystem<dim>::make_grid_and_dofs()
 
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
-      if(cell->is_locally_owned() || cell->is_artificial())
+      if(cell->is_locally_owned() || cell->is_ghost())
          cell->set_user_index(counter++);
 
    pcout << "   Number of active cells: "
