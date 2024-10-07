@@ -8,7 +8,7 @@
 
 using namespace dealii;
 
-const unsigned int nvar = 1;
+constexpr unsigned int nvar = 1;
 
 // Numerical flux functions
 enum class FluxType {upwind, none};
