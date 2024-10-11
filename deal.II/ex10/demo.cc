@@ -294,9 +294,9 @@ void LaplaceProblem<dim>::output_results () const
    data_out.add_data_vector (solution, "solution");
    data_out.add_data_vector (solution_error, "error");
    data_out.build_patches (mapping, fe.degree);
-   std::string fname = "sol-" + Utilities::int_to_string(nrefine,2)+".vtk";
+   std::string fname = "sol-" + Utilities::int_to_string(nrefine,2)+".vtu";
    std::ofstream output (fname);
-   data_out.write_vtk (output);
+   data_out.write_vtu (output);
    std::cout << "   Wrote to file " << fname << std::endl;
 }
 

@@ -270,9 +270,9 @@ void LaplaceProblem<dim>::output_results () const
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
    data_out.build_patches (fe.degree);
-   std::string filename = method + ".vtk";
+   std::string filename = method + ".vtu";
    std::ofstream output (filename);
-   data_out.write_vtk (output);
+   data_out.write_vtu (output);
    std::cout << "Saved solution into " << filename << std::endl;
 }
 

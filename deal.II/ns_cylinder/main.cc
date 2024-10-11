@@ -790,9 +790,9 @@ NS<dim>::output_results ()  const
    data_out.build_patches (mapping, degree+1);
    
    std::string filename = "solution-" 
-                          + Utilities::int_to_string (cycle, 3) + ".vtk";
+                          + Utilities::int_to_string (cycle, 3) + ".vtu";
    std::ofstream output (filename);
-   data_out.write_vtk (output);
+   data_out.write_vtu (output);
    std::cout << "Wrote solution into " << filename << std::endl;
    
    ++cycle;

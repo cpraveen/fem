@@ -236,8 +236,8 @@ void LaplaceProblem<dim>::output_results () const
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
    data_out.build_patches (mapping, fe.degree);
-   std::ofstream output ("solution.vtk");
-   data_out.write_vtk (output);
+   std::ofstream output ("solution.vtu");
+   data_out.write_vtu (output);
 }
 
 //------------------------------------------------------------------------------

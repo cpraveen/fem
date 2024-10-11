@@ -21,10 +21,10 @@ This produces a latex file `error.tex` containing error.
 pdflatex error.tex
 ```
 
-Open and see `error.pdf` for a table of error versus number of dofs. The solution and error are saved in files `solution-00.vtk`, `solution-01.vtk`, etc. Open them together in VisIt and see the change with grid refinement.
+Open and see `error.pdf` for a table of error versus number of dofs. The solution and error are saved in files `solution-00.vtu`, `solution-01.vtu`, etc. Open them together in VisIt and see the change with grid refinement.
 
 ```shell
-visit -o solution-*.vtk
+visit -o solution-*.vtu
 ```
 
 If we compare the error vs dofs from uniform and adaptive refinement, we see that adaptive refinement allows us to achieve same error level as uniform refinement but with substantially fewer dofs.

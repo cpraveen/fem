@@ -210,9 +210,9 @@ namespace Step26
       
       const std::string filename = ("solution-"
                                     + Utilities::int_to_string(timestep_number, 3) +
-                                    ".vtk");
+                                    ".vtu");
       std::ofstream output(filename.c_str());
-      data_out.write_vtk(output);
+      data_out.write_vtu(output);
    }
    
    template<int dim>

@@ -229,9 +229,9 @@ void LaplaceProblem<dim>::output_results ()
    data_out.add_data_vector (solution, "solution");
    data_out.add_data_vector (system_rhs, "error");
    data_out.build_patches (fe.degree);
-   std::string fname = "solution-" + Utilities::int_to_string(counter,2)+".vtk";
+   std::string fname = "solution-" + Utilities::int_to_string(counter,2)+".vtu";
    std::ofstream output (fname);
-   data_out.write_vtk (output);
+   data_out.write_vtu (output);
    ++counter;
 }
 
