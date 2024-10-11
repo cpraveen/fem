@@ -831,7 +831,8 @@ DGSystem<dim>::output_results(const double time) const
    DataOut<dim> data_out;
    PDE::Postprocessor<dim> postprocessor;
    data_out.add_data_vector(dof_handler, solution, postprocessor);
-   data_out.build_patches(mapping(), param->degree);
+   data_out.build_patches(mapping(), param->degree,
+                          DataOut<dim>::curved_inner_cells);
 
    DataOutBase::DataOutFilter data_filter(DataOutBase::DataOutFilterFlags(true, true));
   // Filter the data and store it in data_filter

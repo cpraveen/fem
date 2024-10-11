@@ -27,4 +27,4 @@ Implement shallow water equation model and solve radial dam-break problem, see L
 
 ## Exercise: Linear advection equation
 
-We can also solve scalar conservation law with this code. Implement linear advection equation and solve some IVP.
+We can also solve scalar conservation law with this code. Implement linear advection equation and solve some IVP. This is done in `models/linadv` but try to do it yourself before seeing that solution.
