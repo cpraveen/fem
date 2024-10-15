@@ -91,11 +91,15 @@ minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
 }
 
 //------------------------------------------------------------------------------
+// Find cell size dx, dy for cartesian grid
+//------------------------------------------------------------------------------
 template <typename CIterator>
 void cell_size(const CIterator &cell, double &dx, double &dy)
 {
-   dx = cell->face(1)->center()[0] - cell->face(0)->center()[0];
-   dy = cell->face(3)->center()[1] - cell->face(2)->center()[1];
+   const auto dr1 = cell->face(1)->center() - cell->face(0)->center();
+   const auto dr2 = cell->face(3)->center() - cell->face(2)->center();
+   dx = std::max(fabs(dr1[0]), fabs(dr2[0]));
+   dy = std::max(fabs(dr1[1]), fabs(dr2[1]));
 }
 
 //------------------------------------------------------------------------------
