@@ -63,6 +63,24 @@ namespace PDE
    //---------------------------------------------------------------------------
    template <int dim>
    inline void
+   prim2con(const double          rho,
+            const Tensor<1, dim>& vel,
+            const double          pre,
+            Vector<double>&       u)
+   {
+      u[0] = rho;
+      u[dim+1] = pre/(gamma - 1.0) + 0.5 * rho * vel.norm_square();
+
+      for (unsigned int d = 0; d < dim; ++d)
+      {
+         u[d+1] = rho * vel[d];
+      }
+
+   }
+
+   //---------------------------------------------------------------------------
+   template <int dim>
+   inline void
    con2prim(const Vector<double>& u, Vector<double>& q)
    {
       // density
