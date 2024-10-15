@@ -703,8 +703,8 @@ DGSystem<2>::apply_TVD_limiter()
    {
       double dx, dy;
       cell_size(cell, dx, dy);
-      const double Mdx2 = param->Mlim * dx * dx;
-      const double Mdy2 = param->Mlim * dy * dy;
+      const double h = std::max(dx, dy);
+      const double Mh2 = param->Mlim * h * h;
       const auto c  = cell->user_index();
 
       unsigned int cl, cr, cb, ct;
@@ -778,8 +778,8 @@ DGSystem<2>::apply_TVD_limiter()
       bool tolimit = false;
       for(unsigned int i=0; i<nvar; ++i)
       {
-         Dx1_new[i] = minmod(sqrt_3 * Dx1[i], dbx1[i], dfx1[i], Mdx2) / sqrt_3;
-         Dy1_new[i] = minmod(sqrt_3 * Dy1[i], dby1[i], dfy1[i], Mdy2) / sqrt_3;
+         Dx1_new[i] = minmod(sqrt_3 * Dx1[i], dbx1[i], dfx1[i], Mh2) / sqrt_3;
+         Dy1_new[i] = minmod(sqrt_3 * Dy1[i], dby1[i], dfy1[i], Mh2) / sqrt_3;
          if(fabs(Dx1[i] - Dx1_new[i]) > 1.0e-6 * fabs(Dx1[i]) || 
             fabs(Dy1[i] - Dy1_new[i]) > 1.0e-6 * fabs(Dy1[i]))
             tolimit = true;
