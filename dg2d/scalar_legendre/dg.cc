@@ -644,25 +644,27 @@ DGScalar<dim>::apply_TVD_limiter()
    {
       double dx, dy;
       cell_size(cell, dx, dy);
-      const double Mh2 = param->Mlim * dx * dx;
-      auto c  = cell->user_index();
-      auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
-      auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
-      auto cb = cell->neighbor_or_periodic_neighbor(2)->user_index();
-      auto ct = cell->neighbor_or_periodic_neighbor(3)->user_index();
+      const double Mdx2 = param->Mlim * dx * dx;
+      const double Mdy2 = param->Mlim * dy * dy;
+      const auto c  = cell->user_index();
+      const auto cl = cell->neighbor_or_periodic_neighbor(0)->user_index();
+      const auto cr = cell->neighbor_or_periodic_neighbor(1)->user_index();
+      const auto cb = cell->neighbor_or_periodic_neighbor(2)->user_index();
+      const auto ct = cell->neighbor_or_periodic_neighbor(3)->user_index();
       cell->get_dof_indices(dof_indices);
 
-      double dbx = average[c]  - average[cl];
-      double dfx = average[cr] - average[c];
-      double Dx = solution(dof_indices[1]);
-      double Dx_new = minmod(sqrt_3 * Dx, dbx, dfx, Mh2) / sqrt_3;
+      const double dbx = average[c]  - average[cl];
+      const double dfx = average[cr] - average[c];
+      const double Dx = solution(dof_indices[1]);
+      const double Dx_new = minmod(sqrt_3 * Dx, dbx, dfx, Mdx2) / sqrt_3;
 
-      double dby = average[c]  - average[cb];
-      double dfy = average[ct] - average[c];
-      double Dy = solution(dof_indices[fe.degree+1]);
-      double Dy_new = minmod(sqrt_3 * Dy, dby, dfy, Mh2) / sqrt_3;
+      const double dby = average[c]  - average[cb];
+      const double dfy = average[ct] - average[c];
+      const double Dy = solution(dof_indices[fe.degree+1]);
+      const double Dy_new = minmod(sqrt_3 * Dy, dby, dfy, Mdy2) / sqrt_3;
 
-      if(std::fabs(Dx - Dx_new) > 1.0e-6 || std::fabs(Dy - Dy_new) > 1.0e-6)
+      if(fabs(Dx - Dx_new) > 1.0e-6 * fabs(Dx) || 
+         fabs(Dy - Dy_new) > 1.0e-6 * fabs(Dy))
       {
          for(unsigned int i = 1; i < dofs_per_cell; ++i)
             solution(dof_indices[i]) = 0;

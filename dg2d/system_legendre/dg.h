@@ -669,7 +669,7 @@ DGSystem<dim>::compute_averages()
 {
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
-   const unsigned int dofs_per_comp = (param->degree * (param->degree + 1)) / 2;
+   const unsigned int dofs_per_comp = ((param->degree + 1) * (param->degree + 2)) / 2;
 
    for(auto & cell : dof_handler.active_cell_iterators())
    {
@@ -695,7 +695,7 @@ DGSystem<2>::apply_TVD_limiter()
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
    const unsigned int degree = param->degree;
-   const unsigned int dofs_per_comp = (degree*(degree+1))/2;
+   const unsigned int dofs_per_comp = ((degree+1)*(degree+2))/2;
    Vector<double> dbx(nvar), dfx(nvar), Dx(nvar), Dx_new(nvar);
    Vector<double> dby(nvar), dfy(nvar), Dy(nvar), Dy_new(nvar);
    Vector<double> dbx1(nvar), dfx1(nvar), Dx1(nvar), Dx1_new(nvar);
@@ -708,7 +708,7 @@ DGSystem<2>::apply_TVD_limiter()
       cell_size(cell, dx, dy);
       const double Mdx2 = param->Mlim * dx * dx;
       const double Mdy2 = param->Mlim * dy * dy;
-      auto c  = cell->user_index();
+      const auto c  = cell->user_index();
 
       unsigned int cl, cr, cb, ct;
 
