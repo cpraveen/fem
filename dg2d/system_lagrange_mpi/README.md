@@ -32,3 +32,10 @@ Generate a mesh for this problem using Gmsh and set up the problem file. Run it 
 ## Exercise: output solution in pvtu format
 
 Save solution in vtu format using `write_vtu_with_pvtu_record` function for parallel codes.
+
+## TODO: limiter
+
+Limiters on quad meshes have not been implemented. For some ideas, see
+
+Krishnadutt, Limiting techniques for the discontinuous Galerkin method on unstructured meshes, PhD Thesis.
+http://hdl.handle.net/10012/18566

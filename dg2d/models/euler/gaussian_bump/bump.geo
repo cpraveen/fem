@@ -40,7 +40,6 @@ Transfinite Line{1,-3} = nx;
 Transfinite Line{2,-4} = ny;
 
 Plane Surface(1) = {1};
-
 Transfinite Surface{1};
 //Recombine{1};
 

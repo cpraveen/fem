@@ -32,6 +32,7 @@ struct Problem : ProblemBase<dim>
    const double vel_inf = mach_inf*sqrt(gasGam*gasR*Tem_inf);
    const double pre_out = pre_inf;
 
+   //---------------------------------------------------------------------------
    void initial_value(const Point<dim>& /*p*/,
                       Vector<double>&   u) const override
    {
@@ -41,6 +42,7 @@ struct Problem : ProblemBase<dim>
       u[3] = pre_inf / (gasGam - 1.0) + 0.5 * rho_inf * pow(vel_inf,2);
    }
 
+   //---------------------------------------------------------------------------
    void boundary_value(const int             boundary_id,
                        const Point<dim>&     /*p*/,
                        const double          /*t*/,
@@ -88,6 +90,7 @@ struct Problem : ProblemBase<dim>
       }
    }
 
+   //---------------------------------------------------------------------------
    void set_manifolds(Triangulation<dim>& triangulation) const override
    {
       triangulation.set_all_manifold_ids(0);
