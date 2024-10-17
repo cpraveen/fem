@@ -244,6 +244,9 @@ namespace PDE
    }
 
    //---------------------------------------------------------------------------
+   // steger-warming flux
+   // TODO: Add reference
+   //---------------------------------------------------------------------------
    template <int dim>
    void
    boundary_flux(const Vector<double>& ul,
@@ -252,10 +255,52 @@ namespace PDE
                  const Tensor<1, dim>& normal,
                  Vector<double>&       flux)
    {
-      // TODO: put steger-warming flux here
-      rusanov_flux(ul, ur, normal, flux);
+      double rho_l, rho_r, pre_l, pre_r;
+      Tensor<1,dim> vel_l, vel_r;
+      con2prim<dim>(ul, rho_l, vel_l, pre_l);
+      con2prim<dim>(ur, rho_r, vel_r, pre_r);
+
+      const double c_l = sqrt(gamma * pre_l / rho_l);
+      const double c_r = sqrt(gamma * pre_r / rho_r);
+      const double vn_l = vel_l * normal;
+      const double vn_r = vel_r * normal;
+
+      // positive flux
+      const double l1p = std::max(vn_l,       0.0);
+      const double l2p = std::max(vn_l + c_l, 0.0);
+      const double l3p = std::max(vn_l - c_l, 0.0);
+      const double ap  = 2.0 * (gamma - 1.0) * l1p + l2p + l3p;
+      const double fp  = 0.5 * rho_l / gamma;
+
+      Vector<double> pflux(nvar);
+      pflux[0] = ap;
+      for(unsigned int d=0; d<dim; ++d)
+         pflux[d+1] = ap * vel_l[d] + c_l * (l2p - l3p) * normal[d];
+      pflux[dim+1] = 0.5 * ap * vel_l.norm_square() +
+                     c_l * vn_l * (l2p - l3p) +
+                     c_l * c_l * (l2p + l3p) / (gamma - 1.0);
+
+      // negative flux
+      const double l1m = std::min(vn_r,       0.0);
+      const double l2m = std::min(vn_r + c_r, 0.0);
+      const double l3m = std::min(vn_r - c_r, 0.0);
+      const double am  = 2.0 * (gamma - 1.0) * l1m + l2m + l3m;
+      const double fm  = 0.5 * rho_r / gamma;
+
+      Vector<double> mflux(nvar);
+      mflux[0] = am;
+      for(unsigned int d=0; d<dim; ++d)
+         mflux[d+1] = am * vel_r[d] + c_r * (l2m - l3m) * normal[d];
+      mflux[dim+1] = 0.5 * am * vel_r.norm_square() +
+                     c_r * vn_r * (l2m - l3m) +
+                     c_r * c_r * (l2m + l3m) / (gamma - 1.0);
+
+      for(unsigned int i=0; i<nvar; ++i)
+         flux[i] = fp * pflux[i] + fm * mflux[i];
    }
 
+   //---------------------------------------------------------------------------
+   // Right and left eigenvector matrix in 2d
    //---------------------------------------------------------------------------
    void
    char_mat(const Vector<double>& sol,
@@ -282,85 +327,89 @@ namespace PDE
       const double phi2 = 0.5 * g1 * q2;
       const double h = c2 / g1 + 0.5 * q2;
 
-      Rx[0][0] = 1;
-      Rx[1][0] = u;
-      Rx[2][0] = v;
-      Rx[3][0] = 0.5 * q2;
+      // x direction
+      Rx(0,0) = 1;
+      Rx(1,0) = u;
+      Rx(2,0) = v;
+      Rx(3,0) = 0.5 * q2;
 
-      Rx[0][1] = 0;
-      Rx[1][1] = 0;
-      Rx[2][1] = -1;
-      Rx[3][1] = -v;
+      Rx(0,1) = 0;
+      Rx(1,1) = 0;
+      Rx(2,1) = -1;
+      Rx(3,1) = -v;
 
-      Rx[0][2] = 1;
-      Rx[1][2] = u + c;
-      Rx[2][2] = v;
-      Rx[3][2] = h + c * u;
+      Rx(0,2) = 1;
+      Rx(1,2) = u + c;
+      Rx(2,2) = v;
+      Rx(3,2) = h + c * u;
 
-      Rx[0][3] = 1;
-      Rx[1][3] = u - c;
-      Rx[2][3] = v;
-      Rx[3][3] = h - c * u;
+      Rx(0,3) = 1;
+      Rx(1,3) = u - c;
+      Rx(2,3) = v;
+      Rx(3,3) = h - c * u;
 
-      Ry[0][0] = 1;
-      Ry[1][0] = u;
-      Ry[2][0] = v;
-      Ry[3][0] = 0.5 * q2;
+      // y direction
+      Ry(0,0) = 1;
+      Ry(1,0) = u;
+      Ry(2,0) = v;
+      Ry(3,0) = 0.5 * q2;
 
-      Ry[0][1] = 0;
-      Ry[1][1] = 1;
-      Ry[2][1] = 0;
-      Ry[3][1] = u;
+      Ry(0,1) = 0;
+      Ry(1,1) = 1;
+      Ry(2,1) = 0;
+      Ry(3,1) = u;
 
-      Ry[0][2] = 1;
-      Ry[1][2] = u;
-      Ry[2][2] = v + c;
-      Ry[3][2] = h + c * v;
+      Ry(0,2) = 1;
+      Ry(1,2) = u;
+      Ry(2,2) = v + c;
+      Ry(3,2) = h + c * v;
 
-      Ry[0][3] = 1;
-      Ry[1][3] = u;
-      Ry[2][3] = v - c;
-      Ry[3][3] = h - c * v;
+      Ry(0,3) = 1;
+      Ry(1,3) = u;
+      Ry(2,3) = v - c;
+      Ry(3,3) = h - c * v;
 
-      Lx[0][0] = 1 - phi2 / c2;
-      Lx[1][0] = v;
-      Lx[2][0] = beta * (phi2 - c * u);
-      Lx[3][0] = beta * (phi2 + c * u);
+      // x direction
+      Lx(0,0) = 1 - phi2 / c2;
+      Lx(1,0) = v;
+      Lx(2,0) = beta * (phi2 - c * u);
+      Lx(3,0) = beta * (phi2 + c * u);
 
-      Lx[0][1] = g1 * u / c2;
-      Lx[1][1] = 0;
-      Lx[2][1] = beta * (c - g1 * u);
-      Lx[3][1] = -beta * (c + g1 * u);
+      Lx(0,1) = g1 * u / c2;
+      Lx(1,1) = 0;
+      Lx(2,1) = beta * (c - g1 * u);
+      Lx(3,1) = -beta * (c + g1 * u);
 
-      Lx[0][2] = g1 * v / c2;
-      Lx[1][2] = -1;
-      Lx[2][2] = -beta * g1 * v;
-      Lx[3][2] = -beta * g1 * v;
+      Lx(0,2) = g1 * v / c2;
+      Lx(1,2) = -1;
+      Lx(2,2) = -beta * g1 * v;
+      Lx(3,2) = -beta * g1 * v;
 
-      Lx[0][3] = -g1 / c2;
-      Lx[1][3] = 0;
-      Lx[2][3] = beta * g1;
-      Lx[3][3] = beta * g1;
+      Lx(0,3) = -g1 / c2;
+      Lx(1,3) = 0;
+      Lx(2,3) = beta * g1;
+      Lx(3,3) = beta * g1;
 
-      Ly[0][0] = 1 - phi2 / c2;
-      Ly[1][0] = -u;
-      Ly[2][0] = beta * (phi2 - c * v);
-      Ly[3][0] = beta * (phi2 + c * v);
+      // y direction
+      Ly(0,0) = 1 - phi2 / c2;
+      Ly(1,0) = -u;
+      Ly(2,0) = beta * (phi2 - c * v);
+      Ly(3,0) = beta * (phi2 + c * v);
 
-      Ly[0][1] = g1 * u / c2;
-      Ly[1][1] = 1;
-      Ly[2][1] = -beta * g1 * u;
-      Ly[3][1] = -beta * g1 * u;
+      Ly(0,1) = g1 * u / c2;
+      Ly(1,1) = 1;
+      Ly(2,1) = -beta * g1 * u;
+      Ly(3,1) = -beta * g1 * u;
 
-      Ly[0][2] = g1 * v / c2;
-      Ly[1][2] = 0;
-      Ly[2][2] = beta * (c - g1 * v);
-      Ly[3][2] = -beta * (c + g1 * v);
+      Ly(0,2) = g1 * v / c2;
+      Ly(1,2) = 0;
+      Ly(2,2) = beta * (c - g1 * v);
+      Ly(3,2) = -beta * (c + g1 * v);
 
-      Ly[0][3] = -g1 / c2;
-      Ly[1][3] = 0;
-      Ly[2][3] = beta * g1;
-      Ly[3][3] = beta * g1;
+      Ly(0,3) = -g1 / c2;
+      Ly(1,3) = 0;
+      Ly(2,3) = beta * g1;
+      Ly(3,3) = beta * g1;
    }
 
    //---------------------------------------------------------------------------
