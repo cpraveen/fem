@@ -296,6 +296,7 @@ namespace PDE
                      c_r * vn_r * (l2m - l3m) +
                      c_r * c_r * (l2m + l3m) / (gamma - 1.0);
 
+      // Total flux
       for(unsigned int i=0; i<nvar; ++i)
          flux[i] = fp * pflux[i] + fm * mflux[i];
    }

@@ -1,0 +1,11 @@
+set degree         = 2
+set basis          = gl
+set mapping        = q
+set grid           = bump.msh
+set output step    = 1000
+set cfl            = 0.1
+set final time     = 100.0   # set this to override problem.h
+set limiter        = none    # none,tvd
+set numflux        = rusanov # see pde.h for available fluxes
+set tvb parameter  = 100.0
+

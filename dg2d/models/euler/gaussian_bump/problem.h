@@ -20,16 +20,11 @@ template <int dim>
 struct Problem : ProblemBase<dim>
 {
    const double gasGam = ProblemData::gamma;
-   const double gasR   = 287.0;
 
    const double mach_inf = 0.5;
-   const double P0_inf = 102010.0;
-   const double T0_inf = 288.6;
-   const double factor = 1.0 + 0.5*(gasGam - 1.0)*pow(mach_inf,2);
-   const double Tem_inf = T0_inf/factor;
-   const double pre_inf = P0_inf/pow(factor,gasGam/(gasGam - 1.0));
-   const double rho_inf = pre_inf/(gasR*Tem_inf);
-   const double vel_inf = mach_inf*sqrt(gasGam*gasR*Tem_inf);
+   const double rho_inf = 1.0;
+   const double vel_inf = 1.0;
+   const double pre_inf = 1.0/(gasGam * mach_inf * mach_inf);
    const double pre_out = pre_inf;
 
    //---------------------------------------------------------------------------
