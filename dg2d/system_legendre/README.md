@@ -1,6 +1,6 @@
-# 2d system of conservation law
+# 2d system of conservation law on Cartesian grids
 
-Solves 2d system of conservation laws on Cartesian grids using Legendre basis. The domain need not be a rectangle, but can be anything, but the cells need to be rectangles.
+Solves 2d system of conservation laws on Cartesian grids using Legendre basis. The domain need not be a rectangle, but can be anything, but the cells need to be rectangles with sides aligned with x, y axes.
 
 * `models/euler`: Compressible Euler equations
 

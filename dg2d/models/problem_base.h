@@ -22,7 +22,7 @@ struct ProblemBase
 
    virtual void make_grid(Triangulation<dim>& /*triangulation*/) const
    {
-      AssertThrow(false, ExcNotImplemented());
+      DEAL_II_NOT_IMPLEMENTED();
    }
 
    // Transform grid but cells must remain rectangular if you are using FE_DGP. 
@@ -48,7 +48,7 @@ struct ProblemBase
                                const Vector<double>& /*Uint*/,
                                Vector<double>&       /*Uout*/) const
    {
-      AssertThrow(false, ExcNotImplemented());
+      DEAL_II_NOT_IMPLEMENTED();
    }
 
    virtual std::string get_name()

@@ -1,4 +1,4 @@
-# 2d scalar conservation law
+# 2d scalar conservation law on Cartesian grids
 
 There are two test cases available.
 

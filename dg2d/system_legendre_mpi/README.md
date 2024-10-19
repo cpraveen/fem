@@ -1,6 +1,6 @@
-# 2d system of conservation law
+# 2d system of conservation law on Cartesian grids
 
-Solves 2d system of conservation laws on Cartesian grids using Legendre basis. The domain need not be a rectangle, but can be anything, but the cells need to be rectangles.
+Solves 2d system of conservation laws on Cartesian grids using Legendre basis. The domain need not be a rectangle, but can be anything, but the cells need to be rectangles whose sides are aligned with the x, y axes.
 
 This code is very similar to the one in `system_legendre` but this one is parallel. See the differences
 

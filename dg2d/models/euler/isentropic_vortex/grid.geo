@@ -1,13 +1,13 @@
 // Generate mesh for a rectangulat domain (xmin,xmax) x (ymin,ymax)
 
 // Domain
-xmin = 0.0;
-xmax = 1.0;
-ymin = 0.0;
-ymax = 1.0;
+xmin = -10.0;
+xmax =  10.0;
+ymin = -10.0;
+ymax =  10.0;
 
 // number of points on each side
-n = 51;
+n = 101;
 
 Point(1) = {xmin, ymin, 0};
 Point(2) = {xmax, ymin, 0};
@@ -26,6 +26,9 @@ Transfinite Line{1,2,3,4} = n;
 
 // Comment next line to get triangles only
 Recombine Surface{1};
+
+Periodic Curve {4} = {-2};
+Periodic Curve {1} = {-3};
 
 Physical Surface(100) = {1};
 
