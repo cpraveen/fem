@@ -868,7 +868,8 @@ DGSystem<dim>::run()
    pcout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
    pcout << "Number of threads = " << MultithreadInfo::n_threads() << "\n";
 
-   PDE::print_info();
+   if (Utilities::MPI::this_mpi_process(mpi_comm) == 0)
+      PDE::print_info();
    make_grid_and_dofs();
    assemble_mass_matrix();
    initialize();
