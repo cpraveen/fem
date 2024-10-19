@@ -30,6 +30,7 @@ struct Problem : ProblemBase<dim>
    const double a1 = 0.5 * beta / M_PI;
    const double a2 = 0.5 * (gamma - 1.0) * pow(a1, 2) / gamma;
 
+   //---------------------------------------------------------------------------
    void initial_value(const Point<dim>& p,
                       Vector<double>&   u) const override
    {

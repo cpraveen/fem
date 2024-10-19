@@ -1,13 +1,11 @@
-// Gaussian bump
-
 //------------------------------------------------------------------------------
 namespace ProblemData
 {
-   const std::string name = "GAUSSIAN BUMP";
-   const double xmin = 0.0; // dummy
-   const double xmax = 0.0; // dummy
-   const double ymin = 0.0; // dummy
-   const double ymax = 0.0; // dummy
+   const std::string name = "NACA0012 AIRFOIL";
+   const double xmin = 0.0;
+   const double xmax = 0.0;
+   const double ymin = 0.0;
+   const double ymax = 0.0;
    const double final_time = 100.0;
    const bool periodic_x = false;
    const bool periodic_y = false;
@@ -19,27 +17,29 @@ namespace ProblemData
 template <int dim>
 struct Problem : ProblemBase<dim>
 {
-   const double gasGam = ProblemData::gamma;
-
-   const double mach_inf = 0.5;
+   const double gamma = ProblemData::gamma;
+   const double alpha = 2.0 * (M_PI / 180.0);
+   const double mach = 0.63;
    const double rho_inf = 1.0;
    const double vel_inf = 1.0;
-   const double pre_inf = 1.0/(gasGam * mach_inf * mach_inf);
-   const double pre_out = pre_inf;
+   const double pre_inf = 1.0/(gamma * mach * mach);
 
    //---------------------------------------------------------------------------
    void initial_value(const Point<dim>& /*p*/,
                       Vector<double>&   u) const override
    {
-      u[0] = rho_inf;
-      u[1] = rho_inf * vel_inf;
-      u[2] = 0.0;
-      u[3] = pre_inf / (gasGam - 1.0) + 0.5 * rho_inf * pow(vel_inf,2);
+      const double rho = rho_inf;
+      const double pre = pre_inf;
+      Tensor<1,dim> vel;
+      vel[0] = vel_inf * cos(alpha);
+      vel[1] = vel_inf * sin(alpha);
+
+      PDE::prim2con(rho, vel, pre, u);
    }
 
    //---------------------------------------------------------------------------
    void boundary_value(const int             boundary_id,
-                       const Point<dim>&     /*p*/,
+                       const Point<dim>&     p,
                        const double          /*t*/,
                        const Tensor<1,dim>&  normal,
                        const Vector<double>& Uint,
@@ -51,8 +51,7 @@ struct Problem : ProblemBase<dim>
 
       switch(boundary_id)
       {
-         case 1: // bottom
-         case 3: // top
+         case 0: // airfoil
          {
             const double vn = vint * normal;
             const Tensor<1,dim> vout = vint - (2.0 * vn) * normal;
@@ -63,20 +62,9 @@ struct Problem : ProblemBase<dim>
             break;
          }
 
-         case 2: // outflow
+         case 1: // farfield
          {
-            Uout = Uint;
-            const double Eout = pre_out / (gasGam - 1.0) + 0.5 * rho * vint.norm_square();
-            Uout[3] = Eout;
-            break;
-         }
-
-         case 4: // inflow
-         {
-            Uout[0] = rho_inf;
-            Uout[1] = rho_inf * vel_inf;
-            Uout[2] = 0.0;
-            Uout[3] = pre_inf / (gasGam - 1.0) + 0.5 * rho_inf * pow(vel_inf,2);
+            initial_value(p, Uout);
             break;
          }
 
@@ -85,12 +73,4 @@ struct Problem : ProblemBase<dim>
       }
    }
 
-   //---------------------------------------------------------------------------
-   void set_manifolds(Triangulation<dim>& triangulation) const override
-   {
-      triangulation.set_all_manifold_ids(0);
-      triangulation.set_all_manifold_ids_on_boundary(1, 1);
-      const FunctionManifold<2, 2, 1> bump("x; 0.0625*exp(-25.0*x*x)", "x");
-      triangulation.set_manifold(1, bump);
-   }
 };
