@@ -1,0 +1,7 @@
+set degree         = 1
+set grid           = step.msh
+set output step    = 100
+set cfl            = 0.25
+set limiter        = tvd     # none,tvd
+set tvb parameter  = 0.0
+set numflux        = rusanov # see pde.h for available fluxes

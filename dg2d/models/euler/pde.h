@@ -99,6 +99,8 @@ namespace PDE
    }
 
    //---------------------------------------------------------------------------
+   // q = primitive
+   //---------------------------------------------------------------------------
    template <int dim>
    inline void
    prim2prim(const Vector<double>& q,
@@ -113,6 +115,8 @@ namespace PDE
          vel[d] = q[d+1];
    }
 
+   //---------------------------------------------------------------------------
+   // q = primitive
    //---------------------------------------------------------------------------
    template <int dim>
    void
@@ -136,6 +140,8 @@ namespace PDE
    }
 
    //---------------------------------------------------------------------------
+   // q = primitive
+   //---------------------------------------------------------------------------
    template <int dim>
    inline double
    max_speed(const Vector<double>&  q,
@@ -145,6 +151,11 @@ namespace PDE
       for(unsigned int d = 0; d < dim; ++d)
          vn += q[d + 1] * normal[d];
 
+      if(q[0]<0 || q[dim+1]<0)
+      {
+         std::cout << "Non-physical trace: rho, pre = " << q[0] << " " 
+                   << q[dim+1] << std::endl;
+      }
       return abs(vn) + sqrt(gamma * q[dim + 1] / q[0]);
    }
 
@@ -184,6 +195,13 @@ namespace PDE
       double rho, pre;
       Tensor<1,dim> vel;
       con2prim<dim>(u, rho, vel, pre);
+
+      if(rho<0 || pre<0)
+      {
+         std::cout << "Non-physical avg: rho, pre = " << rho << " " 
+                   << pre << std::endl;
+      }
+
       const double c = sqrt(gamma * pre / rho);
 
       for(unsigned int d = 0; d < dim; ++d)

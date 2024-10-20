@@ -72,9 +72,11 @@ t.fontBold = 1
 # Step 3: Draw the plots
 DrawPlots()                 # The desired plots must be added before this command
 
-#oves and resizes a visualization window
-resx, resy = 1024, 1024
-MoveAndResizeWindow(1, 100, 100, resx, resy)   # (win-id, x-coord of win, y-coord of win, resolution-x, resolution-y)
+# moves and resizes a visualization window
+resx, resy = 2*1024, 2*1024
+# TODO: I dont know if following is doing anything
+# (win-id, x-coord of win, y-coord of win, resolution-x, resolution-y)
+MoveAndResizeWindow(1, 0, 0, resx, resy)
 
 # Save a files
 s = SaveWindowAttributes()

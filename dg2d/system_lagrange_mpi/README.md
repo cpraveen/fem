@@ -39,3 +39,7 @@ Limiters on quad meshes have not been implemented. For some ideas, see
 
 Krishnadutt, Limiting techniques for the discontinuous Galerkin method on unstructured meshes, PhD Thesis.
 http://hdl.handle.net/10012/18566
+
+Frederico Bolsoni Oliveira, João Luiz F. Azevedo & Z. J. Wang
+ANALYSIS OF THE R FAMILY OF LIMITERS APPLIED TO HIGH-ORDER FR/CPR SCHEMES FOR THE SIMULATION OF SUPERSONIC FLOWS
+https://www.icas.org/ICAS_ARCHIVE/ICAS2024/data/papers/ICAS2024_1181_paper.pdf

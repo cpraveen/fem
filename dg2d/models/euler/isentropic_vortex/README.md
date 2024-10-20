@@ -22,6 +22,8 @@ and generate grid
 gmsh -2 grid.geo
 ```
 
+This geo file can also generate a cartesian grid, see comments inside.
+
 ## Compile and run
 
 ```shell
@@ -45,7 +47,7 @@ Or use visit python script
 visit -cli -s ./plot_visit.py
 ```
 
-Use visit to create ong images at all times
+Use visit to create png images at all times
 
 ```shell
 rm -f density*.png
