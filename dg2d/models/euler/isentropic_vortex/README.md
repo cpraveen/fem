@@ -45,7 +45,15 @@ Or use visit python script
 visit -cli -s ./plot_visit.py
 ```
 
-Using pyvista
+Use visit to create ong images at all times
+
+```shell
+rm -f density*.png
+visit -cli -nowin -s ./make_png.py
+open density*.png
+```
+
+Plot using pyvista
 
 ```shell
 python plot_pyvista.py
