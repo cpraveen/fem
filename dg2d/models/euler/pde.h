@@ -11,10 +11,12 @@ using namespace dealii;
 constexpr unsigned int nvar = 4;
 
 // Numerical flux functions
-enum class FluxType {rusanov, none};
+enum class FluxType {rusanov, steger_warming, none};
 
-std::map<std::string, FluxType> FluxTypeList{{"rusanov", FluxType::rusanov},
-                                             {"none",    FluxType::none}};
+std::map<std::string, FluxType> 
+FluxTypeList{{"rusanov",        FluxType::rusanov},
+             {"steger_warming", FluxType::steger_warming},
+             {"none",           FluxType::none}};
 
 //------------------------------------------------------------------------------
 // This should be set by user in a problem.h file
@@ -184,6 +186,65 @@ namespace PDE
    }
 
    //---------------------------------------------------------------------------
+   // steger-warming flux
+   // TODO: Add reference
+   // See 
+   //   Toro, Section 8.4.2
+   //   Steger & Warming, JCP, 1981, Eq. (B9)
+   //---------------------------------------------------------------------------
+   template <int dim>
+   void
+   steger_warming_flux(const Vector<double>& ul,
+                       const Vector<double>& ur,
+                       const Tensor<1, dim>& normal,
+                       Vector<double>&       flux)
+   {
+      double rho_l, rho_r, pre_l, pre_r;
+      Tensor<1,dim> vel_l, vel_r;
+      con2prim<dim>(ul, rho_l, vel_l, pre_l);
+      con2prim<dim>(ur, rho_r, vel_r, pre_r);
+
+      const double c_l = sqrt(gamma * pre_l / rho_l);
+      const double c_r = sqrt(gamma * pre_r / rho_r);
+      const double vn_l = vel_l * normal;
+      const double vn_r = vel_r * normal;
+
+      // positive flux
+      const double l1p = std::max(vn_l,       0.0);
+      const double l2p = std::max(vn_l + c_l, 0.0);
+      const double l3p = std::max(vn_l - c_l, 0.0);
+      const double ap  = 2.0 * (gamma - 1.0) * l1p + l2p + l3p;
+      const double fp  = 0.5 * rho_l / gamma;
+
+      Vector<double> pflux(nvar);
+      pflux[0] = ap;
+      for(unsigned int d=0; d<dim; ++d)
+         pflux[d+1] = ap * vel_l[d] + c_l * (l2p - l3p) * normal[d];
+      pflux[dim+1] = 0.5 * ap * vel_l.norm_square() +
+                     c_l * vn_l * (l2p - l3p) +
+                     c_l * c_l * (l2p + l3p) / (gamma - 1.0);
+
+      // negative flux
+      const double l1m = std::min(vn_r,       0.0);
+      const double l2m = std::min(vn_r + c_r, 0.0);
+      const double l3m = std::min(vn_r - c_r, 0.0);
+      const double am  = 2.0 * (gamma - 1.0) * l1m + l2m + l3m;
+      const double fm  = 0.5 * rho_r / gamma;
+
+      Vector<double> mflux(nvar);
+      mflux[0] = am;
+      for(unsigned int d=0; d<dim; ++d)
+         mflux[d+1] = am * vel_r[d] + c_r * (l2m - l3m) * normal[d];
+      mflux[dim+1] = 0.5 * am * vel_r.norm_square() +
+                     c_r * vn_r * (l2m - l3m) +
+                     c_r * c_r * (l2m + l3m) / (gamma - 1.0);
+
+      // Total flux
+      for(unsigned int i=0; i<nvar; ++i)
+         flux[i] = fp * pflux[i] + fm * mflux[i];
+   }
+
+   //---------------------------------------------------------------------------
    // Following functions are directly called from DG solver
    //---------------------------------------------------------------------------
    template <int dim>
@@ -256,15 +317,15 @@ namespace PDE
             rusanov_flux(ul, ur, normal, flux);
             break;
 
+         case FluxType::steger_warming:
+            steger_warming_flux(ul, ur, normal, flux);
+            break;
+
          default:
             AssertThrow(false, ExcMessage("Unknown numerical flux"));
       }
    }
 
-   //---------------------------------------------------------------------------
-   // steger-warming flux
-   // TODO: Add reference
-   // See Toro, Section 8.4.2
    //---------------------------------------------------------------------------
    template <int dim>
    void
@@ -274,49 +335,7 @@ namespace PDE
                  const Tensor<1, dim>& normal,
                  Vector<double>&       flux)
    {
-      double rho_l, rho_r, pre_l, pre_r;
-      Tensor<1,dim> vel_l, vel_r;
-      con2prim<dim>(ul, rho_l, vel_l, pre_l);
-      con2prim<dim>(ur, rho_r, vel_r, pre_r);
-
-      const double c_l = sqrt(gamma * pre_l / rho_l);
-      const double c_r = sqrt(gamma * pre_r / rho_r);
-      const double vn_l = vel_l * normal;
-      const double vn_r = vel_r * normal;
-
-      // positive flux
-      const double l1p = std::max(vn_l,       0.0);
-      const double l2p = std::max(vn_l + c_l, 0.0);
-      const double l3p = std::max(vn_l - c_l, 0.0);
-      const double ap  = 2.0 * (gamma - 1.0) * l1p + l2p + l3p;
-      const double fp  = 0.5 * rho_l / gamma;
-
-      Vector<double> pflux(nvar);
-      pflux[0] = ap;
-      for(unsigned int d=0; d<dim; ++d)
-         pflux[d+1] = ap * vel_l[d] + c_l * (l2p - l3p) * normal[d];
-      pflux[dim+1] = 0.5 * ap * vel_l.norm_square() +
-                     c_l * vn_l * (l2p - l3p) +
-                     c_l * c_l * (l2p + l3p) / (gamma - 1.0);
-
-      // negative flux
-      const double l1m = std::min(vn_r,       0.0);
-      const double l2m = std::min(vn_r + c_r, 0.0);
-      const double l3m = std::min(vn_r - c_r, 0.0);
-      const double am  = 2.0 * (gamma - 1.0) * l1m + l2m + l3m;
-      const double fm  = 0.5 * rho_r / gamma;
-
-      Vector<double> mflux(nvar);
-      mflux[0] = am;
-      for(unsigned int d=0; d<dim; ++d)
-         mflux[d+1] = am * vel_r[d] + c_r * (l2m - l3m) * normal[d];
-      mflux[dim+1] = 0.5 * am * vel_r.norm_square() +
-                     c_r * vn_r * (l2m - l3m) +
-                     c_r * c_r * (l2m + l3m) / (gamma - 1.0);
-
-      // Total flux
-      for(unsigned int i=0; i<nvar; ++i)
-         flux[i] = fp * pflux[i] + fm * mflux[i];
+      steger_warming_flux(ul, ur, normal, flux);
    }
 
    //---------------------------------------------------------------------------
