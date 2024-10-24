@@ -6,7 +6,7 @@ namespace ProblemData
    const double xmax = 0.0;
    const double ymin = 0.0;
    const double ymax = 0.0;
-   const double final_time = 4.0;
+   const double final_time = 3.5;
    const bool periodic_x = false;
    const bool periodic_y = false;
 

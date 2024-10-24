@@ -17,6 +17,16 @@ std::map<std::string, FluxType> FluxTypeList{{"upwind", FluxType::upwind},
                                              {"none",   FluxType::none}};
 
 //------------------------------------------------------------------------------
+template <int dim>
+struct FluxData
+{
+   Point<dim> p;       // coordinates
+   double t;           // time
+   Vector<double>* ul; // left  cell average
+   Vector<double>* ur; // right cell average
+};
+
+//------------------------------------------------------------------------------
 // This should be set by user in a problem.h file
 //------------------------------------------------------------------------------
 namespace ProblemData
@@ -37,12 +47,12 @@ namespace PDE
    void
    upwind_flux(const Vector<double>&  ul,
                const Vector<double>&  ur,
-               const Point<dim>&      p,
                const Tensor<1, dim>&  normal,
+               const FluxData<dim>&   data,
                Vector<double>&        flux)
    {
       Tensor<1,dim> vel;
-      velocity(p, vel);
+      velocity(data.p, vel);
       const auto vn = vel * normal;
       flux[0] = vn * ((vn > 0.0) ? ul[0] : ur[0]);
    }
@@ -65,11 +75,11 @@ namespace PDE
    template <int dim>
    void
    physical_flux(const Vector<double>&       u,
-                 const Point<dim>&           p,
+                 const FluxData<dim>&        data,
                  ndarray<double, nvar, dim>& flux)
    {
       Tensor<1,dim> vel;
-      velocity(p, vel);
+      velocity(data.p, vel);
       flux[0][0] = vel[0] * u[0];
       flux[0][1] = vel[1] * u[0];
    }
@@ -82,14 +92,14 @@ namespace PDE
    numerical_flux(const FluxType        flux_type,
                   const Vector<double>& ul,
                   const Vector<double>& ur,
-                  const Point<dim>&     p,
                   const Tensor<1, dim>& normal,
+                  const FluxData<dim>&  data,
                   Vector<double>&       flux)
    {
       switch(flux_type)
       {
          case FluxType::upwind:
-            upwind_flux(ul, ur, p, normal, flux);
+            upwind_flux(ul, ur, normal, data, flux);
             break;
 
          default:
@@ -102,11 +112,11 @@ namespace PDE
    void
    boundary_flux(const Vector<double>& ul,
                  const Vector<double>& ur,
-                 const Point<dim>&     p,
                  const Tensor<1, dim>& normal,
+                 const FluxData<dim>&  data,
                  Vector<double>&       flux)
    {
-      upwind_flux(ul, ur, p, normal, flux);
+      upwind_flux(ul, ur, normal, data, flux);
    }
 
    //---------------------------------------------------------------------------

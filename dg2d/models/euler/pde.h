@@ -19,6 +19,16 @@ FluxTypeList{{"rusanov",        FluxType::rusanov},
              {"none",           FluxType::none}};
 
 //------------------------------------------------------------------------------
+template <int dim>
+struct FluxData
+{
+   Point<dim> p;       // coordinates
+   double t;           // time
+   Vector<double>* ul; // left  cell average
+   Vector<double>* ur; // right cell average
+};
+
+//------------------------------------------------------------------------------
 // This should be set by user in a problem.h file
 //------------------------------------------------------------------------------
 namespace ProblemData
@@ -153,7 +163,7 @@ namespace PDE
       for(unsigned int d = 0; d < dim; ++d)
          vn += q[d + 1] * normal[d];
 
-      if(q[0]<0 || q[dim+1]<0)
+      if(q[0] <= 0.0 || q[dim+1] <= 0.0)
       {
          std::cout << "Non-physical trace: rho, pre = " << q[0] << " " 
                    << q[dim+1] << std::endl;
@@ -167,6 +177,7 @@ namespace PDE
    rusanov_flux(const Vector<double>&  ul,
                 const Vector<double>&  ur,
                 const Tensor<1, dim>&  normal,
+                const FluxData<dim>&   data,
                 Vector<double>&        flux)
    {
       Vector<double> ql(nvar), qr(nvar);
@@ -177,8 +188,12 @@ namespace PDE
       physical_flux(ql, normal, fl);
       physical_flux(qr, normal, fr);
 
-      const double al = max_speed(ql, normal);
-      const double ar = max_speed(qr, normal);
+      // Speed based on cell average
+      Vector<double> qal(nvar), qar(nvar);
+      con2prim<dim>(*data.ul, qal);
+      con2prim<dim>(*data.ur, qar);
+      const double al = max_speed(qal, normal);
+      const double ar = max_speed(qar, normal);
       const double lam = std::max(al, ar);
 
       for(unsigned int i = 0; i < nvar; ++i)
@@ -257,7 +272,7 @@ namespace PDE
       Tensor<1,dim> vel;
       con2prim<dim>(u, rho, vel, pre);
 
-      if(rho<0 || pre<0)
+      if(rho <= 0.0 || pre <= 0.0)
       {
          std::cout << "Non-physical avg: rho, pre = " << rho << " " 
                    << pre << std::endl;
@@ -275,7 +290,7 @@ namespace PDE
    template <int dim>
    void
    physical_flux(const Vector<double>&       u,
-                 const Point<dim>&           /*p*/,
+                 const FluxData<dim>&        /*data*/,
                  ndarray<double, nvar, dim>& flux)
    {
       double rho, pre;
@@ -307,14 +322,14 @@ namespace PDE
    numerical_flux(const FluxType        flux_type,
                   const Vector<double>& ul,
                   const Vector<double>& ur,
-                  const Point<dim>&     /*p*/,
                   const Tensor<1, dim>& normal,
+                  const FluxData<dim>&  data,
                   Vector<double>&       flux)
    {
       switch(flux_type)
       {
          case FluxType::rusanov:
-            rusanov_flux(ul, ur, normal, flux);
+            rusanov_flux(ul, ur, normal, data, flux);
             break;
 
          case FluxType::steger_warming:
@@ -331,8 +346,8 @@ namespace PDE
    void
    boundary_flux(const Vector<double>& ul,
                  const Vector<double>& ur,
-                 const Point<dim>&     /*p*/,
                  const Tensor<1, dim>& normal,
+                 const FluxData<dim>&  /*data*/,
                  Vector<double>&       flux)
    {
       steger_warming_flux(ul, ur, normal, flux);

@@ -467,10 +467,11 @@ void DGSystem<dim>::cell_worker(const Iterator &cell,
 
    for (unsigned int q = 0; q < n_q_points; ++q)
    {
+      FluxData<dim> data;
+      data.p = fe_values.quadrature_point(q);
+      data.t = stage_time;
       ndarray<double,nvar,dim> flux;
-      PDE::physical_flux(solution_values[q],
-                         fe_values.quadrature_point(q),
-                         flux);
+      PDE::physical_flux(solution_values[q], data, flux);
       for (unsigned int i = 0; i < dofs_per_cell; ++i)
       {
          const auto c = fe_values.get_fe().system_to_component_index(i).first;
@@ -516,12 +517,17 @@ void DGSystem<dim>::face_worker(const Iterator &cell,
 
    for(unsigned int q=0; q<n_q_points; ++q)
    {
+      FluxData<dim> data;
+      data.p = q_points[q];
+      data.t = stage_time;
+      data.ul = &average[cell->user_index()];
+      data.ur = &average[ncell->user_index()];
       Vector<double> num_flux(nvar);
       PDE::numerical_flux(param->flux_type, 
                           left_state[q], 
                           right_state[q], 
-                          q_points[q], 
                           fe_face_values.normal(q),
+                          data,
                           num_flux);
       for (unsigned int i = 0; i < n_face_dofs; ++i)
       {
@@ -563,11 +569,16 @@ void DGSystem<dim>::boundary_worker(const Iterator &cell,
                               fe_face_values.normal_vector(q),
                               left_state[q],
                               right_state[q]);
+      FluxData<dim> data;
+      data.p = q_points[q];
+      data.t = stage_time;
+      data.ul = &average[cell->user_index()];
+      data.ur = &average[cell->user_index()];
       Vector<double> num_flux(nvar);
       PDE::boundary_flux(left_state[q], //todo
                          right_state[q],
-                         q_points[q],
                          fe_face_values.normal_vector(q),
+                         data,
                          num_flux);
       for (unsigned int i = 0; i < n_face_dofs; ++i)
       {
@@ -912,8 +923,7 @@ DGSystem<dim>::run()
          apply_limiter();
       }
 
-      time += dt;
-      ++iter;
+      time += dt, ++iter;
       if(iter % param->output_step == 0) output_results(time);
       std::cout << "Iter = " << iter 
                 << " dt = " << dt
