@@ -8,11 +8,11 @@ Set parameters in `input.prm` file.
 
 ```shell
 ln -s ../models/euler/pde.h
-ln -s ../models/euler/isentropic_vortex.h problem.h
+ln -s ../models/euler/isentropic_vortex/problem.h
 cmake .
 make release
 make
-mpirun -np 4 ./main > log.txt 2>&1 &
+mpirun -np 4 ./main input.prm > log.txt 2>&1 &
 tail -f log.txt
 visit -o solution.xdmf
 ```
