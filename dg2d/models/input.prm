@@ -1,0 +1,31 @@
+# Listing of Parameters
+# ---------------------
+# Specify basis: gl or gll
+set basis          = gl
+
+# CFL number
+set cfl            = 0.25     # default: 0.0
+
+# Polynomial degree
+set degree         = 1        # default: 0
+
+# Final time
+set final time     = 0.0
+
+# Specify grid: 100,100 or user or foo.msh
+set grid           = grid.msh # default: 0
+
+# Number of grid refinements
+set initial refine = 0
+
+# Limiter
+set limiter        = none
+
+# Specify mapping: cartesian or q or q,1 or q,2 etc.
+set mapping        = q        # default: q,1
+
+# Numerical flux
+set numflux        = rusanov  # default: central
+
+# Frequency to save solution
+set output step    = 100      # default: 10

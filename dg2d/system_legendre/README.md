@@ -8,7 +8,7 @@ Solves 2d system of conservation laws on Cartesian grids using Legendre basis. T
 
 ```shell
 ln -s ../models/euler/pde.h
-ln -s ../models/euler/isentropic_vortex.h problem.h
+ln -s ../models/euler/isentropic_vortex/problem.h
 cmake .
 make release
 make

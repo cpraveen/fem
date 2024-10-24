@@ -4,10 +4,10 @@
 namespace ProblemData
 {
    const std::string name = "Advection on circles";
-   const double xmin = 0.0;
-   const double xmax = 0.0;
-   const double ymin = 0.0;
-   const double ymax = 0.0;
+   const double xmin =-1.0;
+   const double xmax = 1.0;
+   const double ymin =-1.0;
+   const double ymax = 1.0;
    const double final_time = 2.0 * M_PI;
    const bool periodic_x = false;
    const bool periodic_y = false;
