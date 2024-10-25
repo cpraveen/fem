@@ -56,12 +56,7 @@ cd $DEAL_II_DIR/dealii-build
 
 echo "==> Downloading deal.II sources"
 SRC=https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}.tar.gz
-if command -v wget &> /dev/null
-then
-   wget -c $SRC
-else
-   curl -O $SRC
-fi
+wget -c $SRC
 
 echo "==> Extracting deal.II sources"
 tar zxvf dealii-${V}.tar.gz > install.log
@@ -111,12 +106,7 @@ cd $DEAL_II_DIR
 echo "==> Download documentation"
 
 SRC=https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}-offline_documentation.tar.gz
-if command -v wget &> /dev/null
-then
-   wget -c $SRC
-else
-   curl -O $SRC
-fi
+wget -c $SRC
 
 echo "==> Extract documentation"
 tar zxvf dealii-${V}-offline_documentation.tar.gz > install.log
