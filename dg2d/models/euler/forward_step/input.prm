@@ -1,6 +1,6 @@
 set degree         = 1
 set grid           = step.msh
-set output step    = 100
+set output number  = 50
 set cfl            = 0.25
 set limiter        = tvd     # none,tvd
 set tvb parameter  = 0.0

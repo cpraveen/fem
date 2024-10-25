@@ -60,6 +60,8 @@ struct Parameter
    unsigned int n_cells_x, n_cells_y;
    unsigned int n_refine;
    unsigned int output_step;
+   unsigned int output_number;
+   double       output_interval;
    LimiterType  limiter_type;
    double       Mlim;
    FluxType     flux_type;
@@ -202,6 +204,7 @@ private:
    void apply_limiter();
    void apply_TVD_limiter();
    void update(const unsigned int rk_stage);
+   bool call_output();
    void output_results(const double time) const;
 
    template <class Iterator>
@@ -226,7 +229,8 @@ private:
                     CopyData &copy_data);
 
    Parameter*                  param;
-   double                      time, stage_time, dt;
+   double                      time, stage_time, dt, next_output_time;
+   unsigned int                time_step;
    ProblemBase<dim>*           problem;
    Triangulation<dim>          triangulation;
    FESystem<dim>               fe;
@@ -253,6 +257,10 @@ DGSystem<dim>::DGSystem(Parameter&        param,
    dof_handler(triangulation)
 {
    AssertThrow(dim == 2, ExcIndexRange(dim, 0, 2));
+
+   time = 0.0;
+   time_step = 0;
+   next_output_time = param.output_interval;
 }
 
 //------------------------------------------------------------------------------
@@ -844,6 +852,16 @@ DGSystem<dim>::compute_dt()
    }
 
    dt *= param->cfl;
+
+   if(time + dt > param->final_time)
+   {
+      dt = param->final_time - time;
+   }
+   else if (param->output_interval > 0)
+   {
+      if(time+dt > next_output_time)
+         dt = next_output_time - time;
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -861,6 +879,34 @@ DGSystem<dim>::update(const unsigned int rk_stage)
    }
 
    stage_time = a_rk[rk_stage] * time + b_rk[rk_stage] * (stage_time + dt);
+}
+
+//-----------------------------------------------------------------------------
+// Decide if solution needs to be saved
+//-----------------------------------------------------------------------------
+template <int dim>
+bool DGSystem<dim>::call_output()
+{
+   // Save initial condition
+   if(time_step == 0) return true;
+
+   // Save final solution
+   if (fabs(time - param->final_time) < 1.0e-13)
+      return true;
+
+   if (param->output_step > 0)
+      if (time_step % param->output_step == 0)
+         return true;
+
+   if (param->output_interval > 0)
+      if (fabs(time - next_output_time) < 1.0e-13)
+      {
+         next_output_time += param->output_interval;
+         next_output_time = std::min(next_output_time, param->final_time);
+         return true;
+      }
+
+   return false;
 }
 
 //------------------------------------------------------------------------------
@@ -882,7 +928,7 @@ DGSystem<dim>::output_results(const double time) const
    std::string filename = "sol_" + Utilities::int_to_string(counter,3) + ".vtu";
    std::ofstream output(filename);
    data_out.write_vtu(output);
-   std::cout << "Outout at t = " << time << "  " << filename << std::endl;
+   std::cout << "Output at t = " << time << "  " << filename << std::endl;
 
    ++counter;
 }
@@ -904,16 +950,11 @@ DGSystem<dim>::run()
    compute_averages();
    output_results(0.0);
 
-   time = 0.0;
-   unsigned int iter = 0;
-
    while(time < param->final_time)
    {
       solution_old  = solution;
       stage_time = time;
-
       compute_dt();
-      if(time + dt > param->final_time) dt = param->final_time - time;
 
       for(unsigned int rk = 0; rk < n_rk_stages; ++rk)
       {
@@ -923,13 +964,12 @@ DGSystem<dim>::run()
          apply_limiter();
       }
 
-      time += dt, ++iter;
-      if(iter % param->output_step == 0) output_results(time);
-      std::cout << "Iter = " << iter 
+      time += dt, ++time_step;
+      std::cout << "Iter = " << time_step
                 << " dt = " << dt
                 << " time = " << time << std::endl;
+      if(call_output()) output_results(time);
    }
-   output_results(time);
 }
 
 //------------------------------------------------------------------------------
@@ -948,8 +988,12 @@ declare_parameters(ParameterHandler& prm)
                      "Specify grid: 100,100 or user or foo.msh");
    prm.declare_entry("initial refine", "0", Patterns::Integer(0),
                      "Number of grid refinements");
-   prm.declare_entry("output step", "10", Patterns::Integer(0),
-                     "Frequency to save solution");
+   prm.declare_entry("output step", "0", Patterns::Integer(0),
+                     "Iteration frequency to save solution");
+   prm.declare_entry("output number", "0", Patterns::Integer(0),
+                     "How many time to save solution");
+   prm.declare_entry("output interval", "0.0", Patterns::Double(0),
+                     "Time frequency to save solution");
    prm.declare_entry("cfl", "0.0", Patterns::Double(),
                      "CFL number");
    prm.declare_entry("final time", "0.0", Patterns::Double(0),
@@ -989,16 +1033,37 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
    }
 
    param.n_refine = ph.get_integer("initial refine");
-   param.output_step = ph.get_integer("output step");
-
-   param.cfl = ph.get_double("cfl");
-   if(param.cfl == 0.0) param.cfl = 0.95 / (2 * param.degree + 1);
-   if(param.cfl < 0.0) param.cfl = abs(param.cfl) / (2 * param.degree + 1);
 
    double final_time = ph.get_double("final time");
    if(final_time > 0.0)
       param.final_time = final_time;
-   param.Mlim = ph.get_double("tvb parameter");
+
+   param.output_step = ph.get_integer("output step");
+   param.output_number = ph.get_integer("output number");
+   param.output_interval = ph.get_double("output interval");
+   if(param.output_step > 0)
+   {
+      param.output_number = 0;
+      param.output_interval = 0.0;
+   }
+   else if(param.output_number > 0)
+   {
+      param.output_step = 0;
+      param.output_interval = param.final_time / (param.output_number - 1);
+   }
+   else if(param.output_interval > 0.0)
+   {
+      param.output_step = 0;
+      param.output_number = 0;
+   }
+   else
+   {
+      AssertThrow(false, ExcMessage("No output settings given"));
+   }
+
+   param.cfl = ph.get_double("cfl");
+   if(param.cfl == 0.0) param.cfl = 0.95 / (2 * param.degree + 1);
+   if(param.cfl < 0.0) param.cfl = abs(param.cfl) / (2 * param.degree + 1);
 
    {
       std::string value = ph.get("numflux");
@@ -1020,4 +1085,6 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
       else if (value == "tvd") param.limiter_type = LimiterType::tvd;
       else AssertThrow(false, ExcMessage("Unknown limiter"));
    }
+
+   param.Mlim = ph.get_double("tvb parameter");
 }
