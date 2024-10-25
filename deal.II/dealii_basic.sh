@@ -55,7 +55,14 @@ cd $DEAL_II_DIR/dealii-build
 #wget -c https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 
 echo "==> Downloading deal.II sources"
-wget -c https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}.tar.gz
+SRC=https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}.tar.gz
+if command -v wget &> /dev/null
+then
+   wget -c $SRC
+else
+   curl -O $SRC
+fi
+
 echo "==> Extracting deal.II sources"
 tar zxvf dealii-${V}.tar.gz > install.log
 cd dealii-${V} && rm -rf build && mkdir -p build && cd build
@@ -73,6 +80,10 @@ if [[ "$MPI" == "y" ]]; then
       -DCMAKE_Fortran_COMPILER=mpif90  \
       -DDEAL_II_COMPONENT_EXAMPLES=ON  \
       -DDEAL_II_COMPILE_EXAMPLES=OFF \
+      -DEAL_II_ALLOW_AUTODETECTION=OFF \
+      -DEAL_II_FORCE_AUTODETECTION=OFF \
+      -DEAL_II_ALLOW_BUNDLED=ON \
+      -DEAL_II_WITH_VTK=OFF \
       ..
 else
    # Without MPI
@@ -81,9 +92,12 @@ else
       -DDEAL_II_CXX_FLAGS="-march=native -mtune=native -std=c++17" \
       -DDEAL_II_CXX_FLAGS_RELEASE="-O3" \
       -DDEAL_II_WITH_MPI=OFF \
-      -DDEAL_II_WITH_VTK=OFF \
       -DDEAL_II_COMPONENT_EXAMPLES=ON  \
       -DDEAL_II_COMPILE_EXAMPLES=OFF \
+      -DEAL_II_ALLOW_AUTODETECTION=OFF \
+      -DEAL_II_FORCE_AUTODETECTION=OFF \
+      -DEAL_II_ALLOW_BUNDLED=ON \
+      -DEAL_II_WITH_VTK=OFF \
       ..
 fi
 
@@ -95,7 +109,15 @@ make install
 # Download and install documentation
 cd $DEAL_II_DIR
 echo "==> Download documentation"
-wget -c https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}-offline_documentation.tar.gz
+
+SRC=https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}-offline_documentation.tar.gz
+if command -v wget &> /dev/null
+then
+   wget -c $SRC
+else
+   curl -O $SRC
+fi
+
 echo "==> Extract documentation"
 tar zxvf dealii-${V}-offline_documentation.tar.gz > install.log
 #rm dealii-${V}-offline_documentation.tar.gz
