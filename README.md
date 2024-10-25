@@ -14,7 +14,7 @@ These codes are prepared as material for teaching finite element method.
 
 ## How to get the code ?
 
-(1) The easiest way is by using git which will download the code in directory ```fem```
+(1) The easiest way is by using git which will download the code in directory `fem`
 
 ```shell
 git clone https://github.com/cpraveen/fem.git
@@ -26,6 +26,12 @@ git clone https://github.com/cpraveen/fem.git
 
 ```shell
 wget https://github.com/cpraveen/fem/archive/master.zip
+```
+
+or curl
+
+```shell
+curl -O https://github.com/cpraveen/fem/archive/master.zip
 ```
 
 and unzip it

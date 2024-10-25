@@ -78,6 +78,8 @@ A bash script that can automate the installation of deal.II is also included. Do
 ```shell
 cd $HOME
 wget https://raw.githubusercontent.com/cpraveen/fem/master/deal.II/dealii_basic.sh
+# or use curl if you dont have wget
+curl -O https://raw.githubusercontent.com/cpraveen/fem/master/deal.II/dealii_basic.sh
 bash ./dealii_basic.sh
 ```
 
