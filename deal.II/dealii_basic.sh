@@ -11,6 +11,16 @@ DEAL_II_DIR=$HOME/deal.II
 # The compilation will be faster.
 NPROC=2
 
+# Github
+#BASE_URL=https://github.com/dealii/dealii/releases/download
+#SRC1=$BASE_URL/v${V}/dealii-${V}.tar.gz
+#SRC2=$BASE_URL/v${V}/dealii-${V}-offline_documentation.tar.gz
+
+# dealii mirror
+BASE_URL=https://www.dealii.org/downloads
+SRC1=$BASE_URL/dealii-${V}.tar.gz
+SRC2=$BASE_URL/dealii-${V}-offline_documentation.tar.gz
+
 # Needed if you are behind proxy
 # If not, then comment/remove following two lines.
 #http_proxy=http://192.168.1.1:3128
@@ -22,6 +32,13 @@ NPROC=2
 
 # Exit on error
 set -e
+
+if command -v wget &> /dev/null
+then
+   GET="wget -c"
+else
+   GET="curl -O"
+fi
 
 echo "To install with MPI, you need mpicc, mpic++, mpif90"
 read -p "Install with MPI ? (y/n/ctr-c) " MPI
@@ -55,8 +72,7 @@ cd $DEAL_II_DIR/dealii-build
 #wget -c https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 
 echo "==> Downloading deal.II sources"
-SRC=https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}.tar.gz
-wget -c $SRC
+$GET $SRC1
 
 echo "==> Extracting deal.II sources"
 tar zxvf dealii-${V}.tar.gz > install.log
@@ -105,8 +121,7 @@ make install
 cd $DEAL_II_DIR
 echo "==> Download documentation"
 
-SRC=https://github.com/dealii/dealii/releases/download/v${V}/dealii-${V}-offline_documentation.tar.gz
-wget -c $SRC
+$GET $SRC2
 
 echo "==> Extract documentation"
 tar zxvf dealii-${V}-offline_documentation.tar.gz > install.log
