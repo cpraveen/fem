@@ -11,13 +11,22 @@ code -n -d dg.h    ../system_legendre/dg.h
 
 ## Run an example
 
+In a terminal, go to `fem/dg2d/system_legendre_mpi`
+
 ```shell
 ln -s ../models/euler/pde.h
-ln -s ../models/euler/isentropic_vortex.h problem.h
+ln -s ../models/euler/isentropic_vortex/problem.h
 cmake .
 make release
 make
-mpirun -np 4 ./main > log.txt 2>&1 &
+```
+
+In another terminal, go to `fem/dg2d/models/euler/isentropic_vortex`
+
+```shell
+mpirun -np 4 ../../../system_legendre_mpi/main input.prm > log.txt 2>&1 &
 tail -f log.txt
 visit -o solution.xdmf
 ```
+
+When the code is running, if you use `top`, you should see four instances of `main` program running.
