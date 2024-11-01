@@ -164,14 +164,21 @@ docker pull dealii/dealii
 Run as
 
 ```shell
-docker run --rm -t -i dealii/dealii:latest
+cd fem
+docker run -ti --name dealii -v $(pwd):/home/dealii/shared \
+                             -w /home/dealii/shared  \
+                             dealii/dealii:latest
 ```
 
-or better
+This creates a container with name `dealii` and you can also see this in dashboard. The directory `fem` is now visible inside this container. If you exit the terminal, the container will stop running. To join the container again, first start the container and then attach
 
 ```shell
-cd fem
-docker run -ti -v $(pwd):/home/dealii/shared -w /home/dealii/shared  dealii/dealii:latest
+docker start dealii
+docker attach dealii
 ```
 
-The second form allows you to access the files in your `fem` directory.
+To attach a second terminal to the same running container, do
+
+```shell
+docker exec -it dealii /bin/bash
+```
