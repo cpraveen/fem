@@ -182,3 +182,9 @@ To attach a second terminal to the same running container, do
 ```shell
 docker exec -it dealii /bin/bash
 ```
+
+You can delete the container using the dashboard or on terminal
+
+```shell
+docker remove dealii
+```
