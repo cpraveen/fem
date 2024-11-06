@@ -7,8 +7,6 @@
 int
 main(int argc, char** argv)
 {
-   Problem<2> problem;
-
    ParameterHandler ph;
    declare_parameters(ph);
    if(argc < 2)
@@ -21,6 +19,7 @@ main(int argc, char** argv)
    ph.parse_input(argv[1]);
    ph.print_parameters(std::cout, ParameterHandler::Text);
 
+   Problem<2> problem;
    Parameter param;
    param.final_time = problem.get_final_time(); // override this in input file
    parse_parameters(ph, param);
