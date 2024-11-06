@@ -2,9 +2,9 @@
 
 This uses Legendre polynomials as basis functions.
 
-* acoustics: Linear acoustic in homogeneous medium
-* shallow: Shallow water with flat bottom
-* euler: compressible Euler equation for idea gas
+* `acoustics`: Linear acoustic in homogeneous medium
+* `shallow`: Shallow water with flat bottom
+* `euler`: compressible Euler equation for idea gas
 
 ## acoustics: solves linear acoustics
 

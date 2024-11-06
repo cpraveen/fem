@@ -105,7 +105,7 @@ namespace PDE
             const Point<1>&       /*p*/,
             Vector<double>&       /*flux*/)
    {
-      AssertThrow(false, ExcNotImplemented());
+      DEAL_II_NOT_IMPLEMENTED();
    }
 
 //------------------------------------------------------------------------------
@@ -152,7 +152,7 @@ namespace PDE
             break;
 
          default:
-            AssertThrow(false, ExcMessage("Unknown flux type"));
+            DEAL_II_NOT_IMPLEMENTED();
       }
    }
 

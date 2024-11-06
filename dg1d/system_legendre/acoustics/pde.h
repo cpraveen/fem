@@ -133,7 +133,7 @@ void numerical_flux(const FluxType        flux_type,
       break;
 
    default:
-      AssertThrow(false, ExcMessage("Unknown flux type"));
+      DEAL_II_NOT_IMPLEMENTED();
    }
 }
 
