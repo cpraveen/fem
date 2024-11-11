@@ -188,3 +188,18 @@ You can delete the container using the dashboard or on terminal
 ```shell
 docker remove dealii
 ```
+
+To reduce your typing work, create an alias in your `$HOME/.bashrc` file
+
+```shell
+alias docker_dealii="docker run -ti --name dealii \
+                                -v $(pwd):/home/dealii/shared \
+                                -w /home/dealii/shared  \
+                                dealii/dealii:latest"
+```
+
+Now you can start the container by typing in a new terminal
+
+```shell
+docker_dealii
+```
