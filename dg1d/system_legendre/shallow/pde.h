@@ -24,15 +24,15 @@ namespace PDE
 
    const double g = Problem::g;
 
-// Numerical flux functions
+   // Numerical flux functions
    enum class FluxType {roe, rusanov};
 
    std::map<std::string, FluxType> FluxTypeList{{"roe",     FluxType::roe},
                                                 {"rusanov", FluxType::rusanov}};
 
-//------------------------------------------------------------------------------
-// Flux of the PDE model: f(u)
-//------------------------------------------------------------------------------
+   //---------------------------------------------------------------------------
+   // Flux of the PDE model: f(u)
+   //---------------------------------------------------------------------------
    void
    physical_flux(const Vector<double>& u,
                  const Point<1>&       /*p*/,
@@ -44,9 +44,9 @@ namespace PDE
       flux[1] = h * pow(v, 2) + 0.5 * g * pow(h, 2);
    }
 
-//------------------------------------------------------------------------------
-// Maximum wave speed: |df/du(u)|
-//------------------------------------------------------------------------------
+   //---------------------------------------------------------------------------
+   // Maximum wave speed: |df/du(u)|
+   //---------------------------------------------------------------------------
    double
    max_speed(const Vector<double>& u,
              const Point<1>&       /*p*/)
@@ -56,10 +56,10 @@ namespace PDE
       return abs(v) + sqrt(g* h);
    }
 
-//------------------------------------------------------------------------------
-// R = matrix of right eigenvectors, columns are right eigenvectors
-// L = matrix of left eigenvectors = R^(-1), rows are left eigenvectors
-//------------------------------------------------------------------------------
+   //---------------------------------------------------------------------------
+   // R = matrix of right eigenvectors, columns are right eigenvectors
+   // L = matrix of left eigenvectors = R^(-1), rows are left eigenvectors
+   //---------------------------------------------------------------------------
    void
    char_mat(const Vector<double>& u,
             const Point<1>&       /*p*/,
@@ -80,9 +80,9 @@ namespace PDE
       L(1, 0) = -lam1 * idet; L(1, 1) =  1.0 * idet;
    }
 
-//------------------------------------------------------------------------------
-// Compute flux across cell faces
-//------------------------------------------------------------------------------
+   //---------------------------------------------------------------------------
+   // Compute flux across cell faces
+   //---------------------------------------------------------------------------
    void
    roe_flux(const Vector<double>& /*ul*/,
             const Vector<double>& /*ur*/,
@@ -92,9 +92,9 @@ namespace PDE
       AssertThrow(false, ExcNotImplemented());
    }
 
-//------------------------------------------------------------------------------
-// Compute flux across cell faces
-//------------------------------------------------------------------------------
+   //---------------------------------------------------------------------------
+   // Compute flux across cell faces
+   //---------------------------------------------------------------------------
    void
    rusanov_flux(const Vector<double>& ul,
                 const Vector<double>& ur,
@@ -115,9 +115,9 @@ namespace PDE
       flux[1] = 0.5 * (fl[1] + fr[1]) - 0.5 * lam * (ur[1] - ul[1]);
    }
 
-//------------------------------------------------------------------------------
-// Compute flux across cell faces
-//------------------------------------------------------------------------------
+   //---------------------------------------------------------------------------
+   // Compute flux across cell faces
+   //---------------------------------------------------------------------------
    void
    numerical_flux(const FluxType        flux_type,
                   const Vector<double>& ul,

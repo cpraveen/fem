@@ -1,6 +1,6 @@
 # 2d system of conservation law on unstructured grids
 
-Solves 2d system of conservation laws on unstructured grids using Lagrange basis.
+Solves 2d system of conservation laws on unstructured grids using Lagrange basis. It can also work on Cartesian grids.
 
 ## Run an example
 
