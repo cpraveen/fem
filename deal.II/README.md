@@ -203,3 +203,9 @@ Now you can start the container by typing in a new terminal
 ```shell
 docker_dealii
 ```
+
+## Install deal.II using apt
+
+On Debian, Ubuntu and other apt-based systems, you may be able to install deal.II using apt packages, see
+
+https://github.com/dealii/dealii/wiki/Debian-and-Ubuntu 
