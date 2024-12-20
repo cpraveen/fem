@@ -108,7 +108,8 @@ if(cell->face(0)->at_boundary() && param->periodic == false)
 {
    // assemble left boundary flux
 }
-else if(cell->face(1)->at_boundary() && param->periodic == false)
+
+if(cell->face(1)->at_boundary() && param->periodic == false)
 {
    // assemble right boundary flux
 }
@@ -117,3 +118,7 @@ else
    // assemble on right face, as we already do
 }
 ```
+
+## Exercise: Classical RK4 scheme
+
+Implement the classical four stage, fourth order RK scheme.

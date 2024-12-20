@@ -33,6 +33,10 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. [step-12](https://dealii.org/developer/doxygen/deal.II/step_12.html): Discontinuous Galerkin methods for steady linear advection problem
 1. [step-23](https://dealii.org/developer/doxygen/deal.II/step_23.html): Second order wave equation solved as first order system
 
+## Advanced topics
+
+1. [step-37](https://dealii.org/developer/doxygen/deal.II/step_37.html): Matrix-free approach to Poisson equation
+
 ## Installing deal.II
 
 The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming `v9.6.0` but change this to the actual version you are using.
