@@ -31,7 +31,7 @@ Set parameters in file `input.prm` and run
 
 ```shell
 rm -f *.gpl
-./dg input.prm
+./main input.prm
 gnuplot anim.gnu
 ```
 
