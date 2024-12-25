@@ -933,6 +933,7 @@ main(int argc, char** argv)
    // xmin,xmax,... are not in input file, they are set here using test_data.h
    param.xmin = XMIN; param.xmax = XMAX;
    param.ymin = YMIN; param.ymax = YMAX;
+   param.periodic = true;
 
    auto initial_condition = Solution<2>();
    auto boundary_condition = Functions::ZeroFunction<2>();

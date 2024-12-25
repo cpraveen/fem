@@ -32,7 +32,7 @@ for i in range(M):
     plt.plot(xg,0*xg,'|-',markersize=25)
     plt.plot(xd,0*xd,'ro',markersize=8)
     plt.axis([0.0,1.0,-0.5,1.5])
-    plt.xlabel('$x$'); plt.ylabel('$\phi$')
+    plt.xlabel('$x$'); plt.ylabel('$\\phi$')
     if i%2==0:
         plt.plot(x1+xs1,y1,linewidth=2)
         xs1 += h
@@ -42,6 +42,6 @@ for i in range(M):
     # Print global dof numbers
     for j in range(M):
         plt.text(xd[j],-0.15,str(j))
-    t = '$\phi_{'+str(i)+'}$'
+    t = '$\\phi_{'+str(i)+'}$'
     plt.title(t)
     plt.draw(); plt.pause(2.0)

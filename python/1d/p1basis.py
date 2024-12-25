@@ -24,7 +24,7 @@ x = np.linspace(0.0,1.0,1000)
 fig = plt.figure()
 #plt.plot(xg,0*xg,'o-')
 ax = fig.add_subplot(111)
-ax.set_xlabel('$x$'); ax.set_ylabel('$\phi$')
+ax.set_xlabel('$x$'); ax.set_ylabel('$\\phi$')
 line1, = ax.plot(xg,0*xg,'o-')
 line2, = ax.plot(x,0*x,'r-',linewidth=2)
 for i in range(N+1):
@@ -37,6 +37,6 @@ plt.draw()
 for i in range(N+1):
     y = basis(x,i,h)
     line2.set_ydata(y)
-    t = '$\phi_'+str(i)+'$'
+    t = '$\\phi_'+str(i)+'$'
     plt.title(t)
     plt.draw(); plt.pause(2.0)

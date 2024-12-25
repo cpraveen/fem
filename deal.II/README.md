@@ -210,6 +210,8 @@ docker_dealii
 
 ## Install deal.II using apt
 
-On Debian, Ubuntu and other apt-based systems, you may be able to install deal.II using apt packages, see
+On Debian, Ubuntu and other `apt`-based systems, you may be able to install `deal.II` using `apt` packages, see
 
 https://github.com/dealii/dealii/wiki/Debian-and-Ubuntu 
+
+However, you may not get the latest version of deal.II; in that case, you can install all the dependencies using `apt` and compile `deal.II` yourself.
