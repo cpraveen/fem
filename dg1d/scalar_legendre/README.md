@@ -61,8 +61,8 @@ Add include file
 Define functions
 
 ```c++
-FunctionParser<1> initial_condition("sin(2*pi*x)");
-FunctionParser<1> exact_solution("sin(2*pi*(x-t)");
+FunctionParser<1> initial_condition("sin(2*pi*x)","pi=3.141592653589793");
+FunctionParser<1> exact_solution("sin(2*pi*(x-t))","pi=3.141592653589793");
 exact_solution.set_time(param.final_time);
 param.xmin = 0.0; param.xmax = 1.0;
 ```
@@ -81,7 +81,7 @@ Define functions
 
 ```c++
 Functions::SymbolicFunction<1> initial_condition("sin(2*pi*x)");
-Functions::SymbolicFunction<1> exact_solution("sin(2*pi*(x-t)");
+Functions::SymbolicFunction<1> exact_solution("sin(2*pi*(x-t))");
 exact_solution.set_time(param.final_time);
 param.xmin = 0.0; param.xmax = 1.0;
 ```
