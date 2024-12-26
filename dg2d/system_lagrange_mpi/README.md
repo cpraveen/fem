@@ -2,20 +2,8 @@
 
 Solves 2d system of conservation laws on unstructured grids using Lagrange basis. It can also work on Cartesian grids.
 
-## Run an example
-
-Set parameters in `input.prm` file.
-
-```shell
-ln -s ../models/euler/pde.h
-ln -s ../models/euler/isentropic_vortex/problem.h
-cmake .
-make release
-make
-mpirun -np 4 ./main input.prm > log.txt 2>&1 &
-tail -f log.txt
-visit -o solution.xdmf
-```
+1. [Euler isentropic vortex](https://github.com/cpraveen/fem/tree/master/dg2d/models/euler/isentropic_vortex)
+1. [Linear advection](https://github.com/cpraveen/fem/tree/master/dg2d/models/linadv)
 
 ## Exercise: Flow over cylinder (euler)
 
