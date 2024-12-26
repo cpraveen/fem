@@ -28,6 +28,8 @@ This geo file can also generate a cartesian grid, see comments inside.
 
 ## Compile and run
 
+Below code shows how to use `system_lagrange_mpi` to run this example.
+
 In one terminal
 
 ```shell
@@ -37,7 +39,6 @@ ln -s ../models/euler/isentropic_vortex/problem.h
 cmake .
 make release
 make
-mpirun -np 4 ../../../system_lagrange_mpi/main input.prm > log.txt 2>&1 &
 ```
 
 In another terminal
