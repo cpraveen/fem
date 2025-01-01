@@ -40,6 +40,9 @@ const double b_rk[3] = {1.0, 1.0 / 4.0, 2.0 / 3.0};
 // Numerical flux functions
 enum class LimiterType {none, tvd};
 
+// Boundary condition
+enum class BCType {inflow, outflow};
+
 //------------------------------------------------------------------------------
 // Scheme parameters
 //------------------------------------------------------------------------------
@@ -56,6 +59,8 @@ struct Parameter
    LimiterType  limiter_type;
    double       Mlim;
    FluxType     flux_type;
+   bool         periodic;
+   BCType       lbc, rbc;
 };
 
 //------------------------------------------------------------------------------
@@ -92,10 +97,11 @@ template <int dim>
 class DGScalar
 {
 public:
-   DGScalar(Parameter&           param,
-            Quadrature<1>&       cell_quadrature,
-            const Function<dim>& initial_condition,
-            const Function<dim>& exact_solution);
+   DGScalar(Parameter&     param,
+            Quadrature<1>& cell_quadrature,
+            Function<dim>& initial_condition,
+            Function<dim>& boundary_condition,
+            Function<dim>& exact_solution);
    void run();
 
 private:
@@ -118,8 +124,9 @@ private:
    unsigned int         n_rk_stages;
 
    const Quadrature<dim>       cell_quadrature;
-   const Function<dim>*        initial_condition;
-   const Function<dim>*        exact_solution;
+   Function<dim>*              initial_condition;
+   Function<dim>*              boundary_condition;
+   Function<dim>*              exact_solution;
 
    Triangulation<dim>          triangulation;
    FE_DGQArbitraryNodes<dim>   fe;
@@ -136,14 +143,16 @@ private:
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim>
-DGScalar<dim>::DGScalar(Parameter&           param,
-                        Quadrature<1>&       cell_quadrature,
-                        const Function<dim>& initial_condition,
-                        const Function<dim>& exact_solution)
+DGScalar<dim>::DGScalar(Parameter&     param,
+                        Quadrature<1>& cell_quadrature,
+                        Function<dim>& initial_condition,
+                        Function<dim>& boundary_condition,
+                        Function<dim>& exact_solution)
    :
    param(&param),
    cell_quadrature(cell_quadrature),
    initial_condition(&initial_condition),
+   boundary_condition(&boundary_condition),
    exact_solution(&exact_solution),
    fe(cell_quadrature),
    dof_handler(triangulation)
@@ -165,14 +174,17 @@ DGScalar<dim>::make_grid_and_dofs(unsigned int step)
       std::cout << "Making initial grid ...\n";
       GridGenerator::subdivided_hyper_cube(triangulation, param->n_cells, 
                                            param->xmin, param->xmax);
-      typedef typename Triangulation<dim>::cell_iterator Iter;
-      std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
-      GridTools::collect_periodic_faces(triangulation,
-                                        0,
-                                        1,
-                                        0,
-                                        periodicity_vector);
-      triangulation.add_periodicity(periodicity_vector);
+      if(param->periodic == true)
+      {
+         typedef typename Triangulation<dim>::cell_iterator Iter;
+         std::vector<GridTools::PeriodicFacePair<Iter>> periodicity_vector;
+         GridTools::collect_periodic_faces(triangulation,
+                                          0,
+                                          1,
+                                          0,
+                                          periodicity_vector);
+         triangulation.add_periodicity(periodicity_vector);
+      }
    }
    else
    {
@@ -319,22 +331,74 @@ DGScalar<dim>::assemble_rhs()
          rhs(dof_indices[i]) += cell_rhs(i);
 
       // Add face residual to rhs
-      // assemble flux at right face only since we have periodic bc
-      auto ncell = cell->neighbor_or_periodic_neighbor(1);
-      fe_face_values0.reinit(cell, 1);
-      fe_face_values1.reinit(ncell, cell->neighbor_of_neighbor(1));
-      fe_face_values0.get_function_values(solution, left_state);
-      fe_face_values1.get_function_values(solution, right_state);
-      double num_flux;
-      numerical_flux(param->flux_type, left_state[0], right_state[0],
-                     cell->face(1)->center(), num_flux);
-      // Add to left cell
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         rhs(dof_indices[i]) -= num_flux * fe_face_values0.shape_value(i, 0);
-      // Add to right cell
-      ncell->get_dof_indices(dof_indices_nbr);
-      for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         rhs(dof_indices_nbr[i]) += num_flux * fe_face_values1.shape_value(i, 0);
+      if (cell->face(0)->at_boundary() && param->periodic == false)
+      {
+         fe_face_values1.reinit(cell, 0);
+         const auto point = cell->face(0)->center();
+         double flux;
+         if(param->lbc == BCType::inflow)
+         {
+            boundary_condition->set_time(stage_time);
+            left_state[0] = boundary_condition->value(point);
+            flux = physical_flux(left_state[0], point);
+         }
+         else if(param->lbc == BCType::outflow)
+         {
+            fe_face_values1.get_function_values(solution, right_state);
+            flux = physical_flux(right_state[0], point);
+         }
+         else
+         {
+            AssertThrow(false, ExcMessage("Unknown lbc"));
+         }
+         // Add to right cell
+         for(unsigned int i = 0; i < dofs_per_cell; ++i)
+            rhs(dof_indices[i]) += flux * fe_face_values1.shape_value(i, 0);
+      }
+
+      if (cell->face(1)->at_boundary() && param->periodic == false)
+      {
+         fe_face_values0.reinit(cell, 1);
+         const auto point = cell->face(1)->center();
+         double flux;
+         if(param->rbc == BCType::inflow)
+         {
+            boundary_condition->set_time(stage_time);
+            right_state[0] = boundary_condition->value(point);
+            flux = physical_flux(right_state[0], point);
+         }
+         else if(param->rbc == BCType::outflow)
+         {
+            fe_face_values0.get_function_values(solution, left_state);
+            flux = physical_flux(left_state[0], point);
+         }
+         else
+         {
+            AssertThrow(false, ExcMessage("Unknown rbc"));
+         }
+         // Add to left cell
+         for(unsigned int i = 0; i < dofs_per_cell; ++i)
+            rhs(dof_indices[i]) -= flux * fe_face_values0.shape_value(i, 0);
+      }
+      else
+      {
+         // assemble flux at right face only
+         auto ncell = cell->neighbor_or_periodic_neighbor(1);
+         fe_face_values0.reinit(cell, 1);
+         fe_face_values1.reinit(ncell, cell->neighbor_of_neighbor(1));
+         fe_face_values0.get_function_values(solution, left_state);
+         fe_face_values1.get_function_values(solution, right_state);
+         double num_flux;
+         numerical_flux(param->flux_type, left_state[0], right_state[0],
+                        cell->face(1)->center(), num_flux);
+         // Add to left cell
+         for(unsigned int i = 0; i < dofs_per_cell; ++i)
+            rhs(dof_indices[i]) -= num_flux * fe_face_values0.shape_value(i, 0);
+         // Add to right cell
+         ncell->get_dof_indices(dof_indices_nbr);
+         for(unsigned int i = 0; i < dofs_per_cell; ++i)
+            rhs(dof_indices_nbr[i]) += num_flux * fe_face_values1.shape_value(i, 0);
+      }
    }
 
    // Multiply by inverse mass matrix

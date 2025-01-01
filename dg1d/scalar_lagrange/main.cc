@@ -29,11 +29,15 @@ main(int argc, char** argv)
       cell_quadrature = QGaussLobatto<1>(param.degree+1);
 
    auto test_case = get_test_case(ph.get("test case"));
-   const InitialCondition<1> initial_condition(test_case);
-   const Solution<1> exact_solution(test_case, param.final_time);
+   InitialCondition<1> initial_condition(test_case);
+   Functions::ZeroFunction<1> boundary_condition;
+   Solution<1> exact_solution(test_case, param.final_time);
    param.xmin = initial_condition.xmin;
    param.xmax = initial_condition.xmax;
-   DGScalar<1> solver(param, cell_quadrature, initial_condition, exact_solution);
+   param.periodic = true;
+
+   DGScalar<1> solver(param, cell_quadrature, initial_condition,
+                      boundary_condition, exact_solution);
    solver.run();
 
    return 0;

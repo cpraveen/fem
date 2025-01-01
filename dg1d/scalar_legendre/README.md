@@ -65,6 +65,7 @@ FunctionParser<1> initial_condition("sin(2*pi*x)","pi=3.141592653589793");
 FunctionParser<1> exact_solution("sin(2*pi*(x-t))","pi=3.141592653589793");
 exact_solution.set_time(param.final_time);
 param.xmin = 0.0; param.xmax = 1.0;
+param.periodic = true;
 ```
 
 The gradient is computed using finite differences, so do not depend on it.
@@ -84,6 +85,7 @@ Functions::SymbolicFunction<1> initial_condition("sin(2*pi*x)");
 Functions::SymbolicFunction<1> exact_solution("sin(2*pi*(x-t))");
 exact_solution.set_time(param.final_time);
 param.xmin = 0.0; param.xmax = 1.0;
+param.periodic = true;
 ```
 
 ## Exercise: Dirichlet bc
@@ -97,11 +99,13 @@ BC   : u(0,t) = sin(-2*pi*t)
 Exact: u(x,t) = sin(2*pi*(x-t))
 ```
 
-Do not apply periodicity to the mesh.
+Because the characteristics move to the right, we can specify boundary condition only on the left boundary.
 
-We need to assemble flux on boundary faces and we will use upwind flux.
+Do not apply periodicity to the mesh, we use `param->periodic` to distinguish this case.
 
-In cell loop, distinguish between boundary and other faces
+We need to assemble flux on boundary faces also.
+
+In cell loop, we distinguish between boundary and other faces
 
 ```c++
 if(cell->face(0)->at_boundary() && param->periodic == false)
@@ -115,8 +119,21 @@ if(cell->face(1)->at_boundary() && param->periodic == false)
 }
 else
 {
-   // assemble on right face, as we already do
+   // assemble on right face only
 }
+```
+
+Use the following code in `main.cc` file
+
+```c++
+   Functions::SymbolicFunction<1> initial_condition("sin(2*pi*x)");
+   Functions::SymbolicFunction<1> boundary_condition("sin(2*pi*(x-t))");
+   Functions::SymbolicFunction<1> exact_solution("sin(2*pi*(x-t))");
+   exact_solution.set_time(param.final_time);
+   param.xmin = 0.0; param.xmax = 1.0;
+   param.periodic = false;
+   param.lbc = BCType::inflow;
+   param.rbc = BCType::outflow;
 ```
 
 ## Exercise: Classical RK4 scheme
