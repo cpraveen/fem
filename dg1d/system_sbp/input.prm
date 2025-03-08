@@ -1,0 +1,12 @@
+set degree        = 1
+set ncells        = 100
+set output step   = 10
+set cfl           = 0.0
+set limiter       = tvd        # none,tvd
+set numflux       = rusanov    # see pde.h for available fluxes
+set volflux       = central    # see pde.h for available fluxes
+set tvb parameter = 0.0
+
+# final time is set in problem_data.h, specify here if you want to override
+# that value
+#set final time    = 1.0
