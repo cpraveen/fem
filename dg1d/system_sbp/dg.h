@@ -322,7 +322,6 @@ void
 DGSystem<dim>::assemble_rhs()
 {
    FEValues<dim> fe_values(fe, cell_quadrature,
-                           update_quadrature_points |
                            update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
    const unsigned int   n_q_points    = cell_quadrature.size();
