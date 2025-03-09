@@ -168,9 +168,10 @@ namespace PDE
    void
    central_flux(const Vector<double> &ul,
                 const Vector<double> &ur,
-                const Point<1> &p,
                 Vector<double> &flux)
    {
+      Point<1> p(0); // dummy
+
       Vector<double> fl(nvar);
       physical_flux(ul, p, fl);
 
@@ -188,7 +189,6 @@ namespace PDE
    void
    keeppe_flux(const Vector<double>& ul,
                const Vector<double>& ur,
-               const Point<1>&       /*p*/,
                Vector<double>&       flux)
    {
       const double dl = ul[0];
@@ -217,17 +217,16 @@ namespace PDE
    volume_flux(const VFluxType       flux_type,
                const Vector<double>& ul,
                const Vector<double>& ur,
-               const Point<1>&       p,
                Vector<double>&       flux)
    {
       switch (flux_type)
       {
       case VFluxType::central:
-         central_flux(ul, ur, p, flux);
+         central_flux(ul, ur, flux);
          break;
 
       case VFluxType::keeppe:
-         keeppe_flux(ul, ur, p, flux);
+         keeppe_flux(ul, ur, flux);
          break;
 
       default:

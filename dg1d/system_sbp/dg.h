@@ -106,6 +106,23 @@ void compute_diff_operators(const unsigned int degree,
 }
 
 //------------------------------------------------------------------------------
+// Copy solution from global vector into a local vector for all components
+//------------------------------------------------------------------------------
+template <int dim>
+void extract_solution(const FESystem<dim>& fe,
+                      const Vector<double>& solution,
+                      const std::vector<types::global_dof_index>& dof_indices,
+                      const unsigned int index,
+                      Vector<double>& values)
+{
+   for (unsigned int comp = 0; comp < nvar; ++comp)
+   {
+      auto i = fe.component_to_system_index(comp, index);
+      values[comp] = solution(dof_indices[i]);
+   }
+}
+
+//------------------------------------------------------------------------------
 // Main class of the problem
 //------------------------------------------------------------------------------
 template <int dim>
@@ -305,8 +322,6 @@ void
 DGSystem<dim>::assemble_rhs()
 {
    FEValues<dim> fe_values(fe, cell_quadrature,
-                           update_values   | 
-                           update_gradients |
                            update_quadrature_points |
                            update_JxW_values);
    const unsigned int   dofs_per_cell = fe.dofs_per_cell;
@@ -317,15 +332,9 @@ DGSystem<dim>::assemble_rhs()
    Vector<double>       cell_rhs(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
    std::vector<types::global_dof_index> dof_indices_nbr(dofs_per_cell);
-
-   FEFaceValues<dim> fe_face_values0(fe,
-                                     Quadrature<dim-1> (Point<dim>(0.0)),
-                                     update_values);
-   FEFaceValues<dim> fe_face_values1(fe,
-                                     Quadrature<dim-1> (Point<dim>(0.0)),
-                                     update_values);
-   std::vector<Vector<double>>  left_state(1,Vector<double>(nvar));
-   std::vector<Vector<double>>  right_state(1,Vector<double>(nvar));
+   Vector<double>  left_state(nvar);
+   Vector<double>  right_state(nvar);
+   Table<2,double> fx({fe.degree+1,nvar});
 
    rhs = 0.0;
 
@@ -341,26 +350,27 @@ DGSystem<dim>::assemble_rhs()
          solution_values[indx][comp] = solution(dof_indices[i]);
       }
 
-      // Flux integral over cell
-      cell_rhs  = 0.0;
-      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
+      fx.fill(0.0);
+      for(unsigned int i=0; i<fe.degree+1; ++i)
       {
-         Vector<double> flux(nvar);
-         PDE::physical_flux(solution_values[q_point],
-                            fe_values.quadrature_point(q_point),
-                            flux);
-         for(unsigned int i = 0; i < dofs_per_cell; ++i)
+         for(unsigned int j=0; j<fe.degree+1; ++j)
          {
-            auto c = fe.system_to_component_index(i).first;
-            cell_rhs(i) += (fe_values.shape_grad(i, q_point)[0] *
-                            flux[c] *
-                            fe_values.JxW(q_point));
+            Vector<double> flux(nvar);
+            PDE::volume_flux(param->volflux_type, 
+                             solution_values[i], 
+                             solution_values[j],
+                             flux);
+            for(unsigned int c=0; c<nvar; ++c)
+               fx[i][c] += Dm[i][j] * flux[c];
          }
       }
 
-      // Add cell residual to rhs
       for(unsigned int i = 0; i < dofs_per_cell; ++i)
-         rhs(dof_indices[i]) += cell_rhs(i);
+      {
+         auto comp = fe.system_to_component_index(i).first;
+         auto indx = fe.system_to_component_index(i).second;
+         rhs(dof_indices[i]) += -(2.0/dx) * fx[indx][comp] * fe_values.JxW(indx);
+      }
 
       // Add face residual to rhs
       if(cell->face(0)->at_boundary() && Problem::periodic == false)
@@ -368,19 +378,22 @@ DGSystem<dim>::assemble_rhs()
          // left face is left boundary
          // right state is known from solution
          const unsigned int f = 0;
-         fe_face_values0.reinit(cell, f);
-         fe_face_values0.get_function_values(solution, right_state);
+         extract_solution(fe, solution, dof_indices, 0, right_state);
          // get left state from bc
-         Problem::boundary_value(f, stage_time, right_state[0], left_state[0]);
+         Problem::boundary_value(f, stage_time, right_state, left_state);
          Vector<double> num_flux(nvar);
-         PDE::numerical_flux(param->flux_type, left_state[0], right_state[0],
+         PDE::numerical_flux(param->flux_type, left_state, right_state,
                              cell->face(f)->center(), num_flux);
+         Vector<double> flux(nvar);
+         PDE::physical_flux(right_state,
+                            cell->face(f)->center(),
+                            flux);
          // Add to right cell
-         for (unsigned int i = 0; i < dofs_per_cell; ++i)
+         const auto indx = 0;
+         for (unsigned int comp = 0; comp < nvar; ++comp)
          {
-            auto c = fe.system_to_component_index(i).first;
-            rhs(dof_indices[i]) += num_flux[c] *
-                                   fe_face_values0.shape_value(i, 0);
+            const auto i = fe.component_to_system_index(comp,indx);
+            rhs(dof_indices[i]) += (num_flux[comp] - flux[comp]);
          }
       }
 
@@ -389,46 +402,54 @@ DGSystem<dim>::assemble_rhs()
          // right face is right boundary
          // left state is known from solution
          const unsigned int f = 1;
-         fe_face_values0.reinit(cell, f);
-         fe_face_values0.get_function_values(solution, left_state);
+         extract_solution(fe, solution, dof_indices, fe.degree, left_state);
          // get right state from bc
-         Problem::boundary_value(f, stage_time, left_state[0], right_state[0]);
+         Problem::boundary_value(f, stage_time, left_state, right_state);
          Vector<double> num_flux(nvar);
-         PDE::numerical_flux(param->flux_type, left_state[0], right_state[0],
+         PDE::numerical_flux(param->flux_type, left_state, right_state,
                              cell->face(f)->center(), num_flux);
+         Vector<double> flux(nvar);
+         PDE::physical_flux(left_state,
+                            cell->face(f)->center(),
+                            flux);
          // Add to left cell
-         for (unsigned int i = 0; i < dofs_per_cell; ++i)
+         const auto indx = fe.degree;
+         for (unsigned int comp = 0; comp < nvar; ++comp)
          {
-            auto c = fe.system_to_component_index(i).first;
-            rhs(dof_indices[i]) -= num_flux[c] *
-                                   fe_face_values0.shape_value(i, 0);
+            const auto i = fe.component_to_system_index(comp,indx);
+            rhs(dof_indices[i]) -= (num_flux[comp] - flux[comp]);
          }
       }
       else
       {
          // assemble flux at right face only since we have periodic bc
          auto ncell = cell->neighbor_or_periodic_neighbor(1);
-         fe_face_values0.reinit(cell, 1);
-         fe_face_values1.reinit(ncell, cell->neighbor_of_neighbor(1));
-         fe_face_values0.get_function_values(solution, left_state);
-         fe_face_values1.get_function_values(solution, right_state);
+         ncell->get_dof_indices(dof_indices_nbr);
+         extract_solution(fe, solution, dof_indices, fe.degree, left_state);
+         extract_solution(fe, solution, dof_indices_nbr, 0, right_state);
          Vector<double> num_flux(nvar);
-         PDE::numerical_flux(param->flux_type, left_state[0], right_state[0],
+         PDE::numerical_flux(param->flux_type, left_state, right_state,
                              cell->face(1)->center(), num_flux);
+         Vector<double> flux(nvar);
          // Add to left cell
-         for(unsigned int i = 0; i < dofs_per_cell; ++i)
+         PDE::physical_flux(left_state,
+                            cell->face(1)->center(),
+                            flux);
+         const auto indxl = fe.degree;
+         for (unsigned int comp = 0; comp < nvar; ++comp)
          {
-            auto c = fe.system_to_component_index(i).first;
-            rhs(dof_indices[i]) -= num_flux[c] * 
-                                   fe_face_values0.shape_value(i, 0);
+            const auto i = fe.component_to_system_index(comp,indxl);
+            rhs(dof_indices[i]) -= (num_flux[comp] - flux[comp]);
          }
          // Add to right cell
-         ncell->get_dof_indices(dof_indices_nbr);
-         for(unsigned int i = 0; i < dofs_per_cell; ++i)
+         PDE::physical_flux(right_state,
+                            cell->face(1)->center(),
+                            flux);
+         const auto indxr = 0;
+         for (unsigned int comp = 0; comp < nvar; ++comp)
          {
-            auto c = fe.system_to_component_index(i).first;
-            rhs(dof_indices_nbr[i]) += num_flux[c] * 
-                                       fe_face_values1.shape_value(i, 0);
+            const auto i = fe.component_to_system_index(comp,indxr);
+            rhs(dof_indices_nbr[i]) += (num_flux[comp] - flux[comp]);
          }
       }
    }
@@ -558,7 +579,8 @@ DGSystem<dim>::apply_TVD_limiter()
          for(unsigned int i=0; i<dofs_per_cell; ++i)
          {
             auto comp = fe.system_to_component_index(i).first;
-            solution(dof_indices[i])  = average[c][comp] + 2.0 * (xi[i][0] - 0.5) * Dx_new[comp];
+            solution(dof_indices[i])  = average[c][comp] 
+                                        + 2.0 * (xi[i][0] - 0.5) * Dx_new[comp];
          }
       }
    }
@@ -607,7 +629,7 @@ DGSystem<dim>::update(const unsigned int rk_stage)
    for(unsigned int i = 0; i < dof_handler.n_dofs(); ++i)
    {
       solution(i)  = a_rk[rk_stage] * solution_old(i) +
-                     b_rk[rk_stage] * (solution(i) + dt* rhs(i));
+                     b_rk[rk_stage] * (solution(i) + dt * rhs(i));
    }
 
    stage_time = a_rk[rk_stage] * time + b_rk[rk_stage] * (stage_time + dt);
