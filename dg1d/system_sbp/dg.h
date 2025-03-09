@@ -123,6 +123,24 @@ void extract_solution(const FESystem<dim>& fe,
 }
 
 //------------------------------------------------------------------------------
+// Extract solution at all points
+//------------------------------------------------------------------------------
+template <int dim, typename VecArray>
+void extract_solution(const FESystem<dim>& fe,
+                      const Vector<double>& solution,
+                      const std::vector<types::global_dof_index>& dof_indices,
+                      VecArray& values)
+{
+      for(unsigned int i=0; i<fe.dofs_per_cell; ++i)
+      {
+         auto comp = fe.system_to_component_index(i).first;
+         auto indx = fe.system_to_component_index(i).second;
+         values[indx][comp] = solution(dof_indices[i]);
+      }
+
+}
+
+//------------------------------------------------------------------------------
 // Main class of the problem
 //------------------------------------------------------------------------------
 template <int dim>
@@ -341,13 +359,7 @@ DGSystem<dim>::assemble_rhs()
    {
       fe_values.reinit(cell);
       cell->get_dof_indices(dof_indices);
-
-      for(unsigned int i=0; i<dofs_per_cell; ++i)
-      {
-         auto comp = fe.system_to_component_index(i).first;
-         auto indx = fe.system_to_component_index(i).second;
-         solution_values[indx][comp] = solution(dof_indices[i]);
-      }
+      extract_solution(fe, solution, dof_indices, solution_values);
 
       fx.fill(0.0);
       for(unsigned int i=0; i<fe.degree+1; ++i)
@@ -534,13 +546,8 @@ DGSystem<dim>::apply_TVD_limiter()
       cell->get_dof_indices(dof_indices);
 
       // Extract solution at faces
-      for(unsigned int i=0; i<nvar; ++i)
-      {
-         auto il = fe.component_to_system_index(i, 0);
-         auto ir = fe.component_to_system_index(i, param->degree);
-         ul[i] = solution(dof_indices[il]); // left face
-         ur[i] = solution(dof_indices[ir]); // right face
-      }
+      extract_solution(fe, solution, dof_indices, 0, ul);
+      extract_solution(fe, solution, dof_indices, fe.degree, ur);
 
       for(unsigned int comp=0; comp<nvar; ++comp)
       {
