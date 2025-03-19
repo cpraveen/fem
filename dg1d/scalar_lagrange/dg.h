@@ -481,7 +481,7 @@ DGScalar<dim>::apply_TVD_limiter()
          double Dx = 0.5 * ( dl + dr); // limited average slope
          cell->get_dof_indices(dof_indices);
          for(unsigned int i=0; i<fe.dofs_per_cell; ++i)
-            solution(dof_indices[i]) = average[c] + (xi[i][0] - 0.5) * Dx;
+            solution(dof_indices[i]) = average[c] + 2.0 * (xi[i][0] - 0.5) * Dx;
       }
    }
 }
