@@ -37,6 +37,18 @@
         <Field name="autoExpression" type="bool">false</Field>
     </Object>
     <Object name="Expression">
+        <Field name="name" type="string">VelMag</Field>
+        <Field name="definition" type="string">magnitude(Velocity)</Field>
+        <Field name="hidden" type="bool">false</Field>
+        <Field name="type" type="string">ScalarMeshVar</Field>
+        <Field name="fromDB" type="bool">false</Field>
+        <Field name="fromOperator" type="bool">false</Field>
+        <Field name="operatorName" type="string">__none__</Field>
+        <Field name="meshName" type="string"></Field>
+        <Field name="dbName" type="string">__none__</Field>
+        <Field name="autoExpression" type="bool">false</Field>
+    </Object>
+    <Object name="Expression">
         <Field name="name" type="string">Vorticity</Field>
         <Field name="definition" type="string">curl(Velocity)</Field>
         <Field name="hidden" type="bool">false</Field>

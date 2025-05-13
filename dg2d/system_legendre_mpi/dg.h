@@ -1042,7 +1042,7 @@ declare_parameters(ParameterHandler& prm)
    prm.declare_entry("degree", "0", Patterns::Integer(0),
                      "Polynomial degree");
    prm.declare_entry("basis", "legendre", Patterns::Anything(),
-                     "Specify basis: NOT USED");
+                     "Specify basis: NOT USED, always Legendre");
    prm.declare_entry("mapping", "cartesian", Patterns::Anything(),
                      "Specify mapping: NOT USED, always cartesian");
    prm.declare_entry("grid", "0", Patterns::Anything(),
