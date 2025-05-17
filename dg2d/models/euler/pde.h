@@ -11,10 +11,11 @@ using namespace dealii;
 constexpr unsigned int nvar = 4;
 
 // Numerical flux functions
-enum class FluxType {rusanov, steger_warming, none};
+enum class FluxType {rusanov, roe, steger_warming, none};
 
 std::map<std::string, FluxType> 
 FluxTypeList{{"rusanov",        FluxType::rusanov},
+             {"roe",            FluxType::roe},
              {"steger_warming", FluxType::steger_warming},
              {"none",           FluxType::none}};
 
@@ -50,6 +51,10 @@ namespace PDE
 
    const std::string name = "2D Euler equations";
    const double gamma = ProblemData::gamma;
+
+   const unsigned int irho = 0;
+   const unsigned int iE = nvar-1;
+   const unsigned int ipre = nvar-1;
 
    //---------------------------------------------------------------------------
    template <int dim>
@@ -201,6 +206,85 @@ namespace PDE
    }
 
    //---------------------------------------------------------------------------
+   // Roe flux, taken from dflo code
+   //---------------------------------------------------------------------------
+   template <int dim>
+   void 
+   roe_flux(const Vector<double>& ul,
+            const Vector<double>& ur,
+            const Tensor<1, dim>& normal,
+            Vector<double>&       flux)
+   {
+      double rho_l, rho_r, p_l, p_r;
+      Tensor<1,dim> v_l, v_r;
+      con2prim<dim>(ul, rho_l, v_l, p_l);
+      con2prim<dim>(ur, rho_r, v_r, p_r);
+
+      const double rho_l_sqrt = std::sqrt(rho_l);
+      const double rho_r_sqrt = std::sqrt(rho_r);
+      const double fact_l = rho_l_sqrt / (rho_l_sqrt + rho_r_sqrt);
+      const double fact_r = 1.0 - fact_l;
+
+      const Tensor<1,dim> velocity = v_l * fact_l + v_r * fact_r;
+      const double v2 = velocity * velocity;
+      const double vel_normal = velocity * normal;
+
+      const double v_l_normal = v_l * normal;
+      const double v_r_normal = v_r * normal;
+
+      const Tensor<1,dim> dv = v_r - v_l;
+      const double v_dot_dv = velocity * dv;
+
+      const double v2_l = v_l * v_l;
+      const double v2_r = v_r * v_r;
+
+      const double h_l = gamma * p_l / (rho_l * (gamma-1.0)) + 0.5 * v2_l;
+      const double h_r = gamma * p_r / (rho_r * (gamma-1.0)) + 0.5 * v2_r;
+
+      const double density = rho_l_sqrt * rho_r_sqrt;
+      const double h = h_l * fact_l + h_r * fact_r;
+      const double c = std::sqrt( (gamma-1.0) * (h - 0.5*v2) );
+      const double drho = rho_r - rho_l;
+      const double dp = p_r - p_l;
+      const double dvn = v_r_normal - v_l_normal;
+
+      const double a1 = (dp - density * c * dvn) / (2.0*c*c);
+      const double a2 = drho - dp / (c*c);
+      const double a3 = (dp + density * c * dvn) / (2.0*c*c);
+
+      double l1 = std::fabs(vel_normal - c);
+      double l2 = std::fabs(vel_normal);
+      double l3 = std::fabs(vel_normal + c);
+
+      // entropy fix
+      const double delta = 0.1 * c;
+      if(l1 < delta) l1 = 0.5 * (l1*l1/delta + delta);
+      if(l3 < delta) l3 = 0.5 * (l3*l3/delta + delta);
+
+      double Dflux[nvar];
+      Dflux[irho] = l1 * a1 + l2 * a2 + l3 * a3;
+      Dflux[iE] =  l1 * a1 * (h - c * vel_normal)
+                 + l2 * a2 * 0.5 * v2
+                 + l2 * density * (v_dot_dv - vel_normal * dvn)
+                 + l3 * a3 * (h + c * vel_normal);
+      flux[irho] = 0.5 * (rho_l * v_l_normal + rho_r * v_r_normal 
+                          - Dflux[irho]);
+      flux[iE] = 0.5 * (rho_l * h_l * v_l_normal + rho_r * h_r * v_r_normal
+                        - Dflux[iE]);
+      const double p_avg = 0.5 * (p_l + p_r);
+      for(unsigned int d=0; d<dim; ++d)
+      {
+         Dflux[d+1] = (velocity[d] - normal[d] * c) * l1 * a1
+                  + velocity[d] * l2 * a2
+                  + (dv[d] - normal[d] * dvn) * l2 * density
+                  + (velocity[d] + normal[d] * c) * l3 * a3;
+         flux[d+1] = normal[d] * p_avg
+                   + 0.5 * (ul[d+1] * v_l_normal + ur[d+1] * v_r_normal)
+                   - 0.5 * Dflux[d+1];
+      }
+   }
+
+   //---------------------------------------------------------------------------
    // steger-warming flux
    // TODO: Add reference
    // See 
@@ -330,6 +414,10 @@ namespace PDE
       {
          case FluxType::rusanov:
             rusanov_flux(ul, ur, normal, data, flux);
+            break;
+
+         case FluxType::roe:
+            roe_flux(ul, ur, normal, flux);
             break;
 
          case FluxType::steger_warming:
