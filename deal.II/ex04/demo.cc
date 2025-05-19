@@ -103,18 +103,18 @@ template <int dim>
 class LaplaceProblem
 {
 public:
-   LaplaceProblem (int degree, unsigned int nrefine);
-   void run (unsigned int &ncell, unsigned int &ndofs, 
+   LaplaceProblem (int degree);
+   void run (bool refine, unsigned int &ncell, unsigned int &ndofs, 
              double &L2_error, double &H1_error);
    
 private:
-   void make_grid_and_dofs ();
+   void make_grid ();
+   void make_dofs ();
    void assemble_system ();
    void solve ();
    void output_results () const;
    void compute_error (double &L2_error, double &H1_error) const;
    
-   unsigned int           nrefine;
    Triangulation<dim>     triangulation;
    FE_Q<dim>              fe;
    DoFHandler<dim>        dof_handler;
@@ -129,34 +129,35 @@ private:
 
 //------------------------------------------------------------------------------
 template <int dim>
-LaplaceProblem<dim>::LaplaceProblem (int degree, unsigned int nrefine)
+LaplaceProblem<dim>::LaplaceProblem (int degree)
 :
-nrefine (nrefine),
 fe (degree),
 dof_handler (triangulation)
 {}
 
 //------------------------------------------------------------------------------
 template <int dim>
-void LaplaceProblem<dim>::make_grid_and_dofs ()
+void LaplaceProblem<dim>::make_grid ()
 {
    GridGenerator::hyper_cube (triangulation, 0, 1);
-   triangulation.refine_global (nrefine);
-   
-   std::cout
-   << "   Number of active cells: "
-   << triangulation.n_active_cells()
-   << std::endl
-   << "   Total number of cells: "
-   << triangulation.n_cells()
-   << std::endl;
-   
+   triangulation.refine_global(5);
+}
+
+//------------------------------------------------------------------------------
+template <int dim>
+void LaplaceProblem<dim>::make_dofs ()
+{
    dof_handler.distribute_dofs (fe);
    
-   std::cout
-   << "   Number of degrees of freedom: "
-   << dof_handler.n_dofs()
-   << std::endl;
+   std::cout << "   Number of active cells: "
+             << triangulation.n_active_cells()
+             << std::endl
+             << "   Total number of cells: "
+             << triangulation.n_cells()
+             << std::endl;
+   std::cout << "   Number of degrees of freedom: "
+             << dof_handler.n_dofs()
+             << std::endl;
    
    DynamicSparsityPattern dsp(dof_handler.n_dofs());
    DoFTools::make_sparsity_pattern (dof_handler, dsp);
@@ -256,6 +257,7 @@ void LaplaceProblem<dim>::solve ()
 template <int dim>
 void LaplaceProblem<dim>::output_results () const
 {
+   static int step = 0;
    Vector<double> solution_error;
    solution_error.reinit(dof_handler.n_dofs());
    VectorTools::interpolate(dof_handler,
@@ -268,10 +270,11 @@ void LaplaceProblem<dim>::output_results () const
    data_out.add_data_vector (solution, "solution");
    data_out.add_data_vector (solution_error, "error");
    data_out.build_patches (fe.degree);
-   std::string fname = "sol-" + Utilities::int_to_string(nrefine,2)+".vtu";
+   std::string fname = "sol-" + Utilities::int_to_string(step,2)+".vtu";
    std::ofstream output (fname);
    data_out.write_vtu (output);
    std::cout << "   Wrote to file " << fname << std::endl;
+   ++step;
 }
 
 //------------------------------------------------------------------------------
@@ -301,12 +304,21 @@ void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) con
 
 //------------------------------------------------------------------------------
 template <int dim>
-void LaplaceProblem<dim>::run (unsigned int &ncell, 
+void LaplaceProblem<dim>::run (bool          refine,
+                               unsigned int &ncell, 
                                unsigned int &ndofs, 
                                double       &L2_error, 
                                double       &H1_error)
 {
-   make_grid_and_dofs();
+   if(refine == false)
+   {
+      make_grid();
+   }
+   else
+   {
+      triangulation.refine_global();
+   }
+   make_dofs();
    assemble_system ();
    solve ();
    output_results ();
@@ -322,12 +334,15 @@ int main ()
    deallog.depth_console (0);
    int degree = 1;
    ConvergenceTable  convergence_table;   
-   for(unsigned int n=5; n<10; ++n)
+   LaplaceProblem<2> problem (degree);
+   for(unsigned int n=0; n<5; ++n)
    {
-      LaplaceProblem<2> problem (degree, n);
       unsigned int ncell, ndofs;
       double L2_error, H1_error;
-      problem.run (ncell, ndofs, L2_error, H1_error);
+      if(n == 0)
+         problem.run (false, ncell, ndofs, L2_error, H1_error);
+      else
+         problem.run (true, ncell, ndofs, L2_error, H1_error);
 
       convergence_table.add_value("cells", ncell);
       convergence_table.add_value("dofs",  ndofs);
