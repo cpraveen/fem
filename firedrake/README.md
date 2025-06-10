@@ -13,3 +13,7 @@ Jupyter notebook version of fem examples are available.
 If you modify a file, you may want to save a copy to your own Google Drive.
 
 For instructions on how to install Firedrake on colab, see [fem-on-colab.github.io](https://fem-on-colab.github.io)
+
+## Resources
+
+* P. Farrell: [slides](https://pefarrell.org/files/icerm2024.pdf), [codes](https://github.com/pefarrell/icerm2024)
