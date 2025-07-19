@@ -38,7 +38,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 
 ## Advanced topics
 
-1. [step-37](https://dealii.org/developer/doxygen/deal.II/step_37.html): Matrix-free approach to Poisson equation
+1. [step-37](https://dealii.org/developer/doxygen/deal.II/step_37.html): Matrix-free approach to Poisson equation with multigrid in parallel
 
 ## Installing deal.II
 
