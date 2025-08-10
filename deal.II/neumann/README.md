@@ -14,6 +14,10 @@ where:
 
 To get unique solution, the mean value of solution is set to zero.
 
+$$
+\int_\Omega u dx = 0
+$$
+
 Steps to run
 
 ```bash
