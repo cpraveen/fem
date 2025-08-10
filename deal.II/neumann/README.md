@@ -22,6 +22,7 @@ Steps to run
 
 ```bash
 cmake .
+make release
 make
 ./neumann
 ```
