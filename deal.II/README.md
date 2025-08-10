@@ -24,6 +24,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. ex21: 2-d unsteady heat equation
 1. ex31: 2-d linear advection equation using Galerkin method
 1. ns_cylinder: Incompressible NS for flow over cylinder
+1. neumann: Pure neumann problem
 
 ## deal.II Examples
 
