@@ -3,8 +3,8 @@
 This folder contains the implementation of finding solution pure Neumann problem which is described in Chapter 4 of the book. The problem solved is:
 
 $$
-  -\Delta u &= f \quad \text{in } \Omega \\
-  n \cdot \nabla u &= g_N \quad \text{on } \partial\Omega
+  -\Delta u = f \quad \text{in } \Omega \qquad\textrm{and}\qquad
+  n \cdot \nabla u = g_N \quad \text{on } \partial\Omega
 $$
 
 where:
