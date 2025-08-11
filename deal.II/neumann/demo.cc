@@ -191,16 +191,14 @@ NeumannSolver<dim>::setup_system()
   // Sparsity pattern WITH Lagrange multiplier
   DynamicSparsityPattern dsp2(dof_handler.n_dofs() + 1);
 
-  // Copy dsp1 into dsp2 and also add last column/row
+  // First copy dsp1 into dsp2
+  for(types::global_dof_index i=0; i<dsp1.n_rows(); ++i)
+    for(types::global_dof_index c=0; c<dsp1.row_length(i); ++c)
+      dsp2.add(i, dsp1.column_number(i,c));
+
+  // Add last column/row
   for(unsigned int i = 0; i < dof_handler.n_dofs(); ++i)
   {
-    for(unsigned int j = 0; j < dof_handler.n_dofs(); ++j)
-    {
-      if(dsp1.exists(i, j))
-      {
-        dsp2.add(i, j);
-      }
-    }
     dsp2.add(i, dof_handler.n_dofs());
     dsp2.add(dof_handler.n_dofs(), i);
   }
