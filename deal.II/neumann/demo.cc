@@ -1,3 +1,14 @@
+/*
+Solves pure Neumann problem
+   -Laplace(u) = f in Omega
+         du/dn = g on dOmega
+and we have compatibility
+   int(Omega) f + int(dOmega) g = 0
+To get unique solution, we put constraint
+   int(Omega) u = 0
+Author : Devansh Sonigra
+Modifed: Praveen C
+*/
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
 #include <deal.II/grid/grid_out.h>
