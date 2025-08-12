@@ -193,8 +193,8 @@ NeumannSolver<dim>::setup_system()
 
   // First copy dsp1 into dsp2
   for(types::global_dof_index i=0; i<dsp1.n_rows(); ++i)
-    for(types::global_dof_index c=0; c<dsp1.row_length(i); ++c)
-      dsp2.add(i, dsp1.column_number(i,c));
+    for(auto j = dsp1.begin(i); j < dsp1.end(i); ++j)
+      dsp2.add(i, j->column());
 
   // Add last column/row
   for(unsigned int i = 0; i < dof_handler.n_dofs(); ++i)
