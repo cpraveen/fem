@@ -157,16 +157,18 @@ rm dealii-9.6.0-offline_documentation.tar.gz
 
 Now you can open `$DEAL_II_DIR/doc/index.html` in your web browser and view the documentation.
 
-## Using docker on Linux
+## Using docker on Linux/Mac
 
 Docker images are available
 
 https://hub.docker.com/r/dealii/dealii
 
+The latest tags that can be used are `master-noble` (Ubuntu 24.03) or `master-jammy` (Ubuntu 22.04).
+
 Install
 
 ```shell
-docker pull dealii/dealii
+docker pull dealii/dealii:master-noble
 ```
 
 Run as
@@ -175,7 +177,7 @@ Run as
 cd fem
 docker run -ti --name dealii -v $(pwd):/home/dealii/shared \
                              -w /home/dealii/shared  \
-                             dealii/dealii:latest
+                             dealii/dealii:master-noble
 ```
 
 This creates a container with name `dealii` and you can also see this in dashboard. The directory `fem` is now visible inside this container. If you exit the terminal, the container will stop running. To join the container again, first start the container and then attach
@@ -203,7 +205,7 @@ To reduce your typing work, create an alias in your `$HOME/.bashrc` file
 alias docker_dealii="docker run -ti --name dealii \
                                 -v $(pwd):/home/dealii/shared \
                                 -w /home/dealii/shared  \
-                                dealii/dealii:latest"
+                                dealii/dealii:master-noble"
 ```
 
 Now you can start the container by typing in a new terminal
