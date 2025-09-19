@@ -43,7 +43,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 
 ## Installing deal.II
 
-The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming `v9.6.0` but change this to the actual version you are using.
+The examples are based on deal.II finite element library. You can find detailed installation instructions on the [deal.II website](http://www.dealii.org/developer/readme.html). To run most of the examples given here, it is enough to compile deal.II in serial mode. You will need a C++ compiler and cmake, which can be installed using the package manager in your operating system. Download the latest stable version of deal.II [here](https://github.com/dealii/dealii/releases). The instructions below are written assuming `v9.7.1` but change this to the actual version you are using.
 
 ### Prepare your system
 
@@ -113,9 +113,9 @@ To compile deal.II, follow these steps. A sample `dealii.sh` script is included 
 
 ```shell
 cd $HOME
-wget https://github.com/dealii/dealii/releases/download/v9.6.0/dealii-9.6.0.tar.gz
-tar zxvf dealii-9.6.0.tar.gz
-cd dealii-9.6.0
+wget https://github.com/dealii/dealii/releases/download/v9.7.1/dealii-9.7.1.tar.gz
+tar zxvf dealii-9.7.1.tar.gz
+cd dealii-9.7.1
 wget https://raw.githubusercontent.com/cpraveen/fembook/master/deal.II/dealii.sh
 mkdir -p build && cd build
 bash ../dealii.sh
@@ -142,17 +142,17 @@ It is good to keep the build files in case you want to re-compile later. Otherwi
 
 ```shell
 cd $HOME
-rm -rf dealii-9.6.0
-rm dealii-9.6.0.tar.gz
+rm -rf dealii-9.7.1
+rm dealii-9.7.1.tar.gz
 ```
 
 Also, download and install the offline documentation by following these steps.
 
 ```shell
 cd $DEAL_II_DIR
-wget https://github.com/dealii/dealii/releases/download/v9.6.0/dealii-9.6.0-offline_documentation.tar.gz
-tar zxvf dealii-9.6.0-offline_documentation.tar.gz
-rm dealii-9.6.0-offline_documentation.tar.gz
+wget https://github.com/dealii/dealii/releases/download/v9.7.1/dealii-9.7.1-offline_documentation.tar.gz
+tar zxvf dealii-9.7.1-offline_documentation.tar.gz
+rm dealii-9.7.1-offline_documentation.tar.gz
 ```
 
 Now you can open `$DEAL_II_DIR/doc/index.html` in your web browser and view the documentation.
