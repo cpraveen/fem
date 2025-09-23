@@ -293,16 +293,16 @@ void LaplaceProblem<dim>::output_results () const
    static int step = 0;
    static std::vector<std::pair<double, std::string>> pvtu_files;
    const unsigned int n_digits_for_counter = 2;
-   /*PVector solution_error(solution);
+   PVector solution_error(dof_handler.locally_owned_dofs(), mpi_comm);
    VectorTools::interpolate(dof_handler,
                             ExactSolution<dim>(),
                             solution_error);
-   solution_error -= solution; */
+   solution_error -= solution;
 
    DataOut<dim> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
-   //data_out.add_data_vector (solution_error, "error");
+   data_out.add_data_vector (solution_error, "error");
    data_out.build_patches (fe.degree);
 
    data_out.write_vtu_with_pvtu_record("./",
