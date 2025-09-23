@@ -15,6 +15,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
    * Quad mesh
    * Triangle mesh
 1. ex04: 2-d Poisson equation on unit square, Dirichlet bc, convergence under uniform grid refinement
+   * ex04b: Solve in parallel using PETSc
 1. ex05: 2-d Poisson on unit square, mixed bc
 1. ex06: 2-d Laplace equation in non-convex (Gamma-shaped) domain, convergence under uniform refinement
 1. ex07: 2-d Laplace equation in non-convex (Gamma-shaped) domain, convergence under adaptive refinement

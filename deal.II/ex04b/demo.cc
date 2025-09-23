@@ -18,14 +18,23 @@
 #include <deal.II/base/function.h>
 #include <deal.II/base/convergence_table.h>
 #include <deal.II/numerics/vector_tools.h>
-#include <deal.II/numerics/matrix_tools.h>
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/lac/vector.h>
 #include <deal.II/lac/full_matrix.h>
 #include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
-#include <deal.II/lac/solver_cg.h>
-#include <deal.II/lac/precondition.h>
+#include <deal.II/lac/affine_constraints.h>
+
+#include <deal.II/distributed/tria.h>
+
+#include <deal.II/base/conditional_ostream.h>
+#include <deal.II/base/mpi.h>
+
+#include <deal.II/lac/sparsity_tools.h>
+#include <deal.II/lac/petsc_vector.h>
+#include <deal.II/lac/petsc_sparse_matrix.h>
+#include <deal.II/lac/petsc_solver.h>
+#include <deal.II/lac/petsc_precondition.h>
 
 #include <fstream>
 #include <iostream>
@@ -107,31 +116,42 @@ public:
              double &L2_error, double &H1_error);
    
 private:
-   void make_grid ();
+   using PTriangulation = parallel::distributed::Triangulation<dim>;
+   using PMatrix = PETScWrappers::MPI::SparseMatrix;
+   using PVector = PETScWrappers::MPI::Vector;
+   using Constraints = AffineConstraints<double>;
+
+   void make_grid();
    void make_dofs ();
    void assemble_system ();
    void solve ();
    void output_results () const;
    void compute_error (double &L2_error, double &H1_error) const;
-   
-   Triangulation<dim>     triangulation;
+
+   MPI_Comm               mpi_comm;
+   const unsigned int     mpi_rank;
+   ConditionalOStream     pcout;
+
+   PTriangulation         triangulation;
    FE_Q<dim>              fe;
    DoFHandler<dim>        dof_handler;
+   Constraints            constraints;
    
-   SparsityPattern        sparsity_pattern;
-   SparseMatrix<double>   system_matrix;
-   
-   Vector<double>         solution;
-   Vector<double>         system_rhs;
+   PMatrix                system_matrix;
+   PVector                solution;
+   PVector                system_rhs;
 };
 
 
 //------------------------------------------------------------------------------
 template <int dim>
-LaplaceProblem<dim>::LaplaceProblem (int degree)
-:
-fe (degree),
-dof_handler (triangulation)
+LaplaceProblem<dim>::LaplaceProblem(int degree)
+    : mpi_comm(MPI_COMM_WORLD),
+      mpi_rank(Utilities::MPI::this_mpi_process(mpi_comm)),
+      pcout(std::cout, mpi_rank==0),
+      triangulation(mpi_comm),
+      fe(degree),
+      dof_handler(triangulation)
 {}
 
 //------------------------------------------------------------------------------
@@ -148,23 +168,47 @@ void LaplaceProblem<dim>::make_dofs ()
 {
    dof_handler.distribute_dofs (fe);
    
-   std::cout << "   Number of active cells: "
-             << triangulation.n_active_cells()
-             << std::endl
-             << "   Total number of cells: "
-             << triangulation.n_cells()
-             << std::endl;
-   std::cout << "   Number of degrees of freedom: "
-             << dof_handler.n_dofs()
-             << std::endl;
-   
-   DynamicSparsityPattern dsp(dof_handler.n_dofs());
-   DoFTools::make_sparsity_pattern (dof_handler, dsp);
-   sparsity_pattern.copy_from(dsp);
-   
-   system_matrix.reinit (sparsity_pattern);
-   solution.reinit (dof_handler.n_dofs());
-   system_rhs.reinit (dof_handler.n_dofs());
+   pcout << "   Number of active cells: "
+         << triangulation.n_active_cells()
+         << std::endl
+         << "   Total number of cells: "
+         << triangulation.n_cells()
+         << std::endl;
+   pcout << "   Number of degrees of freedom: "
+         << dof_handler.n_dofs()
+         << std::endl;
+
+   const auto &locally_owned_dofs = dof_handler.locally_owned_dofs();
+   IndexSet locally_relevant_dofs = 
+      DoFTools::extract_locally_relevant_dofs(dof_handler);
+
+   constraints.clear();
+   constraints.reinit(locally_owned_dofs, locally_relevant_dofs);
+   VectorTools::interpolate_boundary_values(dof_handler,
+                                            0,
+                                            BoundaryValues<dim>(),
+                                            constraints);
+   constraints.close();
+
+   DynamicSparsityPattern sparsity_pattern(locally_relevant_dofs);
+   DoFTools::make_sparsity_pattern(dof_handler, 
+                                   sparsity_pattern,
+                                   constraints, 
+                                   false);
+   SparsityTools::distribute_sparsity_pattern(sparsity_pattern,
+                                              locally_owned_dofs,
+                                              mpi_comm,
+                                              locally_relevant_dofs);
+
+   system_matrix.reinit(locally_owned_dofs,
+                        locally_owned_dofs,
+                        sparsity_pattern,
+                        mpi_comm);
+   solution.reinit(locally_owned_dofs, 
+                   locally_relevant_dofs, 
+                   mpi_comm);
+   system_rhs.reinit(locally_owned_dofs, 
+                     mpi_comm);
 }
 
 //------------------------------------------------------------------------------
@@ -189,6 +233,7 @@ void LaplaceProblem<dim>::assemble_system ()
    std::vector<double>  rhs_values (n_q_points);
    
    for (const auto &cell : dof_handler.active_cell_iterators())
+   if(cell->is_locally_owned())
    {
       fe_values.reinit (cell);
       cell_matrix = 0;
@@ -210,55 +255,43 @@ void LaplaceProblem<dim>::assemble_system ()
          }
       
       cell->get_dof_indices (local_dof_indices);
-      for (unsigned int i=0; i<dofs_per_cell; ++i)
-      {
-         for (unsigned int j=0; j<dofs_per_cell; ++j)
-            system_matrix.add (local_dof_indices[i],
-                               local_dof_indices[j],
-                               cell_matrix(i,j));
-         
-         system_rhs(local_dof_indices[i]) += cell_rhs(i);
-      }
+      constraints.distribute_local_to_global(cell_matrix,
+                                             cell_rhs,
+                                             local_dof_indices,
+                                             system_matrix,
+                                             system_rhs);
    }
-   
-   // boundary condition
-   std::map<types::global_dof_index,double> boundary_values;
-   VectorTools::interpolate_boundary_values (dof_handler,
-                                             0,
-                                             BoundaryValues<dim>(),
-                                             boundary_values);
-   MatrixTools::apply_boundary_values (boundary_values,
-                                       system_matrix,
-                                       solution,
-                                       system_rhs);
+
+   system_matrix.compress(VectorOperation::add);
+   system_rhs.compress(VectorOperation::add);
 }
 
 //------------------------------------------------------------------------------
 template <int dim>
 void LaplaceProblem<dim>::solve ()
 {
-   SolverControl           solver_control (1000, 1e-12);
-   SolverCG<>              cg (solver_control);
+   SolverControl solver_control(solution.size(), 1e-8 * system_rhs.l2_norm());
+   PETScWrappers::SolverCG cg(solver_control);
+   PETScWrappers::PreconditionBlockJacobi preconditioner(system_matrix);
+   PVector distributed_solution(dof_handler.locally_owned_dofs(),
+                                mpi_comm);
+   cg.solve(system_matrix, distributed_solution, system_rhs, preconditioner);
+   constraints.distribute(distributed_solution);
+   solution = distributed_solution;
 
-   PreconditionSSOR<SparseMatrix<double>> preconditioner;
-   preconditioner.initialize(system_matrix, 1.2);
-
-   cg.solve (system_matrix, solution, system_rhs,
-             preconditioner);
-   
-   std::cout
+   pcout
    << "   " << solver_control.last_step()
    << " CG iterations needed to obtain convergence."
    << std::endl;
 }
 
 //------------------------------------------------------------------------------
+// TODO: Fix this to run in parallel
 template <int dim>
 void LaplaceProblem<dim>::output_results () const
 {
    static int step = 0;
-   Vector<double> solution_error;
-   solution_error.reinit(dof_handler.n_dofs());
+   PVector solution_error(solution);
    VectorTools::interpolate(dof_handler,
                             ExactSolution<dim>(),
                             solution_error);
@@ -289,7 +322,9 @@ void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) con
                                       difference_per_cell,
                                       QGauss<dim>(fe.degree+3),
                                       VectorTools::L2_norm);
-   L2_error = difference_per_cell.l2_norm();
+   L2_error = VectorTools::compute_global_error(triangulation,
+                                                difference_per_cell,
+                                                VectorTools::L2_norm);
 
    // compute L2 error in gradient
    VectorTools::integrate_difference (dof_handler,
@@ -298,7 +333,9 @@ void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) con
                                       difference_per_cell,
                                       QGauss<dim>(fe.degree+3),
                                       VectorTools::H1_seminorm);
-   H1_error = difference_per_cell.l2_norm();
+   H1_error = VectorTools::compute_global_error(triangulation,
+                                                difference_per_cell,
+                                                VectorTools::L2_norm);
 }
 
 //------------------------------------------------------------------------------
@@ -320,7 +357,7 @@ void LaplaceProblem<dim>::run (bool          refine,
    make_dofs();
    assemble_system ();
    solve ();
-   output_results ();
+   //output_results ();
    compute_error (L2_error, H1_error);
 
    ncell = triangulation.n_active_cells ();
@@ -328,9 +365,11 @@ void LaplaceProblem<dim>::run (bool          refine,
 }
 
 //------------------------------------------------------------------------------
-int main ()
+int main(int argc, char **argv)
 {
-   deallog.depth_console (0);
+   Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
+   const auto rank = Utilities::MPI::this_mpi_process(MPI_COMM_WORLD);
+   deallog.depth_console(0);
    int degree = 1;
    ConvergenceTable  convergence_table;   
    LaplaceProblem<2> problem (degree);
@@ -345,8 +384,11 @@ int main ()
       convergence_table.add_value("dofs",  ndofs);
       convergence_table.add_value("L2",    L2_error);
       convergence_table.add_value("H1",    H1_error);
-      std::cout << "--------------------------------------------------------\n";
+      if(rank == 0)
+         std::cout << "--------------------------------------------------------\n";
    }
+
+   if(rank != 0) return 0;
 
    convergence_table.set_precision("L2", 3);
    convergence_table.set_scientific("L2", true);
