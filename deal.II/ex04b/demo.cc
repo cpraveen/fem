@@ -291,21 +291,34 @@ template <int dim>
 void LaplaceProblem<dim>::output_results () const
 {
    static int step = 0;
-   PVector solution_error(solution);
+   static std::vector<std::pair<double, std::string>> pvtu_files;
+   const unsigned int n_digits_for_counter = 2;
+   /*PVector solution_error(solution);
    VectorTools::interpolate(dof_handler,
                             ExactSolution<dim>(),
                             solution_error);
-   solution_error -= solution;
+   solution_error -= solution; */
 
    DataOut<dim> data_out;
    data_out.attach_dof_handler (dof_handler);
    data_out.add_data_vector (solution, "solution");
-   data_out.add_data_vector (solution_error, "error");
+   //data_out.add_data_vector (solution_error, "error");
    data_out.build_patches (fe.degree);
-   std::string fname = "sol-" + Utilities::int_to_string(step,2)+".vtu";
-   std::ofstream output (fname);
-   data_out.write_vtu (output);
-   std::cout << "   Wrote to file " << fname << std::endl;
+
+   data_out.write_vtu_with_pvtu_record("./",
+                                      "sol",
+                                      step,
+                                      mpi_comm,
+                                      n_digits_for_counter);
+
+   std::string fname = "sol_" + 
+                       Utilities::int_to_string(step,n_digits_for_counter) +
+                       ".pvtu";
+   pvtu_files.emplace_back(step, fname);
+   std::ofstream pvd_file("sol.pvd");
+   DataOutBase::write_pvd_record(pvd_file, pvtu_files);
+
+   pcout << "   Wrote to file " << fname << std::endl;
    ++step;
 }
 
@@ -357,7 +370,7 @@ void LaplaceProblem<dim>::run (bool          refine,
    make_dofs();
    assemble_system ();
    solve ();
-   //output_results ();
+   output_results ();
    compute_error (L2_error, H1_error);
 
    ncell = triangulation.n_active_cells ();
