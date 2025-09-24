@@ -281,11 +281,10 @@ template <int dim>
 void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) const
 {
    // compute L2 error in solution
-   ExactSolution<dim> exact_solution;
    Vector<double> difference_per_cell (triangulation.n_active_cells());
    VectorTools::integrate_difference (dof_handler,
                                       solution,
-                                      exact_solution,
+                                      ExactSolution<dim>(),
                                       difference_per_cell,
                                       QGauss<dim>(fe.degree+3),
                                       VectorTools::L2_norm);
@@ -294,7 +293,7 @@ void LaplaceProblem<dim>::compute_error (double &L2_error, double &H1_error) con
    // compute L2 error in gradient
    VectorTools::integrate_difference (dof_handler,
                                       solution,
-                                      exact_solution,
+                                      ExactSolution<dim>(),
                                       difference_per_cell,
                                       QGauss<dim>(fe.degree+3),
                                       VectorTools::H1_seminorm);
