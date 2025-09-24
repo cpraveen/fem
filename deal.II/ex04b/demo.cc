@@ -169,10 +169,7 @@ void LaplaceProblem<dim>::make_dofs ()
    dof_handler.distribute_dofs (fe);
    
    pcout << "   Number of active cells: "
-         << triangulation.n_active_cells()
-         << std::endl
-         << "   Total number of cells: "
-         << triangulation.n_cells()
+         << triangulation.n_global_active_cells()
          << std::endl;
    pcout << "   Number of degrees of freedom: "
          << dof_handler.n_dofs()
