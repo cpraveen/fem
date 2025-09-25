@@ -19,9 +19,7 @@
 #include <deal.II/base/convergence_table.h>
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/data_out.h>
-#include <deal.II/lac/vector.h>
 #include <deal.II/lac/full_matrix.h>
-#include <deal.II/lac/sparse_matrix.h>
 #include <deal.II/lac/dynamic_sparsity_pattern.h>
 #include <deal.II/lac/affine_constraints.h>
 
@@ -283,7 +281,6 @@ void LaplaceProblem<dim>::solve ()
 }
 
 //------------------------------------------------------------------------------
-// TODO: Fix this to run in parallel
 template <int dim>
 void LaplaceProblem<dim>::output_results () const
 {

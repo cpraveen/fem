@@ -1,4 +1,4 @@
-<TeXmacs|2.1.2>
+<TeXmacs|2.1.4>
 
 <style|<tuple|course|old-dots|ice|framed-title|hanging-theorems|number-europe|schola-font>>
 
@@ -426,6 +426,240 @@
       </equation*>
     </slide>
 
+    <\slide>
+      <chapter*|Parallel computing>
+
+      Two models available
+
+      <\itemize>
+        <item>Use multi-threading on shared memory computers:\ 
+
+        <\itemize>
+          <item><verbatim|Workstream> and <verbatim|MeshWorker>
+
+          <item>Underneath, they may use TBB or Taskflow to launch and manage
+          threads
+
+          <item>Relatively easy to use, but performance may be limited
+        </itemize>
+
+        <item>Use MPI on distributed memory computers
+
+        <item>Use a combination of both
+      </itemize>
+
+      <section*|Using MPI>
+
+      MPI stands for <with|font-series|bold|Message Passing Interface> and it
+      is basically a mechanism to transfer messages (data) between different
+      CPUs which are connected via some network.
+
+      In a FEM context, we <with|font-series|bold|partition> the mesh into as
+      many parts as there are processing units (cores).
+
+      Ideally, we would like each partition to contain the same number of
+      cells, which ensures that the work of finite element assembly is
+      equally divided between all partitions.
+
+      We also want to minimize the number of faces on partition boundaries,
+      since this controls the amount of data that needs to be communicated
+      between different processing units. Data communication is a slow
+      process, and should be kept to a minimum.
+
+      We assign a <with|font-series|bold|rank>, an integer from
+      <math|0,1,2,\<ldots\>size-1>, to each processing unit, where
+      <with|font-series|bold|size> = total number of processing units.
+
+      <paragraph|Triangulation.>Each <verbatim|cell> in the triangulation is
+      uniquely <with|font-series|bold|owned> by a rank. We can use
+      <verbatim|cell-\<gtr\>is_locally_owned()> to get this information.
+      deal.II provides several ways to store the mesh.
+
+      <\itemize>
+        <item><verbatim|Triangulation>: used in all serial computations. We
+        need to partition this, see step-17 for how to do this.
+
+        <item><verbatim|parallel::shared::Triangulation> : all ranks store
+        the entire mesh, see step-18.
+
+        <item><verbatim|parallel::distributed::Triangulation> : all ranks
+        store the level-0 mesh. For this to work, the level-0 mesh must be
+        constructed within deal.II and then perhaps refined to the desired
+        level.
+
+        <item><verbatim|parallel::fullydistributed::Triangulation> : each
+        rank stores only a part of the mesh
+      </itemize>
+
+      The mesh contains all the cells which are owned by the rank and also
+      one layer of cells called ghost cells, test with
+      <verbatim|cell-\<gtr\>is_ghost()>.
+
+      <paragraph|Vectors and matrices.>The vectors and matrices also need to
+      be partitioned, and each rank owns only a part of them. This partition
+      may be done in such a way that each rank stores equal amount of data.
+
+      Each element of a vector, i.e, a dof, is owned by a rank.
+
+      The dofs will be numbered contiguously in each partition. We first
+      number all dofs owned by rank=0, then rank=1, and so on.
+
+      In PETSc, matrices are partitioned along rows. E.g., for a
+      <math|10\<times\>10> matrix and using 2 ranks,\ 
+
+      <\indent>
+        rows 0 to 4 are owned by rank=0
+
+        rows 5 to 9 are owned by rank=1
+      </indent>
+
+      Similarly, if we have vector of 10 elements, then
+
+      <\indent>
+        elements 0 to 4 are owned by rank=0
+
+        elements 5 to 9 are owned by rank=1
+      </indent>
+
+      Now if we want to compute matrix-vector product, then the elements of
+      the vector need to be communicated to other ranks.
+
+      <paragraph|Linear solvers.>deal.II has three types if parallel vectors
+      and many parallel linear solvers.
+
+      <\itemize>
+        <item>Namespace <verbatim|LinearAlgebra>
+
+        <verbatim|LinearAlgebra::distributed::Vector> : deal.II parallel
+        vector, cannot be used with PETSc solvers, with Trilinos ?
+
+        <item>Namespace <verbatim|PetscWrappers> or
+        <verbatim|LinearAlgebraPetsc>
+
+        <verbatim|PetscWrappers::MPI::Vector> and
+        <verbatim|PetscWrappers::MPI::SparseMatrix> : use them with linear
+        solvers from PETSc, e.g., <verbatim|PetscWrappers::SolverCG>
+
+        <item>Namespace <verbatim|TrilinosWrappers> or
+        <verbatim|LinearAlgebraTrilinos>
+
+        <verbatim|TrilinosWrappers::MPI::Vector> and
+        <verbatim|TrilinosWrappers::SparseMatrix> : use them with linear
+        solvers from Trilinos, e.g., <verbatim|TrilinosWrappers::SolverCG>
+
+        Trilinos has its own sparsity pattern,
+        <verbatim|TrilinosWrappers::SparsityPattern>
+
+        <item>MUMPS is a parallel LU decomposition method. See step-62 where
+        it is used through <verbatim|PetscWrappers::SparseDirectMUMPS>
+      </itemize>
+
+      <\remark>
+        It may be possible to write code which can easily switch between
+        PETSc and Trilinos, see step-40 and step-50 for how to do this.
+      </remark>
+
+      <section*|Converting a serial code to parallel>
+
+      <verbatim|ex04a> solves Poisson equation in serial and <verbatim|ex04b>
+      does the same in parallel using PETSc and
+      <verbatim|parallel::distributed::Triangulation>.
+
+      <\itemize>
+        <item>Include header file for parallel triangulation
+
+        <item>Include header files for PETSc vectors, matrices, linear
+        solvers
+
+        <item>Declare triangulation to be of parallel type
+
+        <item>Declare vectors and matrices to be of PETSc types
+
+        <item>Specify locally owned dofs while creating sparsity pattern and
+        distribute it
+
+        <item>Allocate vectors and matrices with locally owned and/or locally
+        relevant dofs
+
+        <item>Use <verbatim|AffineConstraints> to implement boundary
+        conditions and hanging node constraints
+
+        <item>Assemble matrix and right hand side only on locally owned cells
+
+        <item>Compress matrix and rhs, which brings in contributions
+        assembled on other ranks
+
+        <item>When solving, we need to pass a completely distributed vector,
+        i.e., one without ghost values
+
+        <item>After solving, apply constraints
+      </itemize>
+
+      Locally owned dofs
+
+      <\cpp-code>
+        const auto& locally_owned_dofs = dof_handler.locally_owned_dofs()
+      </cpp-code>
+
+      Locally relevant dofs
+
+      <\cpp-code>
+        auto locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(dof_handler);
+      </cpp-code>
+
+      These dofs are not locally owned, but they are required to evaluate the
+      solution in locally owned cells. E.g., when we compute error norm,
+      visualize solution, etc.
+
+      <verbatim|system_matrix> and <verbatim|system_rhs> are allocated with
+      locally owned dofs only
+
+      <\cpp-code>
+        system_matrix.reinit(locally_owned_dofs,
+
+        <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp>
+        \ locally_owned_dofs,
+
+        <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp>
+        <nbsp>sparsity_pattern,
+
+        <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp>
+        <nbsp>mpi_comm);
+
+        system_rhs.reinit(locally_owned_dofs, mpi_comm);
+      </cpp-code>
+
+      Even though they do not have ghost values, we can still write into
+      ghost locations during assembly !!!
+
+      <verbatim|solution> is allocated with ghost values, since we later use
+      this to compute error norm
+
+      <\cpp-code>
+        <nbsp>solution.reinit(locally_owned_dofs,
+
+        <nbsp><nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp>
+        locally_relevant_dofs,
+
+        <nbsp><nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp> <nbsp>
+        mpi_comm);
+      </cpp-code>
+
+      When solving the matrix, we create a local, non-ghosted vector,
+      <verbatim|distributed_solution>, which is passed to the CG solver.
+      Finally, we copy the solution
+
+      <\cpp-code>
+        solution = <verbatim|distributed_solution>
+      </cpp-code>
+
+      Since left side vector <verbatim|solution> has ghost values, those
+      values will be fetched through MPI and then filled into the ghost
+      locations of <verbatim|solution> vector. See the documentation of
+      <verbatim|operator=> in <hlink|PetscWrappers::MPI::Vector|https://dealii.org/current/doxygen/deal.II/classPETScWrappers_1_1MPI_1_1Vector.html>
+      for more on this.
+    </slide>
+
     \;
 
     <\slide>
@@ -505,11 +739,17 @@
 <\references>
   <\collection>
     <associate|auto-1|<tuple|?|2>>
+    <associate|auto-10|<tuple|2|11>>
+    <associate|auto-11|<tuple|3|11>>
+    <associate|auto-12|<tuple|1|12>>
     <associate|auto-2|<tuple|?|3>>
     <associate|auto-3|<tuple|2|4>>
-    <associate|auto-4|<tuple|3|5>>
-    <associate|auto-5|<tuple|3|6>>
-    <associate|auto-6|<tuple|3|8>>
+    <associate|auto-4|<tuple|3|6>>
+    <associate|auto-5|<tuple|3|7>>
+    <associate|auto-6|<tuple|3|9>>
+    <associate|auto-7|<tuple|3|10>>
+    <associate|auto-8|<tuple|<with|mode|<quote|math>|\<bullet\>>|10>>
+    <associate|auto-9|<tuple|1|10>>
     <associate|footnote-1|<tuple|1|3>>
     <associate|footnote-2|<tuple|2|3>>
     <associate|footnote-3|<tuple|3|4>>
@@ -545,6 +785,30 @@
       <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|DG
       assembly> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-6><vspace|1fn>
+
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Parallel
+      computing> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-7><vspace|1fn>
+
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|Using
+      MPI> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-8><vspace|0.5fn>
+
+      <with|par-left|<quote|3tab>|Triangulation.
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-9>>
+
+      <with|par-left|<quote|3tab>|Vectors and matrices.
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-10>>
+
+      <with|par-left|<quote|3tab>|Linear solvers.
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-11>>
+
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|Converting
+      a serial code to parallel> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-12><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>
