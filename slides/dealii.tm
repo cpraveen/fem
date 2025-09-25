@@ -429,13 +429,14 @@
     <\slide>
       <chapter*|Parallel computing>
 
-      Two models available
+      Three models available
 
       <\itemize>
         <item>Use multi-threading on shared memory computers:\ 
 
         <\itemize>
-          <item><verbatim|Workstream> and <verbatim|MeshWorker>
+          <item><hlink|WorkStream|https://dealii.org/current/doxygen/deal.II/namespaceWorkStream.html>
+          and <hlink|MeshWorker|https://dealii.org/current/doxygen/deal.II/namespaceMeshWorker.html>
 
           <item>Underneath, they may use TBB or Taskflow to launch and manage
           threads
@@ -477,22 +478,28 @@
 
       <\itemize>
         <item><verbatim|Triangulation>: used in all serial computations. We
-        need to partition this, see step-17 for how to do this.
+        need to partition this, see step-17 for how to do this. The
+        partitioning is done with a library like
+        <hlink|Metis|https://github.com/KarypisLab/ParMETIS>.
 
         <item><verbatim|parallel::shared::Triangulation> : all ranks store
         the entire mesh, see step-18.
 
-        <item><verbatim|parallel::distributed::Triangulation> : all ranks
-        store the level-0 mesh. For this to work, the level-0 mesh must be
-        constructed within deal.II and then perhaps refined to the desired
-        level.
+        <item><verbatim|parallel::distributed::Triangulation> : The
+        partitioning is done automatically using
+        <hlink|p4est|https://www.p4est.org>. All ranks store the level-0
+        mesh. For this to work, the level-0 mesh must be constructed within
+        deal.II and then perhaps refined to the desired level. If you read a
+        large mesh from a file, then there is only level-0 and the whole mesh
+        is stored on all ranks, and this is no different from the shared
+        triangulation.
 
         <item><verbatim|parallel::fullydistributed::Triangulation> : each
-        rank stores only a part of the mesh
+        rank stores only a part of the mesh.
       </itemize>
 
-      The mesh contains all the cells which are owned by the rank and also
-      one layer of cells called ghost cells, test with
+      The mesh on each rank contains all the cells which are owned by that
+      rank and also one layer of cells called ghost cells, test with
       <verbatim|cell-\<gtr\>is_ghost()>.
 
       <paragraph|Vectors and matrices.>The vectors and matrices also need to
@@ -501,7 +508,7 @@
 
       Each element of a vector, i.e, a dof, is owned by a rank.
 
-      The dofs will be numbered contiguously in each partition. We first
+      In PETSc, dofs are numbered contiguously in each partition. We first
       number all dofs owned by rank=0, then rank=1, and so on.
 
       In PETSc, matrices are partitioned along rows. E.g., for a
@@ -521,27 +528,28 @@
         elements 5 to 9 are owned by rank=1
       </indent>
 
-      Now if we want to compute matrix-vector product, then the elements of
-      the vector need to be communicated to other ranks.
+      Now if we want to compute matrix-vector product, which is required by
+      CG solver, then some elements of the vector need to be communicated to
+      other ranks.
 
       <paragraph|Linear solvers.>deal.II has three types of parallel vectors
       and many parallel linear solvers.
 
       <\itemize>
-        <item>Namespace <verbatim|LinearAlgebra>
+        <item>Namespace <hlink|<verbatim|LinearAlgebra>|https://dealii.org/current/doxygen/deal.II/namespaceLinearAlgebra.html>
 
         <verbatim|LinearAlgebra::distributed::Vector> : deal.II parallel
         vector, cannot be used with PETSc solvers, with Trilinos ?
 
-        <item>Namespace <verbatim|PetscWrappers> or
-        <verbatim|LinearAlgebraPetsc>
+        <item>Namespace <hlink|<verbatim|PetscWrappers>|https://dealii.org/current/doxygen/deal.II/namespacePETScWrappers.html>
+        or <hlink|<verbatim|LinearAlgebraPetsc>|https://dealii.org/current/doxygen/deal.II/namespaceLinearAlgebraPETSc.html>
 
         <verbatim|PetscWrappers::MPI::Vector> and
         <verbatim|PetscWrappers::MPI::SparseMatrix> : use them with linear
         solvers from PETSc, e.g., <verbatim|PetscWrappers::SolverCG>
 
-        <item>Namespace <verbatim|TrilinosWrappers> or
-        <verbatim|LinearAlgebraTrilinos>
+        <item>Namespace <hlink|<verbatim|TrilinosWrappers>|https://dealii.org/current/doxygen/deal.II/namespaceTrilinosWrappers.html>
+        or <hlink|<verbatim|LinearAlgebraTrilinos>|https://dealii.org/current/doxygen/deal.II/namespaceLinearAlgebraTrilinos.html>
 
         <verbatim|TrilinosWrappers::MPI::Vector> and
         <verbatim|TrilinosWrappers::SparseMatrix> : use them with linear
@@ -550,13 +558,16 @@
         Trilinos has its own sparsity pattern,
         <verbatim|TrilinosWrappers::SparsityPattern>
 
-        <item>MUMPS is a parallel LU decomposition method. See step-62 where
-        it is used through <verbatim|PetscWrappers::SparseDirectMUMPS>
+        <item><hlink|MUMPS|https://mumps-solver.org/index.php> is a parallel
+        LU decomposition method. See step-62 where it is used through
+        <verbatim|PetscWrappers::SparseDirectMUMPS>
       </itemize>
 
       <\remark>
         It is possible to write code which can easily switch between PETSc
-        and Trilinos, see step-40 and step-50 for how to do this.
+        and Trilinos, see <hlink|step-40|https://dealii.org/current/doxygen/deal.II/step_40.html>
+        and <hlink|step-50|https://dealii.org/current/doxygen/deal.II/step_50.html>
+        for how to do this.
       </remark>
 
       <section*|Converting a serial code to parallel>
@@ -565,7 +576,9 @@
       working correctly. Then make some small changes to make it work in
       parallel.
 
-      <verbatim|ex04a> solves Poisson equation in serial and <verbatim|ex04b>
+      <hlink|<verbatim|ex04a>|https://github.com/cpraveen/fem/tree/master/deal.II/ex04a>
+      solves Poisson equation in serial and
+      <hlink|<verbatim|ex04b>|https://github.com/cpraveen/fem/tree/master/deal.II/ex04b>
       does the same in parallel using PETSc and
       <verbatim|parallel::distributed::Triangulation>. You can diff the two
       codes to see the differences.
@@ -613,8 +626,8 @@
       </cpp-code>
 
       These dofs are not locally owned, but they are required to evaluate the
-      solution in locally owned cells. E.g., when we compute error norm,
-      visualize solution, etc.
+      solution in locally owned cells and maybe even on ghost cells. E.g.,
+      when we compute error norm, visualize solution, etc.
 
       <verbatim|system_matrix> and <verbatim|system_rhs> are allocated with
       locally owned dofs only
@@ -650,7 +663,8 @@
         mpi_comm);
       </cpp-code>
 
-      When assembling matrix and rhs, we do this only on locally owned cells.\ 
+      When assembling matrix and rhs, we do this only on locally owned cells
+      by checking the value of <verbatim|cell-\<gtr\>is_locally_owned()>.
 
       <paragraph|Example.>Suppose dof <math|i> and <math|j> lie on a
       partition boundary and also on <math|interior<around*|(|\<partial\>K<rsub|1>\<cap\>\<partial\>K<rsub|2>|)>>.
@@ -705,9 +719,9 @@
 
       Similar things happen with <verbatim|system_rhs>.
 
-      When solving the matrix, we create a local, non-ghosted vector,
-      <verbatim|distributed_solution>, which is passed to the CG solver.
-      Finally, we copy the solution
+      When solving the matrix, PETSc solvers expect a non-ghosted vector; so
+      we create a non-ghosted vector, <verbatim|distributed_solution>, which
+      is passed to the CG solver. Finally, we copy the solution
 
       <\cpp-code>
         solution = <verbatim|distributed_solution> // solution is ghosted,
@@ -721,6 +735,18 @@
       for more on this.
 
       <\remark>
+        Ghost values can be fetched explicitly like this
+
+        <\cpp-code>
+          solution.update_ghost_values();
+        </cpp-code>
+
+        But make sure you dont do redundant updates, since this is an
+        expensive operation as it involves communication. Does deal.II have
+        mechanisms to prevent this ?
+      </remark>
+
+      <\remark>
         The behaviour of parallel vectors can be subtle, read the
         documentation
 
@@ -729,6 +755,8 @@
           : Accessing individual elements of a vector
 
           <item><hlink|Ghosted vectors|https://dealii.org/current/doxygen/deal.II/DEALGlossary.html#GlossGhostedVector>
+
+          <item><hlink|Parallel computing|https://dealii.org/current/doxygen/deal.II/group__Parallel.html>
         </itemize>
       </remark>
     </slide>
@@ -815,7 +843,7 @@
     <associate|auto-10|<tuple|2|11>>
     <associate|auto-11|<tuple|3|11>>
     <associate|auto-12|<tuple|1|12>>
-    <associate|auto-13|<tuple|1|?>>
+    <associate|auto-13|<tuple|1|14>>
     <associate|auto-2|<tuple|?|3>>
     <associate|auto-3|<tuple|2|4>>
     <associate|auto-4|<tuple|3|6>>
@@ -883,6 +911,10 @@
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|Converting
       a serial code to parallel> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-12><vspace|0.5fn>
+
+      <with|par-left|<quote|3tab>|Example.
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-13>>
     </associate>
   </collection>
 </auxiliary>
