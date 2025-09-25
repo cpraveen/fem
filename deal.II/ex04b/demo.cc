@@ -366,7 +366,7 @@ void LaplaceProblem<dim>::run (bool          refine,
    output_results ();
    compute_error (L2_error, H1_error);
 
-   ncell = triangulation.n_active_cells ();
+   ncell = triangulation.n_global_active_cells ();
    ndofs = dof_handler.n_dofs ();
 }
 
