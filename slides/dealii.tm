@@ -524,7 +524,7 @@
       Now if we want to compute matrix-vector product, then the elements of
       the vector need to be communicated to other ranks.
 
-      <paragraph|Linear solvers.>deal.II has three types if parallel vectors
+      <paragraph|Linear solvers.>deal.II has three types of parallel vectors
       and many parallel linear solvers.
 
       <\itemize>
@@ -555,15 +555,20 @@
       </itemize>
 
       <\remark>
-        It may be possible to write code which can easily switch between
-        PETSc and Trilinos, see step-40 and step-50 for how to do this.
+        It is possible to write code which can easily switch between PETSc
+        and Trilinos, see step-40 and step-50 for how to do this.
       </remark>
 
       <section*|Converting a serial code to parallel>
 
+      A good strategy is to first write a serial code and make sure it is
+      working correctly. Then make some small changes to make it work in
+      parallel.
+
       <verbatim|ex04a> solves Poisson equation in serial and <verbatim|ex04b>
       does the same in parallel using PETSc and
-      <verbatim|parallel::distributed::Triangulation>.
+      <verbatim|parallel::distributed::Triangulation>. You can diff the two
+      codes to see the differences.
 
       <\itemize>
         <item>Include header file for parallel triangulation
@@ -645,19 +650,87 @@
         mpi_comm);
       </cpp-code>
 
+      When assembling matrix and rhs, we do this only on locally owned cells.\ 
+
+      <paragraph|Example.>Suppose dof <math|i> and <math|j> lie on a
+      partition boundary and also on <math|interior<around*|(|\<partial\>K<rsub|1>\<cap\>\<partial\>K<rsub|2>|)>>.
+      Suppose\ 
+
+      <\itemize>
+        <item><math|K<rsub|1>> is owned by rank=0, and <math|K<rsub|2>> is
+        owned by rank=1,\ 
+
+        <item>dof <math|i> is owned by rank=0 and dof <math|j> is owned by
+        rank=1,
+
+        <item><math|a<rsub|i,j>> is owned by rank=0
+      </itemize>
+
+      \;
+
+      <\equation*>
+        a<rsub|i,j>=<big|int><rsub|\<Omega\>>\<nabla\>\<phi\><rsub|i>\<cdot\>\<nabla\>\<phi\><rsub|j>
+        \<mathd\>x=<big|int><rsub|K<rsub|1>>\<nabla\>\<phi\><rsub|i>\<cdot\>\<nabla\>\<phi\><rsub|j>
+        \<mathd\>x+<big|int><rsub|K<rsub|2>>\<nabla\>\<phi\><rsub|i>\<cdot\>\<nabla\>\<phi\><rsub|j>
+        \<mathd\>x
+      </equation*>
+
+      Rank=0 computes
+
+      <\equation*>
+        a<rsub|i,j>=<big|int><rsub|K<rsub|1>>\<nabla\>\<phi\><rsub|i>\<cdot\>\<nabla\>\<phi\><rsub|j>
+        \<mathd\>x
+      </equation*>
+
+      and rank=1 computes
+
+      <\equation*>
+        a<rsub|i,j><rsup|<around*|(|1|)>>=<big|int><rsub|K<rsub|2>>\<nabla\>\<phi\><rsub|i>\<cdot\>\<nabla\>\<phi\><rsub|j>
+        \<mathd\>x
+      </equation*>
+
+      When we call
+
+      <\cpp-code>
+        system_matrix.compress(VectorOperation::add) // induces MPI data
+        exchange
+      </cpp-code>
+
+      rank=1 sends the value <math|a<rsub|i,j><rsup|<around*|(|1|)>>> to
+      rank=0 which then does
+
+      <\equation*>
+        a<rsub|i,j>\<plusassign\>a<rsub|i,j><rsup|<around*|(|1|)>>
+      </equation*>
+
+      Similar things happen with <verbatim|system_rhs>.
+
       When solving the matrix, we create a local, non-ghosted vector,
       <verbatim|distributed_solution>, which is passed to the CG solver.
       Finally, we copy the solution
 
       <\cpp-code>
-        solution = <verbatim|distributed_solution>
+        solution = <verbatim|distributed_solution> // solution is ghosted,
+        induces MPI data exchange
       </cpp-code>
 
       Since left side vector <verbatim|solution> has ghost values, those
       values will be fetched through MPI and then filled into the ghost
-      locations of <verbatim|solution> vector. See the documentation of
-      <verbatim|operator=> in <hlink|PetscWrappers::MPI::Vector|https://dealii.org/current/doxygen/deal.II/classPETScWrappers_1_1MPI_1_1Vector.html>
+      locations of <verbatim|solution> vector. See the documentation of the
+      function <verbatim|operator=> in <hlink|PetscWrappers::MPI::Vector|https://dealii.org/current/doxygen/deal.II/classPETScWrappers_1_1MPI_1_1Vector.html>
       for more on this.
+
+      <\remark>
+        The behaviour of parallel vectors can be subtle, read the
+        documentation
+
+        <\itemize>
+          <item><hlink|PETScWrappers::MPI::Vector|https://dealii.org/current/doxygen/deal.II/classPETScWrappers_1_1MPI_1_1Vector.html>
+          : Accessing individual elements of a vector
+
+          <item><hlink|Ghosted vectors|https://dealii.org/current/doxygen/deal.II/DEALGlossary.html#GlossGhostedVector>
+        </itemize>
+      </remark>
     </slide>
 
     \;
@@ -742,6 +815,7 @@
     <associate|auto-10|<tuple|2|11>>
     <associate|auto-11|<tuple|3|11>>
     <associate|auto-12|<tuple|1|12>>
+    <associate|auto-13|<tuple|1|?>>
     <associate|auto-2|<tuple|?|3>>
     <associate|auto-3|<tuple|2|4>>
     <associate|auto-4|<tuple|3|6>>
