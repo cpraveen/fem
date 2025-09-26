@@ -429,7 +429,9 @@
     <\slide>
       <chapter*|Parallel computing>
 
-      Three models available
+      The main idea is <with|font-series|bold|divide-and-conquer>, i.e.,
+      break a problem into smaller parts and solve them simultaneously on
+      different CPUs. Three models available
 
       <\itemize>
         <item>Use multi-threading on shared memory computers:\ 
@@ -460,12 +462,18 @@
 
       Ideally, we would like each partition to contain the same number of
       cells, which ensures that the work of finite element assembly is
-      equally divided between all partitions.
+      equally divided between all partitions. This is called
+      <with|font-series|bold|load balancing>.
 
       We also want to minimize the number of faces on partition boundaries,
       since this controls the amount of data that needs to be communicated
       between different processing units. Data communication is a slow
       process, and should be kept to a minimum.
+
+      We can think of each cell as a node in a graph, and neighbouring
+      cells/nodes are connected by edges. Then we need to partition the graph
+      by cutting some edges such that each part contains an equal number of
+      nodes, and we cut the smallest number of edges.
 
       We assign a <with|font-series|bold|rank>, an integer from
       <math|0,1,2,\<ldots\>size-1>, to each processing unit, where
@@ -666,8 +674,9 @@
       When assembling matrix and rhs, we do this only on locally owned cells
       by checking the value of <verbatim|cell-\<gtr\>is_locally_owned()>.
 
-      <paragraph|Example.>Suppose dof <math|i> and <math|j> lie on a
-      partition boundary and also on <math|interior<around*|(|\<partial\>K<rsub|1>\<cap\>\<partial\>K<rsub|2>|)>>.
+      <paragraph|Example.>Suppose cells <math|K<rsub|1>,K<rsub|2>> share a
+      common face, dof <math|i> and dof <math|j> lie on a partition boundary
+      and also on <math|interior<around*|(|\<partial\>K<rsub|1>\<cap\>\<partial\>K<rsub|2>|)>>.
       Suppose\ 
 
       <\itemize>

@@ -119,7 +119,7 @@ private:
    using PVector = PETScWrappers::MPI::Vector;
    using Constraints = AffineConstraints<double>;
 
-   void make_grid();
+   void make_grid ();
    void make_dofs ();
    void assemble_system ();
    void solve ();
