@@ -33,16 +33,17 @@ F =   inner(grad(u),grad(v))*dx         \
     + (Cip/h)*(u-g)*v*ds            \
     - f*v*dx
 
-uinit = Expression('sin(6*pi*x[0])',degree=2*k+1)
+x, = SpatialCoordinate(mesh)
+uinit = sin(6*pi*x)
 u0 = project(uinit, V)
 
 Vf = FunctionSpace(mesh, 'DG', 10) # for visualization
-uf = Functio(Vf).interpolate(u0)
-ua=uf.vector().get_local()
-x = SpatialCoordinate(mesh)
-xf= Function(Vf).interpolate(x)
-idx = np.argsort(xf[:,0])
-plt.plot(xf[idx,0],ua[idx]);
+uf = Function(Vf).interpolate(u0)
+ua = uf.vector().get_local()
+xf = Function(Vf).interpolate(x)
+xf = xf.dat.data
+idx = np.argsort(xf)
+plt.plot(xf[idx],ua[idx]);
 plt.savefig('sol0.pdf')
 print('See file sol0.pdf')
 
@@ -74,6 +75,6 @@ for i in range(nt):
 uf = Function(Vf).interpolate(u2)
 ua=uf.vector().get_local()
 plt.figure()
-plt.plot(xf[idx,0],ua[idx]);
+plt.plot(xf[idx],ua[idx]);
 plt.savefig('sol.pdf')
 print('See file sol.pdf')
