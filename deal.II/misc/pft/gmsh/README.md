@@ -1,6 +1,6 @@
 # Parallel fully distributed triangulation using gmsh
 
-Shows how to create a p:f:t triangulation.
+Shows how to create a p::f::t triangulation.
 
 ```shell
 cmake .
