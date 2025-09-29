@@ -427,6 +427,63 @@
     </slide>
 
     <\slide>
+      <chapter*|Working with two dof handlers>
+
+      Solution 1
+
+      <\cpp-code>
+        auto cell2 = dh2.begin_active();
+
+        for(auto cell1 : dh1.active_cell_iterators())
+
+        {
+
+        \ \ fe_values1.reinit(cell1);
+
+        \ \ fe_values2.reinit(cell2);
+
+        \ \ ++cell2;
+
+        }
+      </cpp-code>
+
+      Solution 2
+
+      <\cpp-code>
+        for(auto cell1 : dh1.active_cell_iterators())
+
+        {
+
+        \ \ fe_values1.reinit(cell1);
+
+        \ \ typename DoFHandler\<less\>dim\<gtr\>::active_cell_iterator\ 
+
+        \ \ \ \ cell2(triangulation, cell1-\<gtr\>level(),
+        cell1-\<gtr\>index(), dh2);
+
+        \ \ fe_values2.reinit(cell2);
+
+        }
+      </cpp-code>
+
+      Solution 3
+
+      <\cpp-code>
+        for(auto cell1 : dh1.active_cell_iterators())
+
+        {
+
+        \ \ fe_values1.reinit(cell1);
+
+        \ \ auto cell2 = cell1-\<gtr\>as_dof_handler_iterator(dh2);
+
+        \ \ fe_values2.reinit(cell2);
+
+        }
+      </cpp-code>
+    </slide>
+
+    <\slide>
       <chapter*|Parallel computing>
 
       The main idea is <with|font-series|bold|divide-and-conquer>, i.e.,
@@ -849,18 +906,19 @@
 <\references>
   <\collection>
     <associate|auto-1|<tuple|?|2>>
-    <associate|auto-10|<tuple|2|11>>
-    <associate|auto-11|<tuple|3|11>>
-    <associate|auto-12|<tuple|1|12>>
+    <associate|auto-10|<tuple|1|11>>
+    <associate|auto-11|<tuple|2|12>>
+    <associate|auto-12|<tuple|3|12>>
     <associate|auto-13|<tuple|1|14>>
+    <associate|auto-14|<tuple|1|?>>
     <associate|auto-2|<tuple|?|3>>
     <associate|auto-3|<tuple|2|4>>
     <associate|auto-4|<tuple|3|6>>
     <associate|auto-5|<tuple|3|7>>
     <associate|auto-6|<tuple|3|9>>
     <associate|auto-7|<tuple|3|10>>
-    <associate|auto-8|<tuple|<with|mode|<quote|math>|\<bullet\>>|10>>
-    <associate|auto-9|<tuple|1|10>>
+    <associate|auto-8|<tuple|3|10>>
+    <associate|auto-9|<tuple|<with|mode|<quote|math>|\<bullet\>>|11>>
     <associate|footnote-1|<tuple|1|3>>
     <associate|footnote-2|<tuple|2|3>>
     <associate|footnote-3|<tuple|3|4>>
