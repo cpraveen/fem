@@ -177,8 +177,8 @@ Run as
 
 ```shell
 cd fem
-docker run -ti --name dealii -v $(pwd):/home/dealii/shared \
-                             -w /home/dealii/shared  \
+docker run -ti --name dealii -v $(pwd):/home/shared \
+                             -w /home/shared  \
                              dealii/dealii:master-noble
 ```
 
@@ -205,16 +205,18 @@ To reduce your typing work, create an alias in your `$HOME/.bashrc` file
 
 ```shell
 alias docker_dealii="docker run -ti --name dealii \
-                                -v $(pwd):/home/dealii/shared \
-                                -w /home/dealii/shared  \
+                                -v $(pwd):/home/shared \
+                                -w /home/shared  \
                                 dealii/dealii:master-noble"
 ```
 
-Now you can start the container by typing in a new terminal
+Now you can create and attach to the container by typing in a new terminal
 
 ```shell
 docker_dealii
 ```
+
+Note that subsequently, you can start and attach to this container as described above.
 
 ## Install deal.II using apt
 
