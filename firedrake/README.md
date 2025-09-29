@@ -17,3 +17,7 @@ For instructions on how to install Firedrake on colab, see [fem-on-colab.github.
 ## Resources
 
 * P. Farrell: [slides](https://pefarrell.org/files/icerm2024.pdf), [codes](https://github.com/pefarrell/icerm2024)
+
+## Installing Firedrake
+
+If you want to install it yourself, you can follow the instructions [here](https://www.firedrakeproject.org/install.html). If you are on amd64 machine, you can also use the official [Docker image](https://hub.docker.com/r/firedrakeproject/firedrake/tags). On arm, you can create your own Docker image by following the instructions [here](https://cpraveen.github.io/comp/firedrake).

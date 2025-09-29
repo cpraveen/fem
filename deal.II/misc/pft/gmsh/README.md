@@ -14,7 +14,7 @@ visit -o grid_000.pvtu
 Figure shows 4 partitions obtained with Metis
 
 <p align="center">
-<img width="1024" src="output/rank4.png">
+<img width="512" src="output/rank4.png">
 </p>
 
 Also see the `log_#.txt` files.
