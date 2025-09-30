@@ -115,47 +115,49 @@
     <\slide>
       <chapter*|Iterators>
 
-      <\verbatim>
-        #include \<less\>iostream\<gtr\>
+      <\cpp-code>
+        <\verbatim>
+          #include \<less\>iostream\<gtr\>
 
-        #include \<less\>vector\<gtr\>
+          #include \<less\>vector\<gtr\>
 
-        using namespace std;
+          using namespace std;
 
-        int main()
+          int main()
 
-        {
+          {
 
-        \ \ vector\<less\>double\<gtr\> array(10,0.0);
+          \ \ vector\<less\>double\<gtr\> array(10,0.0);
 
-        \ \ for(int i=0; i\<less\>10; ++i) cout \<less\>\<less\> array[i]
-        \<less\>\<less\> endl;
+          \ \ for(int i=0; i\<less\>10; ++i) cout \<less\>\<less\> array[i]
+          \<less\>\<less\> endl;
 
-        \ \ for(vector\<less\>double\<gtr\>::iterator e=array.begin();
-        e!=array.end(); ++e)
+          \ \ for(vector\<less\>double\<gtr\>::iterator e=array.begin();
+          e!=array.end(); ++e)
 
-        \ \ {
+          \ \ {
 
-        \ \ \ \ cout \<less\>\<less\> *e \<less\>\<less\> endl;
+          \ \ \ \ cout \<less\>\<less\> *e \<less\>\<less\> endl;
 
-        \ \ }
+          \ \ }
 
-        }
-      </verbatim>
-
-      \;
+          }
+        </verbatim>
+      </cpp-code>
 
       In C++-11, we can use <verbatim|auto>
 
-      <\verbatim>
-        \ \ for(auto e=array.begin(); e!=array.end(); ++e)
+      <\cpp-code>
+        <\verbatim>
+          for(auto e=array.begin(); e!=array.end(); ++e)
 
-        \ \ {
+          {
 
-        \ \ \ \ cout \<less\>\<less\> *e \<less\>\<less\> endl;
+          \ \ cout \<less\>\<less\> *e \<less\>\<less\> endl;
 
-        \ \ }
-      </verbatim>
+          }
+        </verbatim>
+      </cpp-code>
 
       We have to compile as
 
@@ -175,48 +177,50 @@
 
       In function <verbatim|first_grid> and <verbatim|second_grid>, add
 
-      <\verbatim>
-        std::cout \<less\>\<less\> "Total cells = " \<less\>\<less\>
-        triangulation.n_cells()
+      <\cpp-code>
+        <\verbatim>
+          std::cout \<less\>\<less\> "Total cells = " \<less\>\<less\>
+          triangulation.n_cells()
 
-        \ \ \ \ \ \ \ \ \ \ \<less\>\<less\> ", active cells = "
-        \<less\>\<less\> triangulation.n_active_cells()\ 
+          \ \ \ \ \ \ \ \ \ \ \<less\>\<less\> ", active cells = "
+          \<less\>\<less\> triangulation.n_active_cells()\ 
 
-        \ \ \ \ \ \ \ \ \ \ \<less\>\<less\> std::endl;
-      </verbatim>
-
-      \;
+          \ \ \ \ \ \ \ \ \ \ \<less\>\<less\> std::endl;
+        </verbatim>
+      </cpp-code>
 
       Old way to iterate over cells
 
-      <\verbatim>
-        \ \ \ typename Triangulation\<less\>2\<gtr\>::active_cell_iterator
+      <\cpp-code>
+        <\verbatim>
+          typename Triangulation\<less\>2\<gtr\>::active_cell_iterator
 
-        \ \ \ \ \ cell = triangulation.begin_active(),
+          \ \ cell = triangulation.begin_active(),
 
-        \ \ \ \ \ endc = triangulation.end();
+          \ \ endc = triangulation.end();
 
-        \ \ \ for (; cell!=endc; ++cell)
+          for (; cell!=endc; ++cell)
 
-        \ \ \ {
+          {
 
-        \ \ \ }
-      </verbatim>
-
-      \;
+          }
+        </verbatim>
+      </cpp-code>
 
       Old way to loop over vertex indices of a 2-D cell<\footnote>
         See <slink|https://dealii.org/developer/doxygen/deal.II/structGeometryInfo.html>
       </footnote>
 
-      <\verbatim>
-        for(unsigned int v=0; v\<less\>GeometryInfo\<less\>2\<gtr\>::vertices_per_cell;
-        ++v)
+      <\cpp-code>
+        <\verbatim>
+          for(unsigned int v=0; v\<less\>GeometryInfo\<less\>2\<gtr\>::vertices_per_cell;
+          ++v)
 
-        {
+          {
 
-        }
-      </verbatim>
+          }
+        </verbatim>
+      </cpp-code>
     </slide>
 
     <\slide>
@@ -244,23 +248,27 @@
 
       Change
 
-      <verbatim|#include \<less\>deal.II/fe/fe_q.h\<gtr\>>
+      <\cpp-code>
+        #include \<less\>deal.II/fe/fe_q.h\<gtr\>
+      </cpp-code>
 
       to
 
-      <verbatim|#include \<less\>deal.II/fe/fe_dgq.h\<gtr\>>
-
-      \;
+      <\cpp-code>
+        <verbatim|#include \<less\>deal.II/fe/fe_dgq.h\<gtr\>>
+      </cpp-code>
 
       Then change
 
-      <verbatim| \ const FE_Q\<less\>2\<gtr\> finite_element(1);>
+      <\cpp-code>
+        const FE_Q\<less\>2\<gtr\> finite_element(1);
+      </cpp-code>
 
       to
 
-      <verbatim| \ const FE_DGQ\<less\>2\<gtr\> finite_element(1);>
-
-      \;
+      <\cpp-code>
+        const FE_DGQ\<less\>2\<gtr\> finite_element(1);
+      </cpp-code>
 
       This shows the sparsity pattern of the DG mass matrix, which is block
       diagonal. To see the sparsity pattern of the flux divergence terms,
@@ -268,16 +276,18 @@
         In two places.
       </footnote>
 
-      <verbatim| \ DoFTools::make_sparsity_pattern(dof_handler,
-      dynamic_sparsity_pattern);>
+      <\cpp-code>
+        DoFTools::make_sparsity_pattern(dof_handler,
+        dynamic_sparsity_pattern);
+      </cpp-code>
 
       to
 
-      <\verbatim>
-        \ \ DoFTools::make_flux_sparsity_pattern(dof_handler,\ 
+      <\cpp-code>
+        DoFTools::make_flux_sparsity_pattern(dof_handler,\ 
 
         \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dynamic_sparsity_pattern);
-      </verbatim>
+      </cpp-code>
     </slide>
 
     <\slide>
@@ -295,20 +305,22 @@
       <math|<around*|{|u<rsub|i><rsup|K>|}>> are stored in a
       <verbatim|solution> vector and must be extracted.
 
-      <\verbatim>
-        Vector\<less\>double\<gtr\> solution;
+      <\cpp-code>
+        <\verbatim>
+          Vector\<less\>double\<gtr\> solution;
 
-        std::vector\<less\>types::global_dof_index\<gtr\>
-        global_dof_indices(fe.dofs_per_cell);
+          std::vector\<less\>types::global_dof_index\<gtr\>
+          global_dof_indices(fe.dofs_per_cell);
 
-        for(auto& cell : dof_handler.active_cell_iterators())
+          for(auto& cell : dof_handler.active_cell_iterators())
 
-        {
+          {
 
-        \ \ cell-\<gtr\>get_dof_indices(global_dof_indices);
+          \ \ cell-\<gtr\>get_dof_indices(global_dof_indices);
 
-        }
-      </verbatim>
+          }
+        </verbatim>
+      </cpp-code>
 
       Now
 
@@ -330,74 +342,76 @@
       Computing the FE solution at any point is done using
       <verbatim|FEValues> via some <verbatim|Quadrature> formula.
 
-      <\verbatim>
-        Vector\<less\>double\<gtr\> solution; // contains current solution
+      <\cpp-code>
+        <\verbatim>
+          Vector\<less\>double\<gtr\> solution; // contains current solution
 
-        QGauss\<less\>dim\<gtr\> quadrature(10);
+          QGauss\<less\>dim\<gtr\> quadrature(10);
 
-        FEValues(mapping, fe, quadrature, update_values\|update_gradients);
+          FEValues(mapping, fe, quadrature, update_values\|update_gradients);
 
-        auto n_q_points = quadrature.size();
+          auto n_q_points = quadrature.size();
 
-        std::vector\<less\>double\<gtr\> solution_values(n_q_points);
+          std::vector\<less\>double\<gtr\> solution_values(n_q_points);
 
-        std::vector\<less\>Tensor\<less\>1,dim\<gtr\>\<gtr\>
-        gradient_values(n_q_points);
+          std::vector\<less\>Tensor\<less\>1,dim\<gtr\>\<gtr\>
+          gradient_values(n_q_points);
 
-        std::vector\<less\>types::global_dof_index\<gtr\>
-        global_dof_indices(fe.dofs_per_cell);
+          std::vector\<less\>types::global_dof_index\<gtr\>
+          global_dof_indices(fe.dofs_per_cell);
 
-        for(auto& cell : dof_handler.active_cell_iterators())
+          for(auto& cell : dof_handler.active_cell_iterators())
 
-        {
+          {
 
-        \ \ fe_values.reinit(cell);
+          \ \ fe_values.reinit(cell);
 
-        \ \ cell-\<gtr\>get_dof_indices(global_dof_indices);
+          \ \ cell-\<gtr\>get_dof_indices(global_dof_indices);
 
-        \ \ for(unsigned int q=0; q\<less\>n_q_points; ++q)
+          \ \ for(unsigned int q=0; q\<less\>n_q_points; ++q)
 
-        \ \ {
+          \ \ {
 
-        \ \ \ \ solution_values[q] = 0.0; gradient_values[q] = 0.0;
+          \ \ \ \ solution_values[q] = 0.0; gradient_values[q] = 0.0;
 
-        \ \ \ \ for(i=0; i\<less\>fe.dofs_per_cell; ++i)
+          \ \ \ \ for(i=0; i\<less\>fe.dofs_per_cell; ++i)
 
-        \ \ \ \ {
+          \ \ \ \ {
 
-        \ \ \ \ \ \ solution_values[i] += solution(global_dof_indices[i]) *\ 
+          \ \ \ \ \ \ solution_values[i] += solution(global_dof_indices[i]) *\ 
 
-        \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fe_values.shape_value(i,q);
+          \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fe_values.shape_value(i,q);
 
-        \ \ \ \ \ \ gradient_values[i] += solution(global_dof_indices[i]) *\ 
+          \ \ \ \ \ \ gradient_values[i] += solution(global_dof_indices[i]) *\ 
 
-        \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fe_values.shape_gradient(i,q);
+          \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fe_values.shape_gradient(i,q);
 
-        \ \ \ \ }
+          \ \ \ \ }
 
-        \ \ }
+          \ \ }
 
-        }
-      </verbatim>
-
-      \;
+          }
+        </verbatim>
+      </cpp-code>
 
       This operation is so common that there are functions available to do
       this.
 
-      <\verbatim>
-        for(auto& cell : dof_handler.active_cell_iterators())
+      <\cpp-code>
+        <\verbatim>
+          for(auto& cell : dof_handler.active_cell_iterators())
 
-        {
+          {
 
-        \ \ fe_values.reinit(cell);
+          \ \ fe_values.reinit(cell);
 
-        \ \ fe_values.get_function_values(solution, solution_values);
+          \ \ fe_values.get_function_values(solution, solution_values);
 
-        \ \ fe_values.get_function_gradients(solution, gradient_values);
+          \ \ fe_values.get_function_gradients(solution, gradient_values);
 
-        }
-      </verbatim>
+          }
+        </verbatim>
+      </cpp-code>
     </slide>
 
     <\slide>
@@ -434,7 +448,7 @@
       <\cpp-code>
         auto cell2 = dh2.begin_active();
 
-        for(auto cell1 : dh1.active_cell_iterators())
+        for(auto& cell1 : dh1.active_cell_iterators())
 
         {
 
@@ -450,7 +464,7 @@
       Solution 2
 
       <\cpp-code>
-        for(auto cell1 : dh1.active_cell_iterators())
+        for(auto& cell1 : dh1.active_cell_iterators())
 
         {
 
@@ -458,8 +472,8 @@
 
         \ \ typename DoFHandler\<less\>dim\<gtr\>::active_cell_iterator\ 
 
-        \ \ \ \ cell2(triangulation, cell1-\<gtr\>level(),
-        cell1-\<gtr\>index(), dh2);
+        \ \ \ \ cell2(&triangulation, cell1-\<gtr\>level(),
+        cell1-\<gtr\>index(), &dh2);
 
         \ \ fe_values2.reinit(cell2);
 
@@ -469,7 +483,7 @@
       Solution 3
 
       <\cpp-code>
-        for(auto cell1 : dh1.active_cell_iterators())
+        for(auto& cell1 : dh1.active_cell_iterators())
 
         {
 
@@ -956,7 +970,7 @@
       <no-break><pageref|auto-6><vspace|1fn>
 
       <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Working
-      with two dof handlers> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      with two dof handlers: dh1, dh2> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-7><vspace|1fn>
 
       <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Parallel
