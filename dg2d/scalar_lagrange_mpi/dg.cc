@@ -220,9 +220,6 @@ private:
    DoFHandler<dim>      dof_handler;
    DoFHandler<dim>      dof_handler_cell;
 
-   IndexSet             locally_owned_dofs;
-   IndexSet             locally_relevant_dofs;
-
    LA::MPI::Vector      mass_matrix;
    LA::MPI::Vector      solution;
    LA::MPI::Vector      solution_old;
@@ -290,9 +287,9 @@ Step12<dim>::setup_system()
 
    dof_handler.distribute_dofs(fe);
 
-   locally_owned_dofs = dof_handler.locally_owned_dofs();
-   DoFTools::extract_locally_relevant_dofs(dof_handler,
-                                           locally_relevant_dofs);
+   const auto& locally_owned_dofs = dof_handler.locally_owned_dofs();
+   IndexSet locally_relevant_dofs = 
+      DoFTools::extract_locally_relevant_dofs(dof_handler);
 
    solution.reinit(locally_owned_dofs, locally_relevant_dofs, mpi_communicator);
    solution_old.reinit(locally_owned_dofs, locally_relevant_dofs, mpi_communicator);

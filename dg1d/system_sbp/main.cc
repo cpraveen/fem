@@ -13,11 +13,11 @@ main(int argc, char** argv)
    {
       std::cout << "Specify input parameter file\n";
       std::cout << "It should contain following parameters.\n\n";
-      ph.print_parameters(std::cout, ParameterHandler::Text);
+      ph.print_parameters(std::cout, ParameterHandler::PRM);
       return 0;
    }
    ph.parse_input(argv[1]);
-   ph.print_parameters(std::cout, ParameterHandler::Text);
+   ph.print_parameters(std::cout, ParameterHandler::PRM);
 
    Parameter param;
    param.final_time = Problem::final_time; // will override if given in input
