@@ -2,6 +2,8 @@
 
 Solves 2d system of conservation laws on unstructured grids using Lagrange basis. It can also work on Cartesian grids.
 
+You can use Gauss-Legendre or Gauss-Lobatto-Legendre points to define the Lagrange basis. The same points are also used for performing the cell and face quadratures.
+
 1. [Euler isentropic vortex](https://github.com/cpraveen/fem/tree/master/dg2d/models/euler/isentropic_vortex)
 1. [Linear advection](https://github.com/cpraveen/fem/tree/master/dg2d/models/linadv)
 

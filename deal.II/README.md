@@ -37,6 +37,8 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. [step-20](https://dealii.org/developer/doxygen/deal.II/step_20.html): Poisson/Darcy equation using mixed method; Raviart-Thomas/DG
 1. [step-22](https://dealii.org/developer/doxygen/deal.II/step_22.html): Stokes flow, Taylor-Hood
 1. [step-55](https://dealii.org/developer/doxygen/deal.II/step_55.html): Stokes flow, Taylor-Hood, parallel
+1. [step-35](https://dealii.org/current/doxygen/deal.II/step_35.html): Unsteady incompressible NS
+1. [step-57](https://dealii.org/current/doxygen/deal.II/step_57.html): Steady incompressible NS
 1. [step-23](https://dealii.org/developer/doxygen/deal.II/step_23.html): Second order wave equation solved as first order system
 
 ## Advanced topics
