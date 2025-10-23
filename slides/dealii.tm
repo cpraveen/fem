@@ -33,6 +33,8 @@
     <assign|fpnum|<macro|<text|<strong|F>>>>
 
     <assign|emach|<macro|\<varepsilon\><rsub|mach>>>
+
+    <assign|mesh|<macro|<with|font|cal|T><rsub|h>>>
   </hide-preamble>
 
   <\slideshow>
@@ -841,6 +843,75 @@
       </remark>
     </slide>
 
+    <\slide>
+      <chapter*|Matrix-free method>
+
+      Let
+
+      <\equation*>
+        N=<text|total dofs>,<space|2em>n=<text|dofs per cell>
+      </equation*>
+
+      The solution <math|u\<in\>\<bbb-R\><rsup|N>>. For methods like CG, we
+      only need to know how to compute matrix-vector products: given
+      <math|u\<in\>\<bbb-R\><rsup|N>> compute <math|A
+      u\<in\>\<bbb-R\><rsup|N>>.
+
+      Let
+
+      <\equation*>
+        P<rsub|K>\<in\>\<bbb-R\><rsup|n\<times\>N>:<space|2em>u<rsub|K>=P<rsub|K>
+        u=<text|dofs supported on cell <math|K>>
+      </equation*>
+
+      In deal.II, <math|P<rsub|K>> is basically obtained by
+      <verbatim|cell-\<gtr\>get_dof_indices(dof_indices)>. The system matrix
+      can be written as
+
+      <\equation*>
+        A=<big|sum><rsub|K\<in\><mesh>>P<rsub|K><rsup|\<top\>>A<rsub|K>P<rsub|K>
+      </equation*>
+
+      where <math|A<rsub|K>\<in\>\<bbb-R\><rsup|n\<times\>n>> is the cell
+      matrix.
+
+      <\equation*>
+        r=A u=<big|sum><rsub|K\<in\><mesh>>P<rsub|K><rsup|\<top\>>A<rsub|K>P<rsub|K>u=<big|sum><rsub|K\<in\><mesh>>P<rsub|K><rsup|\<top\>>A<rsub|K>u<rsub|K>
+      </equation*>
+
+      We could compute <math|A<rsub|K>>, form the product
+      <math|A<rsub|K>u<rsub|K>> and then store the result in <math|r>,
+      without computing the full matrix <math|A>. However, computing
+      <math|A<rsub|K>> requires a triple sum; we are essentially doing a
+      matrix-matrix product.
+
+      <\equation*>
+        A<rsub|K><around*|(|i,j|)>=<big|sum><rsub|q=0><rsup|Q-1>\<nabla\>\<phi\><rsub|i><around*|(|q|)>\<cdot\>\<nabla\>\<phi\><rsub|j><around*|(|q|)>
+        JxW<around*|(|q|)>
+      </equation*>
+
+      So
+
+      <\equation*>
+        A<rsub|K>=B<rsub|K><rsup|\<top\>>D<rsub|K>B<rsub|K>,<space|2em><around*|(|B<rsub|K>|)><rsub|q
+        i>=<around*|[|\<nabla\>\<phi\><rsub|i><around*|(|q|)>|]>,<space|2em>D<rsub|K>=diag<around*|[|JxW<around*|(|q|)>|]>
+      </equation*>
+
+      But
+
+      <\equation*>
+        \<nabla\>\<phi\><rsub|i><around*|(|q|)>=J<rsub|K><rsup|-1><around*|(|q|)><wide|\<nabla\>|^><wide|\<phi\>|^><rsub|i><around*|(|q|)><space|2em>B<rsub|K>=J<rsub|K><rsup|-1><wide|B|^>
+      </equation*>
+
+      so
+
+      <\equation*>
+        A<rsub|K>=<wide|B|^><rsup|\<top\>>J<rsub|K><rsup|-1>D<rsub|K>J<rsub|K><rsup|-\<top\>><wide|B|^>
+      </equation*>
+
+      \;
+    </slide>
+
     \;
 
     <\slide>
@@ -925,6 +996,7 @@
     <associate|auto-12|<tuple|3|13>>
     <associate|auto-13|<tuple|1|13>>
     <associate|auto-14|<tuple|1|15>>
+    <associate|auto-15|<tuple|<with|mode|<quote|math>|\<bullet\>>|17>>
     <associate|auto-2|<tuple|?|3>>
     <associate|auto-3|<tuple|2|4>>
     <associate|auto-4|<tuple|3|6>>
@@ -935,10 +1007,10 @@
     <associate|auto-9|<tuple|<with|mode|<quote|math>|\<bullet\>>|11>>
     <associate|footnote-1|<tuple|1|3>>
     <associate|footnote-2|<tuple|2|3>>
-    <associate|footnote-3|<tuple|3|4>>
+    <associate|footnote-3|<tuple|3|5>>
     <associate|footnr-1|<tuple|1|3>>
     <associate|footnr-2|<tuple|2|3>>
-    <associate|footnr-3|<tuple|3|4>>
+    <associate|footnr-3|<tuple|3|5>>
   </collection>
 </references>
 
@@ -1000,6 +1072,10 @@
       <with|par-left|<quote|3tab>|Example.
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-14>>
+
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Matrix-free
+      method> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-15><vspace|1fn>
     </associate>
   </collection>
 </auxiliary>
