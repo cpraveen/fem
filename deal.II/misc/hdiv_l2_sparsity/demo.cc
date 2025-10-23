@@ -12,7 +12,6 @@
 #include <deal.II/fe/fe_system.h>
 #include <deal.II/fe/fe_raviart_thomas.h>
 #include <deal.II/fe/fe_dgq.h>
-#include <deal.II/fe/fe_q.h>
 
 using namespace dealii;
 
@@ -68,12 +67,8 @@ main()
       BlockDynamicSparsityPattern dsp(block_sizes, block_sizes);
 
       Table<2, DoFTools::Coupling> coupling(dim + 1, dim + 1);
-      for(unsigned int c = 0; c < dim + 1; ++c)
-         for(unsigned int d = 0; d < dim + 1; ++d)
-            if(!((c == dim) && (d == dim)))
-               coupling[c][d] = DoFTools::always;
-            else
-               coupling[c][d] = DoFTools::none;
+      coupling.fill(DoFTools::always);
+      coupling[dim][dim] = DoFTools::none;
 
       DoFTools::make_sparsity_pattern(
          dof_handler, coupling, dsp, constraints, false);
