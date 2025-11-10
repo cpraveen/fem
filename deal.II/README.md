@@ -24,6 +24,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. ex09: 2-d Poisson with discontinuous coefficient. Same as [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html) in deal.II tutorials, modified to use gmsh grid
 1. ex10: Poisson equation in annulus, curved boundaries
 1. ex15: Convection-diffusion equation
+1. hemker: Convection-diffusion equation
 1. ex21: 2-d unsteady heat equation
 1. ex31: 2-d linear advection equation using Galerkin method
 1. ns_cylinder: Incompressible NS for flow over cylinder
