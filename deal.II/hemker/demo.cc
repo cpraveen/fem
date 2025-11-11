@@ -1,5 +1,6 @@
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_in.h>
+#include <deal.II/grid/manifold_lib.h>
 #include <deal.II/dofs/dof_handler.h>
 #include <deal.II/dofs/dof_tools.h>
 #include <deal.II/fe/fe_q.h>
@@ -25,6 +26,7 @@ const Tensor<1,2> velocity({1.0, 0.0});
 double epsilon = 1.0e-3;
 int supg = 0;
 int degree = 1;
+int nrefine = 0;
 
 //------------------------------------------------------------------------------
 template <int dim>
@@ -67,6 +69,12 @@ void LaplaceProblem<dim>::make_grid_and_dofs ()
    std::ifstream gfile("hemker.msh");
    AssertThrow(gfile.is_open(), ExcMessage("Grid file not found"));
    grid_in.read_msh(gfile);
+
+   // circle has boundary id = 2, see geo file. Set its manifold id = 1
+   triangulation.set_all_manifold_ids_on_boundary(2, 1);
+   triangulation.set_manifold(1, SphericalManifold<dim>());
+
+   if(nrefine > 0) triangulation.refine_global(nrefine);
    
    std::cout
    << "Problem size:" << std::endl
@@ -217,6 +225,8 @@ int main (int argc, char* argv[])
          epsilon = Utilities::string_to_double(argv[i+1]);
       else if (std::string(argv[i]) == "-degree")
          degree = Utilities::string_to_int(argv[i+1]);
+      else if (std::string(argv[i]) == "-nrefine")
+         nrefine = Utilities::string_to_int(argv[i+1]);
       else
       {
          std::cout << "Unknown option given: " << argv[i] << std::endl;
@@ -227,6 +237,7 @@ int main (int argc, char* argv[])
    std::cout << "degree  = " << degree << std::endl;
    std::cout << "epsilon = " << epsilon << std::endl;
    std::cout << "supg    = " << supg << std::endl;
+   std::cout << "nrefine = " << nrefine << std::endl;
 
    if(supg == 1) AssertThrow(degree==1, ExcMessage("supg needs degree=1"));
 

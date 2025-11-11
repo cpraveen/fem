@@ -27,6 +27,18 @@ python plot.py
 python surface.py (rotate with mouse)
 ```
 
+There are lot of oscillations in the solution.
+
+Run Galerkin with refined mesh
+
+```shell
+./demo -eps 1.0e-3 -nrefine 1
+python plot.py
+python surface.py (rotate with mouse)
+```
+
+The oscillations are still present.
+
 Run SUPG
 
 ```shell
@@ -35,9 +47,11 @@ python plot.py
 python surface.py (rotate with mouse)
 ```
 
-## Refining the grid
+There are no noticeable oscillations in the solution.
 
-Do this within Gmsh. 
+## Refining the grid in gmsh
+
+To refine within Gmsh,
 
 ```shell
 gmsh hemker.geo
