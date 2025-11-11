@@ -23,6 +23,7 @@ using namespace dealii;
 
 const double epsilon = 1.0e-3;
 const Tensor<1,2> velocity({1.0, 0.0});
+int supg = 0;
 
 //------------------------------------------------------------------------------
 template <int dim>
@@ -107,9 +108,13 @@ void LaplaceProblem<dim>::assemble_system ()
    
    FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
    std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
+
    
    for (const auto &cell : dof_handler.active_cell_iterators())
    {
+      const double h = cell->diameter();
+      const double tau = supg * h / velocity.norm();
+
       fe_values.reinit (cell);
       cell_matrix = 0;
       
@@ -119,14 +124,19 @@ void LaplaceProblem<dim>::assemble_system ()
          for (unsigned int i=0; i<dofs_per_cell; ++i)
          {
             for (unsigned int j=0; j<dofs_per_cell; ++j)
-               cell_matrix(i,j) += (epsilon *
-                                    fe_values.shape_grad (i, q_point) *
-                                    fe_values.shape_grad (j, q_point)
-                                    +
-                                    velocity * 
-                                    fe_values.shape_grad(j,q_point) *
-                                    fe_values.shape_value(i,q_point)) *
-                                    fe_values.JxW (q_point);
+               cell_matrix(i,j) += 
+                  (epsilon *
+                   fe_values.shape_grad (i, q_point) *
+                   fe_values.shape_grad (j, q_point)
+                   +
+                   (velocity * 
+                   fe_values.shape_grad(j,q_point)) *
+                   fe_values.shape_value(i,q_point)
+                   +
+                   tau * 
+                   (velocity * fe_values.shape_grad(i,q_point)) *
+                   (velocity * fe_values.shape_grad(j,q_point))) *
+                   fe_values.JxW (q_point);
          }
       }
       
@@ -192,8 +202,9 @@ void LaplaceProblem<dim>::run ()
 }
 
 //------------------------------------------------------------------------------
-int main ()
+int main (int argc, char* argv[])
 {
+   if(argc == 2 && std::string(argv[1]) == "-supg") supg = 1;
    deallog.depth_console (0);
    int degree = 1;
    LaplaceProblem<2> problem (degree);
