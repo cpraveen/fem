@@ -24,6 +24,7 @@ using namespace dealii;
 const Tensor<1,2> velocity({1.0, 0.0});
 double epsilon = 1.0e-3;
 int supg = 0;
+int degree = 1;
 
 //------------------------------------------------------------------------------
 template <int dim>
@@ -68,6 +69,7 @@ void LaplaceProblem<dim>::make_grid_and_dofs ()
    grid_in.read_msh(gfile);
    
    std::cout
+   << "Problem size:" << std::endl
    << "   Number of active cells: "
    << triangulation.n_active_cells()
    << std::endl
@@ -213,6 +215,8 @@ int main (int argc, char* argv[])
       }
       else if (std::string(argv[i]) == "-eps")
          epsilon = Utilities::string_to_double(argv[i+1]);
+      else if (std::string(argv[i]) == "-degree")
+         degree = Utilities::string_to_int(argv[i+1]);
       else
       {
          std::cout << "Unknown option given: " << argv[i] << std::endl;
@@ -220,8 +224,13 @@ int main (int argc, char* argv[])
       }
    }
 
+   std::cout << "degree  = " << degree << std::endl;
+   std::cout << "epsilon = " << epsilon << std::endl;
+   std::cout << "supg    = " << supg << std::endl;
+
+   if(supg == 1) AssertThrow(degree==1, ExcMessage("supg needs degree=1"));
+
    deallog.depth_console (0);
-   int degree = 1;
    LaplaceProblem<2> problem (degree);
    problem.run ();
    
