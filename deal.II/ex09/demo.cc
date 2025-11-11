@@ -545,15 +545,14 @@ void Step6<dim>::run()
           const Point<dim> mesh_center(0.0, 0.0);
           const double inner_radius = 0.25;
           for (const auto &cell : triangulation.active_cell_iterators())
-          {
-            for (unsigned int v = 0; v < GeometryInfo<2>::vertices_per_cell; ++v)
+            for (const auto v : cell->vertex_indices())
               if (mesh_center.distance(cell->vertex(v)) < inner_radius)
               {
                 cell->set_all_manifold_ids(1);
                 break;
               }
-          }
           triangulation.set_manifold(0, SphericalManifold<dim>());
+          triangulation.reset_manifold(1); // flat manifold
         }
       else
         refine_grid();
