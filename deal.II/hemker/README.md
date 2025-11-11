@@ -22,15 +22,15 @@ make
 Run Galerkin
 
 ```shell
-./demo
-python surface.py (rotate with mouse)
+./demo -eps 1.0e-3
 python plot.py
+python surface.py (rotate with mouse)
 ```
 
 Run SUPG
 
 ```shell
-./demo -supg
-python surface.py (rotate with mouse)
+./demo -eps 1.0e-3 -supg 1
 python plot.py
+python surface.py (rotate with mouse)
 ```

@@ -21,8 +21,8 @@
 
 using namespace dealii;
 
-const double epsilon = 1.0e-3;
 const Tensor<1,2> velocity({1.0, 0.0});
+double epsilon = 1.0e-3;
 int supg = 0;
 
 //------------------------------------------------------------------------------
@@ -204,7 +204,22 @@ void LaplaceProblem<dim>::run ()
 //------------------------------------------------------------------------------
 int main (int argc, char* argv[])
 {
-   if(argc == 2 && std::string(argv[1]) == "-supg") supg = 1;
+   for(int i=1; i<argc; i+=2)
+   {
+      if (std::string(argv[i]) == "-supg")
+      {
+         supg = Utilities::string_to_int(argv[i+1]);
+         AssertThrow(supg==0 || supg==1, ExcMessage("Invalid value of -supg"));
+      }
+      else if (std::string(argv[i]) == "-eps")
+         epsilon = Utilities::string_to_double(argv[i+1]);
+      else
+      {
+         std::cout << "Unknown option given: " << argv[i] << std::endl;
+         exit(0);
+      }
+   }
+
    deallog.depth_console (0);
    int degree = 1;
    LaplaceProblem<2> problem (degree);
