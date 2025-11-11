@@ -34,3 +34,14 @@ Run SUPG
 python plot.py
 python surface.py (rotate with mouse)
 ```
+
+## Refining the grid
+
+Do this within Gmsh. 
+
+```shell
+gmsh hemker.geo
+Mesh -> 2D
+Mesh -> Refine by splitting  # Repeat this for more refinement
+Mesh -> Save
+```
