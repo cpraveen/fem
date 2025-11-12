@@ -24,7 +24,7 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 1. ex09: 2-d Poisson with discontinuous coefficient. Same as [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html) in deal.II tutorials, modified to use gmsh grid
 1. ex10: Poisson equation in annulus, curved boundaries
 1. ex15: Convection-diffusion equation
-1. hemker: Convection-diffusion equation
+1. ex16: Convection-diffusion equation, Hemker problem
 1. ex21: 2-d unsteady heat equation
 1. ex31: 2-d linear advection equation using Galerkin method
 1. ns_cylinder: Incompressible NS for flow over cylinder
@@ -34,18 +34,18 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 
 ### Poisson equation
 
-1. [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html): Poisson equation with discontinuous coefficients, grid adaptation
-1. [step-11](https://dealii.org/developer/doxygen/deal.II/step_11.html): Poisson equation with Neumann boundary conditions
-1. [step-16](https://dealii.org/developer/doxygen/deal.II/step_16.html): Poisson equation with geometric multigrid
-1. [step-20](https://dealii.org/developer/doxygen/deal.II/step_20.html): Poisson/Darcy equation using mixed method; Raviart-Thomas/DG
-1. [step-37](https://dealii.org/developer/doxygen/deal.II/step_37.html): Matrix-free approach to Poisson equation with geometric multigrid in parallel
+1. [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html): Discontinuous coefficients, grid adaptation
+1. [step-11](https://dealii.org/developer/doxygen/deal.II/step_11.html): Neumann boundary conditions
+1. [step-16](https://dealii.org/developer/doxygen/deal.II/step_16.html): Geometric multigrid
+1. [step-20](https://dealii.org/developer/doxygen/deal.II/step_20.html): Mixed method, Raviart-Thomas/DG
+1. [step-37](https://dealii.org/developer/doxygen/deal.II/step_37.html): Matrix-free approach, geometric multigrid in parallel
 1. [step-40](https://dealii.org/developer/doxygen/deal.II/step_40.html): Algebraic multigrid, Trilinos/PETSc
 
 ### Stokes equation
 
-1. [step-22](https://dealii.org/developer/doxygen/deal.II/step_22.html): Stokes flow, Taylor-Hood
-1. [step-55](https://dealii.org/developer/doxygen/deal.II/step_55.html): Stokes flow, Taylor-Hood, parallel
-1. [step-56](https://dealii.org/developer/doxygen/deal.II/step_56.html): Stokes flow, Taylor-Hood, geometric multigrid, FGMRES
+1. [step-22](https://dealii.org/developer/doxygen/deal.II/step_22.html): Taylor-Hood
+1. [step-55](https://dealii.org/developer/doxygen/deal.II/step_55.html): Taylor-Hood, parallel
+1. [step-56](https://dealii.org/developer/doxygen/deal.II/step_56.html): Taylor-Hood, geometric multigrid, FGMRES
 
 ### Steady Navier-Stokes
 

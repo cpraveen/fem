@@ -4,7 +4,7 @@ This is trying to solve a problem similar to
 
 > Quarteroni and Valli, Figure 8.3.1
 
-But it does not give full details. Here is what we solve.
+But the book does not give full details. Here is what we solve.
 
 ```text
 -eps * Laplace(u) + du/dy = 0  in  (0,1) x (0,1)
@@ -12,6 +12,8 @@ u = 0   on  x = 0
 u = 1   on  x = 1
 u = 0.5*(1 + tanh(100*(x-0.5))) on y=0 and y=1
 ```
+
+The bc on bottom/top side creates an internal layer along the line `x=0.5`.
 
 Compile and run
 
@@ -21,4 +23,4 @@ make
 python plot.py
 ```
 
-Solution does not look so bad, need to try with triangles.
+Solution does not look so bad as in the book, need to try with triangles.
