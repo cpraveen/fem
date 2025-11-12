@@ -30,3 +30,7 @@ time mpirun -np 4 ./demo
 ```
 
 While the code is running, use the `top` command to see that multiple instances of `demo` are running.
+
+## Similar examples
+
+The [step-40](https://dealii.org/developer/doxygen/deal.II/step_40.html) example in deal.II is very similar to this, and can use either Trilinos or PETSc. It is setup to use algebraic multigrid as preconditioner, which is easy to use.

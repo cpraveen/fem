@@ -32,18 +32,36 @@ The codes in directory `deal.II` are based on [deal.II](http://www.dealii.org) l
 
 ## deal.II Examples
 
+### Poisson equation
+
 1. [step-6](https://dealii.org/developer/doxygen/deal.II/step_6.html): Poisson equation with discontinuous coefficients, grid adaptation
-1. [step-10](https://dealii.org/developer/doxygen/deal.II/step_10.html): Higher order mappings, compute value of pi
 1. [step-11](https://dealii.org/developer/doxygen/deal.II/step_11.html): Poisson equation with Neumann boundary conditions
-1. [step-12](https://dealii.org/developer/doxygen/deal.II/step_12.html): Discontinuous Galerkin methods for steady linear advection problem
+1. [step-16](https://dealii.org/developer/doxygen/deal.II/step_16.html): Poisson equation with geometric multigrid
 1. [step-20](https://dealii.org/developer/doxygen/deal.II/step_20.html): Poisson/Darcy equation using mixed method; Raviart-Thomas/DG
+1. [step-37](https://dealii.org/developer/doxygen/deal.II/step_37.html): Matrix-free approach to Poisson equation with geometric multigrid in parallel
+1. [step-40](https://dealii.org/developer/doxygen/deal.II/step_40.html): Algebraic multigrid, Trilinos/PETSc
+
+### Stokes equation
+
 1. [step-22](https://dealii.org/developer/doxygen/deal.II/step_22.html): Stokes flow, Taylor-Hood
 1. [step-55](https://dealii.org/developer/doxygen/deal.II/step_55.html): Stokes flow, Taylor-Hood, parallel
-1. [step-35](https://dealii.org/current/doxygen/deal.II/step_35.html): Unsteady incompressible NS
+1. [step-56](https://dealii.org/developer/doxygen/deal.II/step_56.html): Stokes flow, Taylor-Hood, geometric multigrid, FGMRES
+
+### Steady Navier-Stokes
+
 1. [step-57](https://dealii.org/current/doxygen/deal.II/step_57.html): Steady incompressible NS
+
+### Unsteady Navier-Stokes
+
+1. [step-35](https://dealii.org/current/doxygen/deal.II/step_35.html): Unsteady incompressible NS
+
+### Miscellaneous
+
+1. [step-10](https://dealii.org/developer/doxygen/deal.II/step_10.html): Higher order mappings, compute value of pi
+1. [step-12](https://dealii.org/developer/doxygen/deal.II/step_12.html): Discontinuous Galerkin methods for steady linear advection problem
 1. [step-23](https://dealii.org/developer/doxygen/deal.II/step_23.html): Second order wave equation solved as first order system
 
-## Advanced topics
+### Advanced topics
 
 1. [step-37](https://dealii.org/developer/doxygen/deal.II/step_37.html): Matrix-free approach to Poisson equation with multigrid in parallel
 
