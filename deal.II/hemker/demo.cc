@@ -123,7 +123,8 @@ void LaplaceProblem<dim>::assemble_system ()
    {
       const double h = cell->diameter();
       const double Pe = 0.5 * velocity.norm() * h / epsilon;
-      const double tau = supg * ((Pe > 1.0) ? h/velocity.norm() : Pe);
+      // TODO: Check the Pe <= 1 case
+      const double tau = supg * h / velocity.norm() * ((Pe > 1.0) ? 1.0 : Pe);
 
       fe_values.reinit (cell);
       cell_matrix = 0;
