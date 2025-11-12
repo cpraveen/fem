@@ -119,11 +119,11 @@ void LaplaceProblem<dim>::assemble_system ()
    FullMatrix<double>   cell_matrix (dofs_per_cell, dofs_per_cell);
    std::vector<types::global_dof_index> local_dof_indices (dofs_per_cell);
 
-   
    for (const auto &cell : dof_handler.active_cell_iterators())
    {
       const double h = cell->diameter();
-      const double tau = supg * h / velocity.norm();
+      const double Pe = 0.5 * velocity.norm() * h / epsilon;
+      const double tau = supg * ((Pe > 1.0) ? h/velocity.norm() : Pe);
 
       fe_values.reinit (cell);
       cell_matrix = 0;
