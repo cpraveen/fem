@@ -844,6 +844,83 @@
     </slide>
 
     <\slide>
+      <chapter*|Sum factorization>
+
+      Computing sums
+
+      <\equation*>
+        <big|sum><rsub|q=0><rsup|N>c a<rsub|q>
+        b<rsub|q>=c<big|sum><rsub|q=0><rsup|N> a<rsub|q> b<rsub|q>
+      </equation*>
+
+      Second form is better; reduces the number of multiplications.
+
+      <section*|Evaluating solution>
+
+      A 2-D FE solution evaluated at a quadrature point
+      <math|<around*|(|\<xi\><rsub|q>,\<eta\><rsub|q>|)>>.
+
+      <\wide-tabular>
+        <tformat|<cwith|1|1|1|1|cell-tborder|0ln>|<cwith|1|1|1|1|cell-bborder|0ln>|<cwith|1|1|1|1|cell-lborder|0ln>|<cwith|1|1|1|1|cell-rborder|1ln>|<cwith|1|1|2|2|cell-lborder|1ln>|<cwith|1|1|1|1|cell-halign|l>|<table|<row|<\cell>
+          <\padded-center>
+            Standard form
+          </padded-center>
+
+          <\equation*>
+            u<rsub|h><around*|(|\<xi\><rsub|q>,\<eta\><rsub|q>|)>=<big|sum><rsub|i=0><rsup|N><big|sum><rsub|j=0><rsup|N>\<ell\><rsub|i><around*|(|\<xi\><rsub|q>|)>\<ell\><rsub|j><around*|(|\<eta\><rsub|q>|)>u<rsub|i
+            j>
+          </equation*>
+        </cell>|<\cell>
+          <\padded-center>
+            Factored form
+          </padded-center>
+
+          <\equation*>
+            u<rsub|h><around*|(|\<xi\><rsub|q>,\<eta\><rsub|q>|)>=<big|sum><rsub|i=0><rsup|N>\<ell\><rsub|i><around*|(|\<xi\><rsub|q>|)><big|sum><rsub|j=0><rsup|N>\<ell\><rsub|j><around*|(|\<eta\><rsub|q>|)>u<rsub|i
+            j>
+          </equation*>
+        </cell>>>>
+      </wide-tabular>
+
+      FLOP count
+
+      <\padded-center>
+        <tabular|<tformat|<cwith|1|-1|1|-1|cell-tborder|1ln>|<cwith|1|-1|1|-1|cell-bborder|1ln>|<cwith|1|-1|1|-1|cell-lborder|1ln>|<cwith|1|-1|1|-1|cell-rborder|1ln>|<table|<row|<cell|>|<cell|Standard>|<cell|Factored>>|<row|<cell|Additions>|<cell|<math|N<around*|(|N+1|)>>>|<cell|<math|N<around*|(|N+1|)>>>>|<row|<cell|Multiplications>|<cell|<math|2<around*|(|N+1|)><rsup|2>>>|<cell|<math|<around*|(|N+2|)><around*|(|N+1|)>>>>>>>
+      </padded-center>
+
+      Difference in multiplications
+
+      <\equation*>
+        Mult<around*|(|Std|)>-Mult<around*|(|Fact|)>=N<around*|(|N+1|)>
+      </equation*>
+
+      Reduction in no. of multiplications in factored form
+
+      <\padded-center>
+        <tabular|<tformat|<cwith|1|-1|1|-1|cell-tborder|1ln>|<cwith|1|-1|1|-1|cell-bborder|1ln>|<cwith|1|-1|1|-1|cell-lborder|1ln>|<cwith|1|-1|1|-1|cell-rborder|1ln>|<cwith|1|1|1|1|cell-halign|c>|<table|<row|<cell|<math|N>>|<cell|1>|<cell|2>|<cell|3>|<cell|4>|<cell|5>>|<row|<cell|Reduction>|<cell|2>|<cell|6>|<cell|12>|<cell|20>|<cell|30>>>>>
+      </padded-center>
+
+      <\remark*>
+        In deal.II, <verbatim|FEValues> would have already computed the
+        product <math|\<ell\><rsub|i><around*|(|\<xi\><rsub|q>|)>\<ell\><rsub|j><around*|(|\<eta\><rsub|q>|)>=\<phi\><rsub|k><around*|(|\<xi\><rsub|q>,\<eta\><rsub|q>|)>>
+        and <verbatim|FEValues.get_function_values> computes
+
+        <\equation*>
+          <big|sum><rsub|k=0><rsup|<around*|(|N+1|)><rsup|2>-1>\<phi\><rsub|k>
+          <around*|(|\<xi\><rsub|q>,\<eta\><rsub|q>|)>u<rsub|k>
+        </equation*>
+
+        which requires
+
+        <\equation*>
+          Additions=<around*|(|N+1|)><rsup|2>-1,<space|2em>Multiplications=<around*|(|N+1|)><rsup|2>
+        </equation*>
+
+        which is similar to the factored method.
+      </remark*>
+    </slide>
+
+    <\slide>
       <chapter*|Matrix-free method>
 
       Let
@@ -997,6 +1074,8 @@
     <associate|auto-13|<tuple|1|13>>
     <associate|auto-14|<tuple|1|15>>
     <associate|auto-15|<tuple|<with|mode|<quote|math>|\<bullet\>>|17>>
+    <associate|auto-16|<tuple|<with|mode|<quote|math>|\<bullet\>>|?>>
+    <associate|auto-17|<tuple|<with|mode|<quote|math>|\<bullet\>>|?>>
     <associate|auto-2|<tuple|?|3>>
     <associate|auto-3|<tuple|2|4>>
     <associate|auto-4|<tuple|3|6>>
