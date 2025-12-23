@@ -88,7 +88,6 @@ struct Problem : ProblemBase<dim>
    //---------------------------------------------------------------------------
    void set_manifolds(Triangulation<dim>& triangulation) const override
    {
-      triangulation.set_all_manifold_ids(0);
       triangulation.set_all_manifold_ids_on_boundary(1, 1);
       const FunctionManifold<2, 2, 1> bump("x; 0.0625*exp(-25.0*x*x)", "x");
       triangulation.set_manifold(1, bump);
