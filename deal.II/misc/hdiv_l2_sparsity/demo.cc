@@ -31,6 +31,7 @@ main()
 
    DoFHandler<dim> dof_handler(triangulation);
    dof_handler.distribute_dofs(fe);
+   DoFRenumbering::Cuthill_McKee(dof_handler); // useful for ILU preconditioner
    DoFRenumbering::component_wise(dof_handler);
 
    AffineConstraints<double> constraints;
