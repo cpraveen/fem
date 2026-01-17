@@ -505,6 +505,10 @@ void DGSystem<dim>::cell_worker(const Iterator &cell,
       data.t = stage_time;
       ndarray<double,nvar,dim> flux;
       PDE::physical_flux(solution_values[q], data, flux);
+      #if defined(ADD_SOURCE)
+      Vector<double> src(nvar);
+      PDE::source(data.p, data.t, solution_values[q], src);
+      #endif
       for (unsigned int i = 0; i < dofs_per_cell; ++i)
       {
          const auto c = fe_values.get_fe().system_to_component_index(i).first;
@@ -512,6 +516,11 @@ void DGSystem<dim>::cell_worker(const Iterator &cell,
          double tmp = 0.0;
          for(unsigned int d=0; d<dim; ++d) tmp += shape_grad[d] * flux[c][d];
          cell_rhs(i) += tmp * fe_values.JxW(q);
+         #if defined(ADD_SOURCE)
+         cell_rhs(i) += src[c] * 
+                        fe_values.shape_value_component(i,q,c) *
+                        fe_values.JxW(q);
+         #endif
       }
 
    }

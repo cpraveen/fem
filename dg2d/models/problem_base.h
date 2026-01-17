@@ -51,6 +51,15 @@ struct ProblemBase
       DEAL_II_NOT_IMPLEMENTED();
    }
 
+   // u_t + div(f) = s(p,t,u)
+   virtual void source(const Point<dim>& /*p*/,
+                       const double      /*t*/,
+                       Vector<double>&   /*U*/,
+                       Vector<double>&   s) const
+   {
+      s = 0.0;
+   }    
+
    virtual std::string get_name()
    {
       return ProblemData::name;
