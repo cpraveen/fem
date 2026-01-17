@@ -75,7 +75,6 @@ struct Problem : ProblemBase<dim>
    //---------------------------------------------------------------------------
    void set_manifolds(Triangulation<dim>& triangulation) const override
    {
-      triangulation.set_all_manifold_ids(0);
       triangulation.set_all_manifold_ids_on_boundary(101, 1);
       const SphericalManifold<dim> cylinder(Point<dim>(0,0));
       triangulation.set_manifold(1, cylinder);
