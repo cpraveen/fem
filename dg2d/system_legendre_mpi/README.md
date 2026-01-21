@@ -11,7 +11,7 @@ code -n -d dg.h    ../system_legendre/dg.h
 
 ## Run an example
 
-In a terminal, go to `fem/dg2d/system_legendre_mpi`
+In a terminal, go to `fem/dg2d/system_legendre_mpi` and run the code
 
 ```shell
 ln -s ../models/euler/pde.h

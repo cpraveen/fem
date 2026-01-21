@@ -7,6 +7,28 @@ You can use Gauss-Legendre or Gauss-Lobatto-Legendre points to define the Lagran
 1. [Euler isentropic vortex](https://github.com/cpraveen/fem/tree/master/dg2d/models/euler/isentropic_vortex)
 1. [Linear advection](https://github.com/cpraveen/fem/tree/master/dg2d/models/linadv)
 
+## Run an example
+
+In a terminal, go to `fem/dg2d/system_lagrange_mpi`
+
+```shell
+ln -s ../models/euler/pde.h
+ln -s ../models/euler/isentropic_vortex/problem.h
+cmake .
+make release
+make
+```
+
+In another terminal, go to `fem/dg2d/models/euler/isentropic_vortex` and run the code
+
+```shell
+mpirun -np 4 ../../../system_lagrange_mpi/main input.prm > log.txt 2>&1 &
+tail -f log.txt
+visit -o solution.xdmf
+```
+
+When the code is running, if you use `top`, you should see four instances of `main` program running.
+
 ## Exercise: Flow over cylinder (euler)
 
 Solve subsonic flow over cylinder at Mach number of 0.3; make a grid in Gmsh and run the code for a long time to reach steady solution.
