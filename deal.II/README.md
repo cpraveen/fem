@@ -105,6 +105,8 @@ For grid generation, we need Gmsh, get it from [here](https://www.gmsh.info).
 
 ### Automated installation
 
+> WARNING: These instructions will give a basic installation of deal.II which may not be enough to run the parallel codes in this repository.
+
 A bash script that can automate the installation of deal.II is also included. Do the following steps
 
 ```shell
@@ -118,6 +120,8 @@ bash ./dealii_basic.sh
 This will install deal.II into the directory `$HOME/deal.II`; you can change the location of install directory by editing the bash script.
 
 ### Manual download and install
+
+> WARNING: These instructions will give a basic installation of deal.II which may not be enough to run the parallel codes in this repository.
 
 Suppose we want to install deal.II in `$HOME/deal.II` directory. Add following line in your `$HOME/.bashrc` file
 
