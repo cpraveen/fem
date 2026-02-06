@@ -132,6 +132,10 @@ ParameterReader::declare_parameters()
                     "4",
                     Patterns::Integer(0),
                     "Initial refinement of mesh");
+  prm.declare_entry("solver",
+                    "schur",
+                    Patterns::Selection("schur|umfpack"),
+                    "Linear solver");
 }
 
 void
@@ -148,7 +152,8 @@ class MixedLaplaceProblem
 public:
    MixedLaplaceProblem(const unsigned int nrefine,
                        const unsigned int degree, 
-                       const unsigned int initial_refine);
+                       const unsigned int initial_refine,
+                       const std::string  solver);
    void run(std::vector<int>&    ncell,  
             std::vector<double>& h_array, 
             std::vector<int>&    phi_dofs,
@@ -184,6 +189,7 @@ private:
    const unsigned int degree;
    const unsigned int nrefine;
    unsigned int initial_refine;
+   std::string linear_solver;
 
    Timer               timer;
    double              h_max;
@@ -205,11 +211,13 @@ template <int dim>
 MixedLaplaceProblem<dim>::MixedLaplaceProblem(
       const unsigned int nrefine,
       const unsigned int degree,
-      const unsigned int initial_refine)
+      const unsigned int initial_refine,
+      const std::string  solver)
    :
    degree(degree),
    nrefine(nrefine),
    initial_refine(initial_refine),
+   linear_solver(solver),
    fe(FE_RaviartThomas<dim>(degree), FE_DGQ<dim>(degree)),
    dof_handler(triangulation)
 {}
@@ -507,8 +515,11 @@ MixedLaplaceProblem<dim>::solve(int&    phi_iteration,
                                 double& phi_time, 
                                 double& j_time)
 {
-   solve_schur(phi_iteration, j_iteration, phi_time, j_time);
-   //solve_umfpack(phi_iteration, j_iteration, phi_time, j_time);
+   if(linear_solver == "schur")
+      solve_schur(phi_iteration, j_iteration, phi_time, j_time);
+   else
+      solve_umfpack(phi_iteration, j_iteration, phi_time, j_time);
+
    std::cout << "Time to solve (phi,j,total) = " << phi_time << ", " << j_time
              << ", " << phi_time + j_time << std::endl;
 }
@@ -525,15 +536,15 @@ MixedLaplaceProblem<dim>::compute_errors(double& phi_err, double& j_err)
       const ComponentSelectFunction<dim> scalar_mask(dim, dim + 1);
       Vector<double> cellwise_errors(triangulation.n_active_cells());
       VectorTools::integrate_difference(dof_handler,
-                                       solution,
-                                       exact_solution,
-                                       cellwise_errors,
-                                       quadrature,
-                                       VectorTools::L2_norm,
-                                       &scalar_mask);
+                                        solution,
+                                        exact_solution,
+                                        cellwise_errors,
+                                        quadrature,
+                                        VectorTools::L2_norm,
+                                        &scalar_mask);
       phi_err = VectorTools::compute_global_error(triangulation,
-                                                cellwise_errors,
-                                                VectorTools::L2_norm);
+                                                  cellwise_errors,
+                                                  VectorTools::L2_norm);
    }
 
    {
@@ -541,12 +552,12 @@ MixedLaplaceProblem<dim>::compute_errors(double& phi_err, double& j_err)
                                                      dim + 1);
       Vector<double> cellwise_errors(triangulation.n_active_cells());
       VectorTools::integrate_difference(dof_handler,
-                                       solution,
-                                       exact_solution,
-                                       cellwise_errors,
-                                       quadrature,
-                                       VectorTools::L2_norm,
-                                       &vector_mask);
+                                        solution,
+                                        exact_solution,
+                                        cellwise_errors,
+                                        quadrature,
+                                        VectorTools::L2_norm,
+                                        &vector_mask);
       j_err = VectorTools::compute_global_error(triangulation,
                                                 cellwise_errors,
                                                 VectorTools::L2_norm);
@@ -647,7 +658,8 @@ main()
 
     MixedLaplaceProblem<2> mixed_laplace_problem(nrefine, 
                                                  degree, 
-                                                 initial_refine);
+                                                 initial_refine,
+                                                 prm.get("solver"));
     mixed_laplace_problem.run(ncell, 
                               h_array,
                               p_dofs, 

@@ -1,3 +1,4 @@
 set degree = 1
 set nrefine = 4
 set initial_refine = 5
+set solver = schur
