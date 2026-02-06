@@ -1,5 +1,7 @@
 namespace PrescribedSolution
 {
+   const double pi = M_PI;
+
    //---------------------------------------------------------------------------
    template <int dim>
    class ExactSolution : public Function<dim>
@@ -7,20 +9,49 @@ namespace PrescribedSolution
    public:
       ExactSolution() : Function<dim>(dim+1) {}
 
-      double value(const Point<dim> &p,
-                   const unsigned int component) const override;
+      void vector_value(const Point<dim>& p,
+                        Vector<double>&   value) const override;
+      void vector_gradient(const Point<dim>&           p,
+                           std::vector<Tensor<1,dim>>& value) const override;
    };
 
    template <>
-   double ExactSolution<2>::value(const Point<2> &p,
-                                  const unsigned int component) const
+   void ExactSolution<2>::vector_value(const Point<2>& p,
+                                       Vector<double>& value) const
    {
-      if(component == 0)      // p_x
-         return -2 * M_PI * sin(2 * M_PI * p[0]) * cos(2 * M_PI * p[1]);
-      else if(component == 1) // p_y
-         return -2 * M_PI * cos(2 * M_PI * p[0]) * sin(2 * M_PI * p[1]);
-      else                    // p
-         return cos(2 * M_PI * p[0]) * cos(2 * M_PI * p[1]);
+      const double x = p[0];
+      const double y = p[1];
+      const double cx = cos(2 * pi * x);
+      const double sx = sin(2 * pi * x);
+      const double cy = cos(2 * pi * y);
+      const double sy = sin(2 * pi * y);
+
+      value[0] = -2 * pi * sx * cy;
+      value[1] = -2 * pi * cx * sy;
+      value[2] = cx * cy;
+   }
+
+   template <>
+   void ExactSolution<2>::vector_gradient(const Point<2>&           p,
+                                          std::vector<Tensor<1,2>>& value) const
+   {
+      const double x = p[0];
+      const double y = p[1];
+      const double cx = cos(2 * pi * x);
+      const double sx = sin(2 * pi * x);
+      const double cy = cos(2 * pi * y);
+      const double sy = sin(2 * pi * y);
+      const double a  = pow(2 * pi, 2);
+      const double b  = 2 * pi;
+
+      value[0][0] = -a * cx * cy;
+      value[0][1] =  a * sx * sy;
+
+      value[1][0] =  a * sx * sy;
+      value[1][1] = -a * cx * cy;
+
+      value[2][0] = -b * sx * cy;
+      value[2][1] = -b * cx * sy;
    }
 
    //---------------------------------------------------------------------------
@@ -38,6 +69,6 @@ namespace PrescribedSolution
    double RHSFunction<2>::value(const Point<2> &p,
                                 const unsigned int /*component*/) const
    {
-      return 8 * M_PI * M_PI * cos(2 * M_PI * p[0]) * cos(2 * M_PI * p[1]);
+      return 8 * pi * pi * cos(2 * pi * p[0]) * cos(2 * pi * p[1]);
    }
 } // namespace PrescribedSolution

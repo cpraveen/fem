@@ -159,6 +159,7 @@ public:
             std::vector<int>&    j_dofs, 
             std::vector<double>& phi_error, 
             std::vector<double>& j_error,
+            std::vector<double>& d_error,
             std::vector<int>&    phi_iterations, 
             std::vector<int>&    j_iterations,
             std::vector<double>& phi_time,
@@ -180,8 +181,9 @@ private:
               int&    j_iteration,
               double& phi_time, 
               double& j_time);
-   void compute_errors(double& phi_error, 
-                       double& j_err);
+   void compute_errors(double& phi_err,
+                       double& j_err,
+                       double& d_err);
    void output_results(unsigned int n);
    void refine_grid(unsigned int refine);
 
@@ -526,7 +528,9 @@ MixedLaplaceProblem<dim>::solve(int&    phi_iteration,
 //------------------------------------------------------------------------------
 template <int dim>
 void
-MixedLaplaceProblem<dim>::compute_errors(double& phi_err, double& j_err)
+MixedLaplaceProblem<dim>::compute_errors(double& phi_err,
+                                         double& j_err,
+                                         double& d_err)
 {
    PrescribedSolution::ExactSolution<dim> exact_solution;
    const QGauss<dim> quadrature(degree + 2);
@@ -558,6 +562,22 @@ MixedLaplaceProblem<dim>::compute_errors(double& phi_err, double& j_err)
                                         VectorTools::L2_norm,
                                         &vector_mask);
       j_err = VectorTools::compute_global_error(triangulation,
+                                                cellwise_errors,
+                                                VectorTools::L2_norm);
+   }
+
+   {
+      const ComponentSelectFunction<dim> vector_mask(std::make_pair(0, dim),
+                                                     dim + 1);
+      Vector<double> cellwise_errors(triangulation.n_active_cells());
+      VectorTools::integrate_difference(dof_handler,
+                                        solution,
+                                        exact_solution,
+                                        cellwise_errors,
+                                        quadrature,
+                                        VectorTools::Hdiv_seminorm,
+                                        &vector_mask);
+      d_err = VectorTools::compute_global_error(triangulation,
                                                 cellwise_errors,
                                                 VectorTools::L2_norm);
    }
@@ -602,6 +622,7 @@ MixedLaplaceProblem<dim>::run(std::vector<int>&    ncell,
                               std::vector<int>&    j_dofs,
                               std::vector<double>& phi_error,
                               std::vector<double>& j_error,
+                              std::vector<double>& d_error,
                               std::vector<int>&    phi_iterations,
                               std::vector<int>&    j_iterations,
                               std::vector<double>& phi_time,
@@ -619,7 +640,7 @@ MixedLaplaceProblem<dim>::run(std::vector<int>&    ncell,
       assemble_system();
       solve(phi_iterations[i], j_iterations[i], phi_time[i], j_time[i]);
 
-      compute_errors(phi_error[i], j_error[i]);
+      compute_errors(phi_error[i], j_error[i], d_error[i]);
       output_results(i);
 
       ncell[i] = triangulation.n_active_cells();
@@ -652,8 +673,8 @@ main()
 
     std::vector<int> ncell(nrefine),  p_dofs(nrefine), j_dofs(nrefine),  
                      p_iterations(nrefine), j_iterations(nrefine);
-    std::vector<double> p_error(nrefine),  j_error(nrefine), p_time(nrefine), 
-                        j_time(nrefine), h_array(nrefine);
+    std::vector<double> p_error(nrefine),  j_error(nrefine), d_error(nrefine),
+                        p_time(nrefine), j_time(nrefine), h_array(nrefine);
 
     MixedLaplaceProblem<2> mixed_laplace_problem(nrefine, 
                                                  degree, 
@@ -665,6 +686,7 @@ main()
                               j_dofs, 
                               p_error, 
                               j_error, 
+                              d_error,
                               p_iterations, 
                               j_iterations, 
                               p_time, 
@@ -679,31 +701,35 @@ main()
          convergence_table.add_value("hmax", h_array[n]);
          convergence_table.add_value("time(p)", p_time[n]);
          convergence_table.add_value("iter(p)", p_iterations[n]);
+         convergence_table.add_value("error(p)", p_error[n]);
          convergence_table.add_value("time(j)", j_time[n]);
          convergence_table.add_value("iter(j)", j_iterations[n]);
          convergence_table.add_value("error(j)", j_error[n]);
-         convergence_table.add_value("error(p)", p_error[n]);
+         convergence_table.add_value("error(d)", d_error[n]);
       }
 
       convergence_table.set_precision("error(j)", 3);
       convergence_table.set_scientific("error(j)", true);
       convergence_table.set_precision("error(p)", 3);
       convergence_table.set_scientific("error(p)", true);
+      convergence_table.set_precision("error(d)", 3);
+      convergence_table.set_scientific("error(d)", true);
 
-      convergence_table.set_tex_caption("cells", "\\# cells");
-      convergence_table.set_tex_caption("dofs(p)", "\\# dofs(p)");
-      convergence_table.set_tex_caption("dofs(j)", "\\# dofs(j)");
-      convergence_table.set_tex_caption("hmax", "\\# h-max");
-      convergence_table.set_tex_caption("time(p)", "\\# time(p)");
-      convergence_table.set_tex_caption("iter(p)", "\\# iterations of p");
-      convergence_table.set_tex_caption("time(j)", "\\# time(j)");
-      convergence_table.set_tex_caption("iter(j)", "\\# iterations of j");
-      convergence_table.set_tex_caption("error(j)", "j-$L^2$-error");
-      convergence_table.set_tex_caption("error(p)", "p-$L^2$-error");
+      convergence_table.set_tex_caption("cells", "cells");
+      convergence_table.set_tex_caption("dofs(p)", "dofs(p)");
+      convergence_table.set_tex_caption("dofs(j)", "dofs(j)");
+      convergence_table.set_tex_caption("hmax", "hmax");
+      convergence_table.set_tex_caption("time(p)", "time(p)");
+      convergence_table.set_tex_caption("iter(p)", "iter(p)");
+      convergence_table.set_tex_caption("error(p)", "error(p)");
+      convergence_table.set_tex_caption("time(j)", "time(j)");
+      convergence_table.set_tex_caption("iter(j)", "iter(j)");
+      convergence_table.set_tex_caption("error(j)", "error(j)");
+      convergence_table.set_tex_caption("error(d)", "error(div)");
 
       convergence_table.set_tex_format("cells", "r");
-      convergence_table.set_tex_format("dofs(p)",  "r");
-      convergence_table.set_tex_format("dofs(j)",  "r");
+      convergence_table.set_tex_format("dofs(p)", "r");
+      convergence_table.set_tex_format("dofs(j)", "r");
       convergence_table.set_tex_format("hmax",  "r");
       convergence_table.set_tex_format("time(p)", "r");
       convergence_table.set_tex_format("iter(p)",  "r");
@@ -714,13 +740,15 @@ main()
       ("error(j)", ConvergenceTable::reduction_rate_log2);
       convergence_table.evaluate_convergence_rates
       ("error(p)", ConvergenceTable::reduction_rate_log2);
+      convergence_table.evaluate_convergence_rates
+      ("error(d)", ConvergenceTable::reduction_rate_log2);
 
       std::cout << std::endl;
       convergence_table.write_text(std::cout);
 
-      std::ofstream tex_file("hdiv_" + problem + ".tex");
+      std::ofstream tex_file(problem + ".tex");
       convergence_table.write_tex(tex_file);
-      std::ofstream text_file("hdiv_" + problem + ".txt");
+      std::ofstream text_file(problem + ".txt");
       convergence_table.write_text(text_file);
    }
 
