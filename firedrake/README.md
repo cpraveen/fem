@@ -16,6 +16,7 @@ For instructions on how to install Firedrake on colab, see [fem-on-colab.github.
 
 ## Resources
 
+* [Jupyter notebooks](https://www.firedrakeproject.org/notebooks.html), [open in colab](https://colab.research.google.com/github/firedrakeproject/notebooks)
 * P. Farrell: [slides](https://pefarrell.org/files/icerm2024.pdf), [codes](https://github.com/pefarrell/icerm2024)
 
 ## Installing Firedrake
