@@ -1,3 +1,3 @@
 set degree = 1
-set nrefine = 1
-set initial_refine = 6
+set nrefine = 4
+set initial_refine = 5

@@ -516,25 +516,41 @@ MixedLaplaceProblem<dim>::solve(int&    phi_iteration,
 //------------------------------------------------------------------------------
 template <int dim>
 void
-MixedLaplaceProblem<dim>::compute_errors(double& phi_error, double& j_err)
+MixedLaplaceProblem<dim>::compute_errors(double& phi_err, double& j_err)
 {
-   /*const ComponentSelectFunction<dim> velocity_mask(std::make_pair(0, dim),
-                                                    dim + 1);
-   PrescribedSolution::JFunction<dim> jfunc(Ha, Re);
-   Vector<double> cellwise_errors(triangulation.n_active_cells());
-   const QTrapezoid<1> q_trapez;
-   const QIterated<dim> quadrature(q_trapez, degree + 2);
+   PrescribedSolution::ExactSolution<dim> exact_solution;
+   const QGauss<dim> quadrature(degree + 2);
 
-   VectorTools::integrate_difference(dof_handler, 
-                                     solution, 
-                                     jfunc,
-                                     cellwise_errors, 
-                                     quadrature,
-                                     VectorTools::L2_norm, 
-                                     &velocity_mask);
-   j_err = VectorTools::compute_global_error(triangulation, 
-                                             cellwise_errors, 
-                                             VectorTools::L2_norm);*/
+   {
+      const ComponentSelectFunction<dim> scalar_mask(dim, dim + 1);
+      Vector<double> cellwise_errors(triangulation.n_active_cells());
+      VectorTools::integrate_difference(dof_handler,
+                                       solution,
+                                       exact_solution,
+                                       cellwise_errors,
+                                       quadrature,
+                                       VectorTools::L2_norm,
+                                       &scalar_mask);
+      phi_err = VectorTools::compute_global_error(triangulation,
+                                                cellwise_errors,
+                                                VectorTools::L2_norm);
+   }
+
+   {
+      const ComponentSelectFunction<dim> vector_mask(std::make_pair(0, dim),
+                                                     dim + 1);
+      Vector<double> cellwise_errors(triangulation.n_active_cells());
+      VectorTools::integrate_difference(dof_handler,
+                                       solution,
+                                       exact_solution,
+                                       cellwise_errors,
+                                       quadrature,
+                                       VectorTools::L2_norm,
+                                       &vector_mask);
+      j_err = VectorTools::compute_global_error(triangulation,
+                                                cellwise_errors,
+                                                VectorTools::L2_norm);
+   }
 }
 
 //------------------------------------------------------------------------------
