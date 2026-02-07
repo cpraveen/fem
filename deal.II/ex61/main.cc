@@ -1,7 +1,7 @@
 /* Write
      -Laplace(p) = f
    as
-      J       = grad(p) 
+      J       = grad(p)
       -div(J) = f
    Weak formulation
      (J, Jt) + (div(Jt),p) = 0
@@ -20,7 +20,9 @@
 #include <deal.II/lac/block_sparse_matrix.h>
 #include <deal.II/lac/solver_cg.h>
 #include <deal.II/lac/sparse_direct.h>
+#include <deal.II/lac/solver_gmres.h>
 #include <deal.II/lac/precondition.h>
+#include <deal.II/lac/sparse_ilu.h>
 #include <deal.II/lac/linear_operator.h>
 #include <deal.II/lac/packaged_operation.h>
 
@@ -59,7 +61,6 @@ const std::string problem = "Neumann";
 #else
 #error "Unknown PROBLEM"
 #endif
-
 
 //------------------------------------------------------------------------------
 template <int dim>
@@ -131,9 +132,13 @@ ParameterReader::declare_parameters()
                     "4",
                     Patterns::Integer(0),
                     "Initial refinement of mesh");
+  prm.declare_entry("perturb grid",
+                    "0",
+                    Patterns::Double(0,1),
+                    "Perturb grid");
   prm.declare_entry("solver",
                     "schur",
-                    Patterns::Selection("schur|umfpack"),
+                    Patterns::Selection("schur|umfpack|gmres"),
                     "Linear solver");
 }
 
@@ -150,17 +155,18 @@ class MixedLaplaceProblem
 {
 public:
    MixedLaplaceProblem(const unsigned int nrefine,
-                       const unsigned int degree, 
+                       const unsigned int degree,
                        const unsigned int initial_refine,
+                       const double       perturb,
                        const std::string  solver);
-   void run(std::vector<int>&    ncell,  
-            std::vector<double>& h_array, 
+   void run(std::vector<int>&    ncell,
+            std::vector<double>& h_array,
             std::vector<int>&    phi_dofs,
-            std::vector<int>&    j_dofs, 
-            std::vector<double>& phi_error, 
+            std::vector<int>&    j_dofs,
+            std::vector<double>& phi_error,
             std::vector<double>& j_error,
             std::vector<double>& d_error,
-            std::vector<int>&    phi_iterations, 
+            std::vector<int>&    phi_iterations,
             std::vector<int>&    j_iterations,
             std::vector<double>& phi_time,
             std::vector<double>& j_time);
@@ -169,17 +175,21 @@ private:
    void make_grid(const unsigned int refine);
    void setup_system();
    void assemble_system();
-   void solve_schur(int&    phi_iteration, 
-                    int&    j_iteration, 
+   void solve_schur(int&    phi_iteration,
+                    int&    j_iteration,
                     double& phi_time,
                     double& j_time);
-   void solve_umfpack(int&    phi_iteration, 
+   void solve_umfpack(int&    phi_iteration,
                       int&    j_iteration,
-                      double& phi_time, 
+                      double& phi_time,
                       double& j_time);
-   void solve(int&    phi_iteration, 
+   void solve_gmres(int&    phi_iteration,
+                    int&    j_iteration,
+                    double& phi_time,
+                    double& j_time);
+   void solve(int&    phi_iteration,
               int&    j_iteration,
-              double& phi_time, 
+              double& phi_time,
               double& j_time);
    void compute_errors(double& phi_err,
                        double& j_err,
@@ -189,8 +199,9 @@ private:
 
    const unsigned int degree;
    const unsigned int nrefine;
-   unsigned int initial_refine;
-   std::string linear_solver;
+   const unsigned int initial_refine;
+   const double       perturb;
+   const std::string  linear_solver;
 
    Timer               timer;
    double              h_max;
@@ -213,11 +224,13 @@ MixedLaplaceProblem<dim>::MixedLaplaceProblem(
       const unsigned int nrefine,
       const unsigned int degree,
       const unsigned int initial_refine,
+      const double       perturb,
       const std::string  solver)
    :
    degree(degree),
    nrefine(nrefine),
    initial_refine(initial_refine),
+   perturb(perturb),
    linear_solver(solver),
    fe(FE_RaviartThomas<dim>(degree), FE_DGQ<dim>(degree)),
    dof_handler(triangulation)
@@ -231,6 +244,25 @@ MixedLaplaceProblem<dim>::make_grid(const unsigned int refine)
    triangulation.clear();
    GridGenerator::hyper_cube(triangulation, 0.0, 1.0, false);
    triangulation.refine_global(refine);
+
+   if(perturb <= 0.0) return;
+   std::cout << "Randomly perturbing grid with amplitude "
+             << perturb << std::endl;
+
+   // Randomly perturb the grid
+   const auto h = 1.0 / pow(2, refine);
+   auto v = triangulation.begin_vertex();
+   for(; v < triangulation.end_vertex(); ++v)
+   {
+      auto& p = v->vertex();
+      if(p[0] > 0 && p[0] < 1 && p[1] > 0 && p[1] < 1)
+      {
+         double a = ((double)rand()) / RAND_MAX;
+         double b = ((double)rand()) / RAND_MAX;
+         p[0] +=  perturb * (2 * a - 1) * h;
+         p[1] +=  perturb * (2 * b - 1) * h;
+      }
+   }
 }
 
 //------------------------------------------------------------------------------
@@ -431,9 +463,9 @@ MixedLaplaceProblem<dim>::assemble_system()
 //------------------------------------------------------------------------------
 template <int dim>
 void
-MixedLaplaceProblem<dim>::solve_schur(int&    phi_iteration, 
+MixedLaplaceProblem<dim>::solve_schur(int&    phi_iteration,
                                       int&    j_iteration,
-                                      double& phi_time,  
+                                      double& phi_time,
                                       double& j_time)
 {
    const auto& M = system_matrix.block(0, 0);
@@ -490,9 +522,9 @@ MixedLaplaceProblem<dim>::solve_schur(int&    phi_iteration,
 //------------------------------------------------------------------------------
 template <int dim>
 void
-MixedLaplaceProblem<dim>::solve_umfpack(int&    phi_iteration, 
+MixedLaplaceProblem<dim>::solve_umfpack(int&    phi_iteration,
                                         int&    j_iteration,
-                                        double& phi_time,  
+                                        double& phi_time,
                                         double& j_time)
 {
    timer.start();
@@ -511,15 +543,43 @@ MixedLaplaceProblem<dim>::solve_umfpack(int&    phi_iteration,
 //------------------------------------------------------------------------------
 template <int dim>
 void
-MixedLaplaceProblem<dim>::solve(int&    phi_iteration, 
+MixedLaplaceProblem<dim>::solve_gmres(int&    phi_iteration,
+                                      int&    j_iteration,
+                                      double& phi_time,
+                                      double& j_time)
+{
+   timer.start();
+   SolverControl solver_control(1000, 1e-6 * system_rhs.l2_norm());
+   SolverGMRES<BlockVector<double>>::AdditionalData additional_data;
+   additional_data.max_basis_size = 100;
+   SolverGMRES<BlockVector<double>> solver(solver_control, additional_data);
+
+   // TODO: Not able to use ILU with BlockMatrix/Vector
+   //SparseILU<double> preconditioner;
+   //preconditioner.initialize(system_matrix);
+
+   solver.solve(system_matrix, solution, system_rhs, PreconditionIdentity());
+
+   phi_iteration = 0;
+   j_iteration = 0;
+   phi_time = timer.last_wall_time();
+   j_time = 0.0;
+}
+
+//------------------------------------------------------------------------------
+template <int dim>
+void
+MixedLaplaceProblem<dim>::solve(int&    phi_iteration,
                                 int&    j_iteration,
-                                double& phi_time, 
+                                double& phi_time,
                                 double& j_time)
 {
    if(linear_solver == "schur")
       solve_schur(phi_iteration, j_iteration, phi_time, j_time);
-   else
+   else if(linear_solver == "umfpack")
       solve_umfpack(phi_iteration, j_iteration, phi_time, j_time);
+   else
+      solve_gmres(phi_iteration, j_iteration, phi_time, j_time);
 
    std::cout << "Time to solve (phi,j,total) = " << phi_time << ", " << j_time
              << ", " << phi_time + j_time << std::endl;
@@ -671,25 +731,26 @@ main()
     unsigned int initial_refine = prm.get_integer("initial_refine");
     std::cout << "Using FE = RT(" << degree << "), DG(" << degree << ")\n";
 
-    std::vector<int> ncell(nrefine),  p_dofs(nrefine), j_dofs(nrefine),  
+    std::vector<int> ncell(nrefine),  p_dofs(nrefine), j_dofs(nrefine),
                      p_iterations(nrefine), j_iterations(nrefine);
     std::vector<double> p_error(nrefine),  j_error(nrefine), d_error(nrefine),
                         p_time(nrefine), j_time(nrefine), h_array(nrefine);
 
-    MixedLaplaceProblem<2> mixed_laplace_problem(nrefine, 
-                                                 degree, 
+    MixedLaplaceProblem<2> mixed_laplace_problem(nrefine,
+                                                 degree,
                                                  initial_refine,
+                                                 prm.get_double("perturb grid"),
                                                  prm.get("solver"));
-    mixed_laplace_problem.run(ncell, 
+    mixed_laplace_problem.run(ncell,
                               h_array,
-                              p_dofs, 
-                              j_dofs, 
-                              p_error, 
-                              j_error, 
+                              p_dofs,
+                              j_dofs,
+                              p_error,
+                              j_error,
                               d_error,
-                              p_iterations, 
-                              j_iterations, 
-                              p_time, 
+                              p_iterations,
+                              j_iterations,
+                              p_time,
                               j_time);
 
       ConvergenceTable  convergence_table;
