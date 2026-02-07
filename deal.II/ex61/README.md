@@ -1,6 +1,43 @@
 # H(div) method for Poisson equation
 
-By default, it generates Cartesian grids. You can randomly perturb the grid to get quad elements by setting, e.g.,
+Laplace equation
+
+$$
+-\Delta p = f
+$$
+
+is written as first order system
+
+$$
+J = \nabla p, \qquad \nabla \cdot J = -f
+$$
+
+**Dirichlet problem**: weakly imposed
+
+$$
+p = 0 \quad \textrm{on} \quad \partial\Omega
+$$
+
+**Neumann problem**: strongly imposed
+
+$$
+J \cdot n = 0 \quad \textrm{on} \quad \partial\Omega
+$$
+
+together with constraint
+
+$$
+\int_{\partial\Omega}p ds = 0
+$$
+
+**Weak formulation**: in either case it is
+
+$$
+(J, \tilde{J}) + (\nabla\cdot\tilde{J},p) = 0, \qquad
+(\nabla\cdot J, \tilde{p}) = -(f, \tilde{p})
+$$
+
+By default, the code generates Cartesian grids. You can randomly perturb the grid to get quad elements by setting, e.g.,
 
 ```text
 set perturb grid = 0.1
@@ -10,7 +47,7 @@ Increasing this value increases the amount of perturbation.
 
 Observe the convergence rates on Cartesian and quad grids.
 
-> Currently gmres is used without preconditioner since ILU does not work with BlockVector. TODO: Switch to Petsc or Trilinos solvers.
+> The Schur solver is based on [step-20](https://dealii.org/current/doxygen/deal.II/step_20.html), see step-20 documentation for a discussion of its limitations. Currently gmres is used without preconditioner since ILU does not work with BlockVector. TODO: Switch to Petsc or Trilinos solvers.
 
 ## Dirichlet problem
 
