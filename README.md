@@ -56,3 +56,9 @@ Some of the examples require additional software.
 * [Gmsh](http://gmsh.info): used for generating unstructured grids
 * [VisIt](https://wci.llnl.gov/simulation/computer-codes/visit/executables): used to visualize solutions 
 * [ParaView](https://www.paraview.org): another software to visualize solutions
+
+---
+
+* `Origin`: https://codeberg.org/cpraveen/fem
+* `Mirror`: https://git.sr.ht/~cpraveen/fem
+* `Mirror`: https://github.com/cpraveen/fem
