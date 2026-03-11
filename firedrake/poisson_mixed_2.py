@@ -46,6 +46,7 @@ params2 = { "ksp_type": "gmres",
             "ksp_monitor": None,
             "pc_type": "fieldsplit",
             "pc_fieldsplit_type": "schur",
+            "pc_fieldsplit_schur_fact_type": "lower",
             "fieldsplit_0": 
             {
                 "ksp_type": "preonly",
@@ -65,6 +66,7 @@ params3 = { "ksp_type": "gmres",
             "ksp_monitor": None,
             "pc_type": "fieldsplit",
             "pc_fieldsplit_type": "schur",
+            "pc_fieldsplit_schur_fact_type": "lower",
             "fieldsplit_0": 
             {
                 "ksp_type": "preonly",
@@ -84,6 +86,7 @@ params4 = { "ksp_type": "gmres",
             "ksp_monitor": None,
             "pc_type": "fieldsplit",
             "pc_fieldsplit_type": "schur",
+            "pc_fieldsplit_schur_fact_type": "lower",
             "fieldsplit_0": 
             {
                 "ksp_type": "preonly",
