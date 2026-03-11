@@ -58,9 +58,28 @@ params2 = { "ksp_type": "gmres",
             }
           }
 
+# Field split:
+# M : ILU, S : CG
+params3 = { "ksp_type": "gmres",
+            "ksp_view": None,
+            "ksp_monitor": None,
+            "pc_type": "fieldsplit",
+            "pc_fieldsplit_type": "schur",
+            "fieldsplit_0": 
+            {
+                "ksp_type": "preonly",
+                "pc_type": "ilu",
+            },
+            "fieldsplit_1": {
+                "ksp_type": "cg",
+                "ksp_max_iter": 30,
+                "pc_type": "none",
+            }
+          }
+
 # Fieldsplit
 # M : jacobi, S : CG
-params3 = { "ksp_type": "gmres",
+params4 = { "ksp_type": "gmres",
             "ksp_view": None,
             "ksp_monitor": None,
             "pc_type": "fieldsplit",
@@ -77,7 +96,7 @@ params3 = { "ksp_type": "gmres",
             }
           }
 
-params = [params0, params1, params2, params3]
+params = [params0, params1, params2, params3, params4]
 
 problem = LinearVariationalProblem(a, L, w, bcs=[bc0,bc1])
 solver = LinearVariationalSolver(problem, solver_parameters=params[iparams])
