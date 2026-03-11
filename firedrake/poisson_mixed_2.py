@@ -60,38 +60,27 @@ params2 = { "ksp_type": "gmres",
 
 # Fieldsplit
 # M : jacobi, S : CG
-# TODO: Not working as expected
 params3 = { "ksp_type": "gmres",
             "ksp_view": None,
             "ksp_monitor": None,
             "pc_type": "fieldsplit",
             "pc_fieldsplit_type": "schur",
-            "pc_fieldsplit_schur_precondition": "selfp",
             "fieldsplit_0": 
             {
                 "ksp_type": "preonly",
                 "pc_type": "jacobi",
             },
             "fieldsplit_1": {
-                "ksp_type": "preonly",
-                "pc_type": "ksp",
-                "pc_ksp_type": "cg",
-                "pc_pc_type": "none",
-                "pc_ksp_max_iter": 30,
+                "ksp_type": "cg",
+                "ksp_max_iter": 30,
+                "pc_type": "none",
             }
           }
 
-if iparams == 0:
-    params = params0
-elif iparams == 1:
-    params = params1
-elif iparams == 2:
-    params = params2
-else:
-    params = params3
+params = [params0, params1, params2, params3]
 
 problem = LinearVariationalProblem(a, L, w, bcs=[bc0,bc1])
-solver = LinearVariationalSolver(problem, solver_parameters=params)
+solver = LinearVariationalSolver(problem, solver_parameters=params[iparams])
 solver.solve()
 
 sigma, u = w.subfunctions
