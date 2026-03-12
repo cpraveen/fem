@@ -18,6 +18,8 @@ Open and see `error.pdf` for a table of error versus mesh size and corresponding
 
 The solution error as a function of x,y is saved into different files as the grid is refined. You can open the error-##.vtu files in visit and see the error distribution in the domain.
 
+> The solution is proportional to rhs function. CG without preconditioner will converge faster than with SSOR preconditioner !!! Try with `PreconditionIdentity()`.
+
 ## Exercise: Solve on triangular grid
 
 Modify this example to solve on triangular grids. See ex02b for an example of how to do this.

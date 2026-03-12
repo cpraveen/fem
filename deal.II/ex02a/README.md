@@ -8,6 +8,8 @@ make
 ./demo
 ```
 
+> Because solution is proportional to rhs function, CG converges in just a few iterations.
+
 ## Run the problem in 3d
 
 To run in 3-d, change the problem in `main` function as
