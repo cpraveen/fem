@@ -33,7 +33,7 @@ params0 = { "ksp_view": None,
           }
 
 # GMRES + ILU
-params1 = { "ksp_type": "gmres", 
+params1 = { "ksp_type": "gmres",
             "ksp_view": None,
             "ksp_monitor": None,
             "pc_type": "ilu",
@@ -47,14 +47,14 @@ params2 = { "ksp_type": "gmres",
             "pc_type": "fieldsplit",
             "pc_fieldsplit_type": "schur",
             "pc_fieldsplit_schur_fact_type": "lower",
-            "fieldsplit_0": 
+            "fieldsplit_0":
             {
                 "ksp_type": "preonly",
                 "pc_type": "lu",
             },
             "fieldsplit_1": {
                 "ksp_type": "cg",
-                "ksp_max_iter": 30,
+                "ksp_max_it": 30,
                 "pc_type": "none",
             }
           }
@@ -67,14 +67,14 @@ params3 = { "ksp_type": "gmres",
             "pc_type": "fieldsplit",
             "pc_fieldsplit_type": "schur",
             "pc_fieldsplit_schur_fact_type": "lower",
-            "fieldsplit_0": 
+            "fieldsplit_0":
             {
                 "ksp_type": "preonly",
                 "pc_type": "ilu",
             },
             "fieldsplit_1": {
                 "ksp_type": "cg",
-                "ksp_max_iter": 30,
+                "ksp_max_it": 30,
                 "pc_type": "none",
             }
           }
@@ -87,14 +87,14 @@ params4 = { "ksp_type": "gmres",
             "pc_type": "fieldsplit",
             "pc_fieldsplit_type": "schur",
             "pc_fieldsplit_schur_fact_type": "lower",
-            "fieldsplit_0": 
+            "fieldsplit_0":
             {
                 "ksp_type": "preonly",
                 "pc_type": "jacobi",
             },
             "fieldsplit_1": {
                 "ksp_type": "cg",
-                "ksp_max_iter": 30,
+                "ksp_max_it": 30,
                 "pc_type": "none",
             }
           }
