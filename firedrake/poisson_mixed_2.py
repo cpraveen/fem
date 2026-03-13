@@ -54,7 +54,7 @@ params2 = { "ksp_type": "gmres",
             },
             "fieldsplit_1": {
                 "ksp_type": "cg",
-                "ksp_max_it": 30,
+                "ksp_rtol": 1e-2,
                 "pc_type": "none",
             }
           }
@@ -74,7 +74,7 @@ params3 = { "ksp_type": "gmres",
             },
             "fieldsplit_1": {
                 "ksp_type": "cg",
-                "ksp_max_it": 30,
+                "ksp_rtol": 1e-2,
                 "pc_type": "none",
             }
           }
@@ -94,7 +94,7 @@ params4 = { "ksp_type": "gmres",
             },
             "fieldsplit_1": {
                 "ksp_type": "cg",
-                "ksp_max_it": 30,
+                "ksp_rtol": 1e-2,
                 "pc_type": "none",
             }
           }
