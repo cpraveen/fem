@@ -46,7 +46,7 @@ f = lambda x,y: np.sin(2.0*np.pi*x) * np.cos(2.0*np.pi*y)
 # Exact solution
 uexact = lambda x,y: (0.5/(2.0*np.pi)**2) * np.sin(2.0*np.pi*x) * np.cos(2.0*np.pi*y)
 
-b = np.zeros(npoints)   # rhs vector
+b = np.zeros(npoints)             # rhs vector
 A = lil_matrix((npoints,npoints)) # system matrix
 
 # Loop over cells and assemble

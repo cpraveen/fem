@@ -48,7 +48,7 @@ f = lambda x,y: 1.0
 # boundary value on inner boundary
 ubdry = lambda x,y: 0.0
 
-b = np.zeros(npoints)   # rhs vector
+b = np.zeros(npoints)             # rhs vector
 A = lil_matrix((npoints,npoints)) # system matrix
 
 # Loop over cells and assemble

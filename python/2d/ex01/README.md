@@ -24,6 +24,15 @@ The code also shows how to make use of mesh object and how to draw contour plots
 
 ## Solve the Poisson equation
 
+We solve the Dirichlet problem
+
+```text
+-Laplce(u) = f  in O = [0,1] x [0,1]
+         u = g  on dO
+```
+
+Run
+
 ```bash
 python poisson2d.py
 ```

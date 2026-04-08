@@ -3,9 +3,9 @@
 Solve
 
 ```
-   -Laplace(u)  = 1,   {1 < r < 2}
-            u   = 0,   {r = 1}
-          du/dn = 0,   {r = 2}
+   -Laplace(u)  = 1,   in {1 < r < 2}
+            u   = 0,   on {r = 1}
+          du/dn = 0,   on {r = 2}
 ```
 
 Generate mesh
