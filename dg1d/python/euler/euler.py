@@ -19,7 +19,8 @@ parser.add_argument('-cfl', type=float, help='CFL number', default=0.9)
 parser.add_argument('-Tf', type=float, help='Final time', default=0.0)
 parser.add_argument('-plot_freq', type=int, help='Frequency to plot solution', 
                     default=5)
-parser.add_argument('-ic', choices=('sod','lax'), help='Initial condition', 
+parser.add_argument('-ic', choices=('sod','lax','shuosher'), 
+                    help='Initial condition', 
                     default='sod')
 parser.add_argument('-char_lim', type=int, help='Characteristic limiter', 
                     default=0)
@@ -31,6 +32,8 @@ if args.ic == 'sod':
     from sod import *
 elif args.ic == 'lax':
     from lax import *
+elif args.ic == 'shuosher':
+    from shuosher import *
 else:
     print('Unknown initial condition')
     exit()

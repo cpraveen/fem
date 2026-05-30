@@ -27,3 +27,16 @@ python euler.py -h
 ```
 
 for available options.
+
+## Sod test case
+
+```shell
+python euler.py -ncell 100 -degree 2 -Tf 0.2 -ic sod -char_lim 1 -tvbM 100
+```
+
+## Shu-Osher test
+
+```shell
+python euler.py -ncell 400 -degree 2 -Tf 1.8 -ic shuosher -char_lim 1 \
+                -tvbM 100 -plot_freq 100
+```
