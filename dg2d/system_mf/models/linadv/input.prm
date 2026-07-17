@@ -1,0 +1,9 @@
+set degree         = 1
+set basis          = gl
+set mapping        = cartesian
+set grid           = 100,100
+set output step    = 100
+set cfl            = 0.25
+set limiter        = none    # none,tvd
+set numflux        = upwind  # see pde.h for available fluxes
+set tvb parameter  = 100.0
