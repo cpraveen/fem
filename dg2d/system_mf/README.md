@@ -22,20 +22,22 @@ make
 
 ```shell
 cd fem/dg2d/system_mf
-ln -sf ./models/euler/pde.h pde.h
-ln -sf ./models/euler/isentropic_vortex/problem.h problem.h
+ln -sf ./models/euler/pde.h
+ln -sf ./models/euler/isentropic_vortex/problem.h
 make
-mpirun -np 2 ./main input_euler.prm
+cd models/euler/isentropic_vortex
+mpirun -np 4 ../../../main input.prm
 ```
 
 ## Run Linear advection (rotating gaussian)
 
 ```shell
 cd fem/dg2d/system_mf
-ln -sf ./models/linadv/pde.h pde.h
+ln -sf ./models/linadv/pde.h
 ln -sf ./models/linadv/rotate.h problem.h
 make
-mpirun -np 2 ./main input_linadv.prm
+cd models/linadv
+mpirun -np 4 ../../main input.prm
 ```
 
 ## Viewing results
