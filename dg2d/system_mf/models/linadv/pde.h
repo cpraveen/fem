@@ -4,6 +4,7 @@
 #ifndef __PDE_H__
 #define __PDE_H__
 
+#include <deal.II/base/vectorization.h>
 #include <deal.II/numerics/data_postprocessor.h>
 
 using namespace dealii;
@@ -17,13 +18,13 @@ std::map<std::string, FluxType> FluxTypeList{{"upwind", FluxType::upwind},
                                              {"none",   FluxType::none}};
 
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, typename Number>
 struct FluxData
 {
-   Point<dim> p;       // coordinates
-   double t;           // time
-   Vector<double>* ul; // left  cell average
-   Vector<double>* ur; // right cell average
+   Point<dim, Number> p;                                 // quadrature point
+   double t;                                             // time
+   Tensor<1, nvar, Number> ul;                           // left  cell average
+   Tensor<1, nvar, Number> ur;                           // right cell average
 };
 
 //------------------------------------------------------------------------------
@@ -31,8 +32,8 @@ struct FluxData
 //------------------------------------------------------------------------------
 namespace ProblemData
 {
-   template <int dim>
-   extern void velocity(const Point<dim>& p, Tensor<1,dim>& v);
+   template <int dim, typename Number>
+   void velocity(const Point<dim, Number>& p, Tensor<1, dim, Number>& v);
 }
 
 //------------------------------------------------------------------------------
@@ -42,29 +43,37 @@ namespace PDE
    const std::string name = "2D linear advection equation";
    using ProblemData::velocity;
 
+   template <int dim, typename Number>
+   using FluxMatrix = Tensor<1, dim, Number>;
+
+   template <int dim, typename Number>
+   using NormalFlux = Number;
+
    //---------------------------------------------------------------------------
-   template <int dim>
-   void
-   upwind_flux(const Vector<double>&  ul,
-               const Vector<double>&  ur,
-               const Tensor<1, dim>&  normal,
-               const FluxData<dim>&   data,
-               Vector<double>&        flux)
+   template <int dim, typename Number>
+   inline DEAL_II_ALWAYS_INLINE void
+   upwind_flux(const Number&                            ul,
+               const Number&                            ur,
+               const Tensor<1, dim, Number>&            normal,
+               const FluxData<dim, Number>&             data,
+               NormalFlux<dim, Number>&                 flux)
    {
-      Tensor<1,dim> vel;
+      Tensor<1, dim, Number> vel;
       velocity(data.p, vel);
-      const auto vn = vel * normal;
-      flux[0] = vn * ((vn > 0.0) ? ul[0] : ur[0]);
+      const Number vn = vel * normal;
+      const Number u = compare_and_apply_mask<SIMDComparison::greater_than>(
+         vn, Number(0.0), ul, ur);
+      flux = vn * u;
    }
 
    //---------------------------------------------------------------------------
    // Following functions are directly called from DG solver
    //---------------------------------------------------------------------------
-   template <int dim>
-   void
-   max_speed(const Vector<double>& /*u*/,
-             const Point<dim>&     p,
-             Tensor<1, dim>&       speed)
+   template <int dim, typename Number>
+   inline DEAL_II_ALWAYS_INLINE void
+   max_speed(const Tensor<1, nvar, Number>& /*u*/,
+             const Point<dim, Number>&       p,
+             Tensor<1, dim, Number>&         speed)
    {
       velocity(p, speed);
    }
@@ -72,29 +81,29 @@ namespace PDE
    //---------------------------------------------------------------------------
    // Flux of the PDE model: f(u,x)
    //---------------------------------------------------------------------------
-   template <int dim>
-   void
-   physical_flux(const Vector<double>&       u,
-                 const FluxData<dim>&        data,
-                 ndarray<double, nvar, dim>& flux)
+   template <int dim, typename Number>
+   inline DEAL_II_ALWAYS_INLINE void
+   physical_flux(const Number&                         u,
+                 const FluxData<dim, Number>&          data,
+                 FluxMatrix<dim, Number>&              flux)
    {
-      Tensor<1,dim> vel;
+      Tensor<1, dim, Number> vel;
       velocity(data.p, vel);
-      flux[0][0] = vel[0] * u[0];
-      flux[0][1] = vel[1] * u[0];
+      for(unsigned int d = 0; d < dim; ++d)
+         flux[d] = vel[d] * u;
    }
 
    //---------------------------------------------------------------------------
    // Compute flux across cell faces
    //---------------------------------------------------------------------------
-   template <int dim>
-   void
-   numerical_flux(const FluxType        flux_type,
-                  const Vector<double>& ul,
-                  const Vector<double>& ur,
-                  const Tensor<1, dim>& normal,
-                  const FluxData<dim>&  data,
-                  Vector<double>&       flux)
+   template <int dim, typename Number>
+   inline DEAL_II_ALWAYS_INLINE void
+   numerical_flux(const FluxType                            flux_type,
+                  const Number&                             ul,
+                  const Number&                             ur,
+                  const Tensor<1, dim, Number>&             normal,
+                  const FluxData<dim, Number>&              data,
+                  NormalFlux<dim, Number>&                  flux)
    {
       switch(flux_type)
       {
@@ -108,32 +117,15 @@ namespace PDE
    }
 
    //---------------------------------------------------------------------------
-   template <int dim>
-   void
-   boundary_flux(const Vector<double>& ul,
-                 const Vector<double>& ur,
-                 const Tensor<1, dim>& normal,
-                 const FluxData<dim>&  data,
-                 Vector<double>&       flux)
+   template <int dim, typename Number>
+   inline DEAL_II_ALWAYS_INLINE void
+   boundary_flux(const Number&                            ul,
+                 const Number&                            ur,
+                 const Tensor<1, dim, Number>&            normal,
+                 const FluxData<dim, Number>&             data,
+                 NormalFlux<dim, Number>&                 flux)
    {
       upwind_flux(ul, ur, normal, data, flux);
-   }
-
-   //---------------------------------------------------------------------------
-   void
-   char_mat(const Vector<double>& /*sol*/,
-            const Point<2>&       /*p*/,
-            const Tensor<1, 2>&   /*ex*/,
-            const Tensor<1, 2>&   /*ey*/,
-            FullMatrix<double>&   Rx,
-            FullMatrix<double>&   Lx,
-            FullMatrix<double>&   Ry,
-            FullMatrix<double>&   Ly)
-   {
-      Rx[0][0] = 1.0;
-      Ry[0][0] = 1.0;
-      Lx[0][0] = 1.0;
-      Ly[0][0] = 1.0;
    }
 
    //---------------------------------------------------------------------------

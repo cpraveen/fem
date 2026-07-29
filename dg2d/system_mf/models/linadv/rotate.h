@@ -13,10 +13,11 @@ namespace ProblemData
    const bool periodic_y = true;
 
    //---------------------------------------------------------------------------
-   // Velocity field
+   // Velocity field (vectorized - handles all Number types including scalar)
    //---------------------------------------------------------------------------
-   template <>
-   void velocity(const Point<2>& p, Tensor<1,2>& v)
+   template <int dim, typename Number>
+   inline DEAL_II_ALWAYS_INLINE void
+   velocity(const Point<dim, Number>& p, Tensor<1, dim, Number>& v)
    {
       v[0] = -p[1];
       v[1] =  p[0];
@@ -31,12 +32,15 @@ struct Problem : ProblemBase<dim>
    const double x0 = 0.5;
    const double y0 = 0.0;
 
-   void initial_value(const Point<dim>& p,
-                      Vector<double>&   u) const override
+   void initial_value(const Point<dim> &p, Vector<double> &u) const override 
    {
-      const double x = p[0] - x0;
-      const double y = p[1] - y0;
-      u[0] = 1.0 + exp(-alpha * (x * x + y * y));
+     const double x = p[0] - x0;
+     const double y = p[1] - y0;
+     u[0] = 1.0 + exp(-alpha * (x * x + y * y));
+     if (x < 0.1 && x > -0.1) 
+     {
+       u[0] = 10.0;
+     }
    }
 
    // Not needed if we have periodic bc

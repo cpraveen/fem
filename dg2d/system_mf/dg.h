@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 // Solves system of PDE of the form
 //    u_t + div(f(u,x)) = 0
@@ -23,6 +24,7 @@
 #include <deal.II/base/function.h>
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/conditional_ostream.h>
+#include <deal.II/base/table.h>
 
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/data_out.h>
@@ -31,7 +33,8 @@
 #include <deal.II/lac/affine_constraints.h>
 #include <deal.II/lac/la_parallel_vector.h>
 
-#include <deal.II/meshworker/mesh_loop.h>
+#include <deal.II/matrix_free/matrix_free.h>
+#include <deal.II/matrix_free/fe_evaluation.h>
 
 #include <deal.II/distributed/tria.h>
 
@@ -104,86 +107,9 @@ minmod(const double a, const double b, const double c, const double Mh2 = 0.0)
 }
 
 //------------------------------------------------------------------------------
-template <int dim>
-struct ScratchData
-{
-   ScratchData(const Mapping<dim> &mapping,
-               const FiniteElement<dim> &fe,
-               const Quadrature<dim> &cell_quadrature,
-               const Quadrature<dim-1> &face_quadrature,
-               const UpdateFlags update_flags = update_values |
-                                                update_gradients |
-                                                update_quadrature_points |
-                                                update_JxW_values,
-               const UpdateFlags interface_update_flags = update_values | 
-                                                          update_quadrature_points |
-                                                          update_JxW_values | 
-                                                          update_normal_vectors)
-       : 
-       fe_values(mapping, fe, cell_quadrature, update_flags), 
-       fe_interface_values(mapping,
-                           fe,
-                           face_quadrature,
-                           interface_update_flags),
-      solution_values(cell_quadrature.size(), Vector<double>(nvar)),
-      left_state(face_quadrature.size(), Vector<double>(nvar)),
-      right_state(face_quadrature.size(), Vector<double>(nvar))
-   {
-   }
-
-   ScratchData(const ScratchData<dim> &scratch_data)
-       : fe_values(scratch_data.fe_values.get_mapping(),
-                   scratch_data.fe_values.get_fe(),
-                   scratch_data.fe_values.get_quadrature(),
-                   scratch_data.fe_values.get_update_flags()),
-         fe_interface_values(scratch_data.fe_interface_values.get_mapping(),
-                             scratch_data.fe_interface_values.get_fe(),
-                             scratch_data.fe_interface_values.get_quadrature(),
-                             scratch_data.fe_interface_values.get_update_flags()),
-         solution_values(scratch_data.fe_values.get_quadrature().size(),
-                         Vector<double>(nvar)),
-         left_state(scratch_data.fe_interface_values.get_quadrature().size(),
-                    Vector<double>(nvar)),
-         right_state(scratch_data.fe_interface_values.get_quadrature().size(),
-                     Vector<double>(nvar))
-   {
-   }
-
-   FEValues<dim> fe_values;
-   FEInterfaceValues<dim> fe_interface_values;
-   std::vector<Vector<double>> solution_values;
-   std::vector<Vector<double>> left_state;
-   std::vector<Vector<double>> right_state;
-};
-
-//------------------------------------------------------------------------------
-struct CopyDataFace
-{
-   std::vector<types::global_dof_index> joint_dof_indices;
-   Vector<double> cell_rhs;
-};
-
-//------------------------------------------------------------------------------
-struct CopyData
-{
-   Vector<double> cell_rhs;
-   std::vector<types::global_dof_index> local_dof_indices;
-   std::vector<CopyDataFace> face_data;
-
-   template <class Iterator>
-   void reinit(const Iterator &cell, unsigned int dofs_per_cell)
-   {
-      cell_rhs.reinit(dofs_per_cell);
-
-      local_dof_indices.resize(dofs_per_cell);
-      cell->get_dof_indices(local_dof_indices);
-   }
-};
-
-//------------------------------------------------------------------------------
 // Main class of the problem
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 class DGSystem
 {
 public:
@@ -197,7 +123,7 @@ private:
    typedef LinearAlgebra::distributed::Vector<double> PVector;
 
    void make_grid_and_dofs();
-   const Mapping<dim, dim>& mapping() const;
+   const Mapping<dim, dim> &mapping() const;
    void initialize();
    void assemble_mass_matrix();
    void assemble_rhs();
@@ -209,51 +135,31 @@ private:
    bool call_output();
    void output_results(const double time) const;
 
-   template <class Iterator>
-   void cell_worker(const Iterator &cell,
-                    ScratchData<dim> &scratch_data,
-                    CopyData &copy_data);
-
-   template <class Iterator>
-   void boundary_worker(const Iterator &cell,
-                        const unsigned int &f,
-                        ScratchData<dim> &scratch_data,
-                        CopyData &copy_data);
-
-   template <class Iterator>
-   void face_worker(const Iterator &cell,
-                    const unsigned int &f,
-                    const unsigned int &sf,
-                    const Iterator &ncell,
-                    const unsigned int &nf,
-                    const unsigned int &nsf,
-                    ScratchData<dim> &scratch_data,
-                    CopyData &copy_data);
-
-   const MPI_Comm              mpi_comm;
-   Parameter*                  param;
-   double                      time, stage_time, dt, next_output_time;
-   unsigned int                time_step;
-   ProblemBase<dim>*           problem;
-   ConditionalOStream          pcout;
-   PTriangulation              triangulation;
-   FESystem<dim>               fe;
-   DoFHandler<dim>             dof_handler;
-   AffineConstraints<double>   constraints;
-   const Quadrature<dim>       cell_quadrature;
-   const Quadrature<dim-1>     face_quadrature;
-   PVector                     solution;
-   PVector                     solution_old;
-   PVector                     rhs;
-   PVector                     imm;
-   std::vector<Vector<double>> average;
+   const MPI_Comm                       mpi_comm;
+   Parameter*                           param;
+   double                               time, stage_time, dt, next_output_time;
+   unsigned int                         time_step;
+   ProblemBase<dim>*                    problem;
+   ConditionalOStream                   pcout;
+   PTriangulation                       triangulation;
+   FESystem<dim>                        fe;
+   DoFHandler<dim>                      dof_handler;
+   AffineConstraints<double>            constraints;
+   const Quadrature<dim>                cell_quadrature;
+   const Quadrature<dim-1>              face_quadrature;
+   PVector                              solution;
+   PVector                              solution_old;
+   PVector                              rhs;
+   PVector                              imm;
+   std::vector<Tensor<1, nvar, double>> average;
+   MatrixFree<dim, double>              matrix_free;
 };
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-template <int dim>
-DGSystem<dim>::DGSystem(Parameter&        param,
+template <int dim, int degree>
+DGSystem<dim,degree>::DGSystem(Parameter&        param,
                         ProblemBase<dim>& problem,
                         Quadrature<1>&    quadrature_1d)
    :
@@ -277,9 +183,9 @@ DGSystem<dim>::DGSystem(Parameter&        param,
 //------------------------------------------------------------------------------
 // Make grid and allocate memory for solution variables
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::make_grid_and_dofs()
+DGSystem<dim,degree>::make_grid_and_dofs()
 {
    pcout << "Making initial grid ...\n";
    if(param->grid == "user")
@@ -359,47 +265,61 @@ DGSystem<dim>::make_grid_and_dofs()
          << triangulation.n_cells()
          << std::endl;
 
-   dof_handler.distribute_dofs(fe);
+    dof_handler.distribute_dofs(fe);
 
-   pcout << "   Number of degrees of freedom: "
-         << dof_handler.n_dofs()
-         << std::endl;
+    pcout << "   Number of degrees of freedom: "
+          << dof_handler.n_dofs()
+          << std::endl;
 
-   const auto& locally_owned_dofs = dof_handler.locally_owned_dofs();
-   IndexSet locally_relevant_dofs = DoFTools::extract_locally_relevant_dofs(dof_handler);
+    // We dont have any constraints in DG.
+    constraints.clear();
+    constraints.close();
+    typename MatrixFree<dim, double>::AdditionalData additional_data;
+    additional_data.mapping_update_flags = update_quadrature_points |
+                                           update_JxW_values |
+                                           update_values;
+    additional_data.mapping_update_flags_inner_faces =
+                                                     update_quadrature_points |
+                                                     update_JxW_values |
+                                                     update_values |
+                                                     update_normal_vectors;
+    additional_data.mapping_update_flags_boundary_faces =
+                                                     update_quadrature_points |
+                                                     update_JxW_values |
+                                                     update_values |
+                                                     update_normal_vectors;
 
-   // Solution and rhs variables
-   solution.reinit(locally_owned_dofs, locally_relevant_dofs, mpi_comm);
-   solution_old.reinit(locally_owned_dofs, mpi_comm);
-   rhs.reinit(solution);
-   imm.reinit(solution_old);
-   average.resize(counter, Vector<double>(nvar));
+    matrix_free.reinit(mapping(), dof_handler, constraints, cell_quadrature,
+                       additional_data);
+    average.resize(counter);
 
-   // We dont have any constraints in DG.
-   constraints.clear();
-   constraints.close();
+    matrix_free.initialize_dof_vector(solution);
+    solution_old.reinit(solution);
+    rhs.reinit(solution);
+    imm.reinit(solution);
 
-   pcout << "Mapping type   = " << param->mapping << std::endl;
-   pcout << "Mapping degree = " << param->mapping_degree << std::endl;
+    pcout << "Mapping type   = " << param->mapping << std::endl;
+    pcout << "Mapping degree = " << param->mapping_degree << std::endl;
 
-   // check support point order. We assume that the order of cell_quadrature
-   // points is same as the order of lagrange basis points. This allows us to 
-   // directly get solution at quadrature points without using get_function_values.
-   for(unsigned int i=0; i<fe.dofs_per_cell; ++i)
-   {
-      auto ind_i = fe.system_to_component_index(i).second;
+    // check support point order. We assume that the order of cell_quadrature
+    // points is same as the order of lagrange basis points. This allows us to
+    // directly get solution at quadrature points without using
+    // get_function_values.
+    for (unsigned int i = 0; i < fe.dofs_per_cell; ++i)
+    {
+      auto ind_i   = fe.system_to_component_index(i).second;
       auto q_point = cell_quadrature.point(ind_i);
-      auto value = fe.shape_value(i, q_point);
-      AssertThrow(fabs(value-1.0) < 1.0e-13, 
+      auto value   = fe.shape_value(i, q_point);
+      AssertThrow(fabs(value - 1.0) < 1.0e-13,
                   ExcMessage("Support point order assumption wrong"));
-   }
+    }
 }
 
 //------------------------------------------------------------------------------
 // Return mapping type based on selected type
 //------------------------------------------------------------------------------
-template <int dim>
-const Mapping<dim, dim>& DGSystem<dim>::mapping() const
+template <int dim, int degree>
+const Mapping<dim, dim>& DGSystem<dim,degree>::mapping() const
 {
    if (param->mapping == "q")
    {
@@ -421,79 +341,78 @@ const Mapping<dim, dim>& DGSystem<dim>::mapping() const
 
 //------------------------------------------------------------------------------
 // Assemble mass matrix for each cell
-// With Legendre basis, mass matrix is diagonal, we only store diagonal part.
-// Invert it and store
+// With Lagrange basis at collocation points, mass matrix is diagonal,
+// with entries equal to JxW at the corresponding quadrature point.
+// Invert it and store.
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::assemble_mass_matrix()
+DGSystem<dim,degree>::assemble_mass_matrix()
 {
    pcout << "Constructing mass matrix ...\n";
 
-   FEValues<dim> fe_values(mapping(), fe, cell_quadrature,
-                           update_values | update_JxW_values);
-   const unsigned int   dofs_per_cell = fe.dofs_per_cell;
-   const unsigned int   n_q_points    = cell_quadrature.size();
-   Vector<double>   cell_matrix(dofs_per_cell);
-   std::vector<types::global_dof_index> dof_indices(dofs_per_cell);
-
+   FEEvaluation<dim, degree, degree+1, nvar, double> phi(matrix_free);
    imm = 0.0;
 
-   // Cell iterator
-   for(auto & cell : dof_handler.active_cell_iterators())
-   if(cell->is_locally_owned())
+   for (unsigned int cell = 0; cell < matrix_free.n_cell_batches(); ++cell)
    {
-      fe_values.reinit(cell);
-      cell_matrix = 0.0;
-
-      for(unsigned int q_point = 0; q_point < n_q_points; ++q_point)
-         for(unsigned int i = 0; i < dofs_per_cell; ++i)
-            cell_matrix(i) += fe_values.shape_value(i, q_point) *
-                              fe_values.shape_value(i, q_point) *
-                              fe_values.JxW(q_point);
-
-      cell->get_dof_indices(dof_indices);
-      imm.add(dof_indices, cell_matrix);
+      phi.reinit(cell);
+      unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+      for (unsigned int lane = 0; lane < n_lanes; ++lane)
+      {
+         auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+         std::vector<types::global_dof_index> dof_indices(fe.dofs_per_cell);
+         cell_it->get_dof_indices(dof_indices);
+         for (unsigned int q = 0; q < phi.n_q_points; ++q)
+         {
+            double JxW = phi.JxW(q)[lane];
+            for (unsigned int c = 0; c < nvar; ++c)
+            {
+               auto idx = fe.component_to_system_index(c, q);
+               imm(dof_indices[idx]) += JxW;
+            }
+         }
+      }
    }
 
    imm.compress(VectorOperation::add);
 
-   // Invert mass matrix
    for (unsigned int i = 0; i < imm.locally_owned_size(); ++i)
-   {
-      imm.local_element(i) = 1.0 / imm.local_element(i);
-   }
+     imm.local_element(i) = 1.0 / imm.local_element(i);
 }
 
 //------------------------------------------------------------------------------
 // Set initial conditions
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::initialize()
+DGSystem<dim,degree>::initialize()
 {
    pcout << "Interpolating initial condition ...\n";
 
-   FEValues<dim> fe_values(mapping(), fe, cell_quadrature,
-                           update_quadrature_points);
-   const unsigned int   n_q_points    = cell_quadrature.size();
-   std::vector<types::global_dof_index> dof_indices(fe.dofs_per_cell);
-
-   for(auto & cell : dof_handler.active_cell_iterators())
-   if(cell->is_locally_owned())
+   FEEvaluation<dim, degree, degree+1, nvar, double> phi(matrix_free);
+   for (unsigned int cell = 0; cell < matrix_free.n_cell_batches(); ++cell)
    {
-      fe_values.reinit(cell);
-      cell->get_dof_indices(dof_indices);
-
-      for(unsigned int q = 0; q < n_q_points; ++q)
+      phi.reinit(cell);
+      unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+      for (unsigned int lane = 0; lane < n_lanes; ++lane)
       {
-         Vector<double> initial_value(nvar);
-         problem->initial_value(fe_values.quadrature_point(q),
-                                initial_value);
-         for(unsigned int i = 0; i < nvar; ++i)
+         auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+         std::vector<types::global_dof_index> dof_indices(fe.dofs_per_cell);
+         cell_it->get_dof_indices(dof_indices);
+
+         for (unsigned int q = 0; q < phi.n_q_points; ++q)
          {
-            auto idx = fe.component_to_system_index(i, q);
-            solution(dof_indices[idx]) = initial_value[i];
+           Point<dim> p;
+           for (unsigned int d = 0; d < dim; ++d)
+             p[d] = phi.quadrature_point(q)[d][lane];
+           Vector<double> initial_value(nvar);
+           problem->initial_value(p, initial_value);
+           for (unsigned int i = 0; i < nvar; ++i)
+           {
+             auto idx = fe.component_to_system_index(i, q);
+             solution(dof_indices[idx]) = initial_value[i];
+           }
          }
       }
    }
@@ -502,325 +421,273 @@ DGSystem<dim>::initialize()
 }
 
 //------------------------------------------------------------------------------
-template <int dim>
-template <class Iterator>
-void DGSystem<dim>::cell_worker(const Iterator &cell,
-                                ScratchData<dim> &scratch_data,
-                                CopyData &copy_data)
-{
-   FEValues<dim> &fe_values = scratch_data.fe_values;
-   fe_values.reinit(cell);
-
-   const unsigned int dofs_per_cell = fe_values.get_fe().n_dofs_per_cell();
-   const unsigned int n_q_points = fe_values.get_quadrature().size();
-
-   copy_data.reinit(cell, dofs_per_cell);
-
-   auto &cell_rhs = copy_data.cell_rhs;
-   auto &solution_values = scratch_data.solution_values;
-   auto &dof_indices = copy_data.local_dof_indices;
-
-   for(unsigned int i=0; i<dofs_per_cell; ++i)
-   {
-      auto comp_i = fe_values.get_fe().system_to_component_index(i).first;
-      auto indx_i = fe_values.get_fe().system_to_component_index(i).second;
-      solution_values[indx_i][comp_i] = solution(dof_indices[i]);
-   }
-
-   for (unsigned int q = 0; q < n_q_points; ++q)
-   {
-      FluxData<dim> data;
-      data.p = fe_values.quadrature_point(q);
-      data.t = stage_time;
-      ndarray<double,nvar,dim> flux;
-      PDE::physical_flux(solution_values[q], data, flux);
-      #if defined(ADD_SOURCE)
-      Vector<double> src(nvar);
-      PDE::source(data.p, data.t, solution_values[q], src);
-      #endif
-      for (unsigned int i = 0; i < dofs_per_cell; ++i)
-      {
-         const auto c = fe_values.get_fe().system_to_component_index(i).first;
-         const auto& shape_grad = fe_values.shape_grad_component(i,q,c);
-         double tmp = 0.0;
-         for(unsigned int d=0; d<dim; ++d) tmp += shape_grad[d] * flux[c][d];
-         cell_rhs(i) += tmp * fe_values.JxW(q);
-         #if defined(ADD_SOURCE)
-         cell_rhs(i) += src[c] * 
-                        fe_values.shape_value_component(i,q,c) *
-                        fe_values.JxW(q);
-         #endif
-      }
-
-   }
-}
-
+// DG operator for MatrixFree assembly
 //------------------------------------------------------------------------------
-template <int dim>
-template <class Iterator>
-void DGSystem<dim>::face_worker(const Iterator &cell,
-                                const unsigned int &f,
-                                const unsigned int &sf,
-                                const Iterator &ncell,
-                                const unsigned int &nf,
-                                const unsigned int &nsf,
-                                ScratchData<dim> &scratch_data,
-                                CopyData &copy_data)
+namespace PDE
 {
-   FEInterfaceValues<dim> &fe_face_values = scratch_data.fe_interface_values;
-   fe_face_values.reinit(cell, f, sf, ncell, nf, nsf);
-
-   const unsigned int n_cell_dofs = fe_face_values.get_fe().n_dofs_per_cell();
-   const unsigned int n_face_dofs = fe_face_values.n_current_interface_dofs();
-   const unsigned int n_q_points = fe_face_values.get_quadrature().size();
-   const auto &q_points = fe_face_values.get_quadrature_points();
-
-   auto &left_state = scratch_data.left_state;
-   auto &right_state = scratch_data.right_state;
-   fe_face_values.get_fe_face_values(0).get_function_values(solution, left_state);
-   fe_face_values.get_fe_face_values(1).get_function_values(solution, right_state);
-
-   copy_data.face_data.emplace_back();
-   CopyDataFace &copy_data_face = copy_data.face_data.back();
-   copy_data_face.joint_dof_indices = fe_face_values.get_interface_dof_indices();
-   copy_data_face.cell_rhs.reinit(n_face_dofs);
-   auto &cell_rhs = copy_data_face.cell_rhs;
-
-   for(unsigned int q=0; q<n_q_points; ++q)
+   template <int dim, int degree>
+   class DGOperator
    {
-      FluxData<dim> data;
-      data.p = q_points[q];
-      data.t = stage_time;
-      data.ul = &average[cell->user_index()];
-      data.ur = &average[ncell->user_index()];
-      Vector<double> num_flux(nvar);
-      PDE::numerical_flux(param->flux_type, 
-                          left_state[q], 
-                          right_state[q], 
-                          fe_face_values.normal(q),
-                          data,
-                          num_flux);
-      for (unsigned int i = 0; i < n_face_dofs; ++i)
+   public:
+      DGOperator(const Parameter *param,
+                  const std::vector<Tensor<1, nvar, double>> *avg, double t = 0.0)
+          : param(param), average(avg), time(t) {}
+
+      void cell(const MatrixFree<dim, double> &mf,
+                LinearAlgebra::distributed::Vector<double> &dst,
+                const LinearAlgebra::distributed::Vector<double> &src,
+                const std::pair<unsigned int, unsigned int> &range) const
       {
-         unsigned int ii = (i < n_cell_dofs) ? i : i - n_cell_dofs;
-         const auto c = fe_face_values.get_fe().system_to_component_index(ii).first;
-         cell_rhs(i) -= num_flux[c] *
-                        fe_face_values.jump_in_shape_values(i, q, c) *
-                        fe_face_values.JxW(q);
+        FEEvaluation<dim, degree, degree+1, nvar, double> phi(mf);
+        for (auto cell = range.first; cell < range.second; ++cell) {
+          phi.reinit(cell);
+          phi.gather_evaluate(src, EvaluationFlags::values);
+          for (unsigned int q = 0; q < phi.n_q_points; ++q) {
+            auto u = phi.get_value(q);
+
+            FluxData<dim, VectorizedArray<double>> flux_data;
+            flux_data.p = phi.quadrature_point(q);
+
+            typename PDE::FluxMatrix<dim, VectorizedArray<double>> ft;
+            physical_flux<dim>(u, flux_data, ft);
+            phi.submit_gradient(ft, q);
+            #if defined(ADD_SOURCE)
+            Tensor<1, nvar, VectorizedArray<double>> src_val;
+            PDE::source(phi.quadrature_point(q), time, u, src_val);
+            phi.submit_value(src_val, q);
+            #endif
+          }
+          phi.integrate_scatter(EvaluationFlags::gradients
+          #if defined(ADD_SOURCE)
+                                | EvaluationFlags::values
+          #endif
+                                , dst);
+        }
       }
-   }
-}
 
-//------------------------------------------------------------------------------
-template <int dim>
-template <class Iterator>
-void DGSystem<dim>::boundary_worker(const Iterator &cell,
-                                    const unsigned int &f,
-                                    ScratchData<dim> &scratch_data,
-                                    CopyData &copy_data)
-{
-   scratch_data.fe_interface_values.reinit(cell, f);
-   const auto &fe_face_values 
-      = scratch_data.fe_interface_values.get_fe_face_values(0);
-
-   const unsigned int n_face_dofs = fe_face_values.get_fe().n_dofs_per_cell();
-   const unsigned int n_q_points = fe_face_values.get_quadrature().size();
-   const auto &q_points = fe_face_values.get_quadrature_points();
-
-   auto &left_state = scratch_data.left_state;
-   auto &right_state = scratch_data.right_state;
-   fe_face_values.get_function_values(solution, left_state);
-   auto &cell_rhs = copy_data.cell_rhs;
-
-   for (unsigned int q = 0; q < n_q_points; ++q)
-   {
-      problem->boundary_value(cell->face(f)->boundary_id(),
-                              q_points[q],
-                              stage_time,
-                              fe_face_values.normal_vector(q),
-                              left_state[q],
-                              right_state[q]);
-      FluxData<dim> data;
-      data.p = q_points[q];
-      data.t = stage_time;
-      data.ul = &average[cell->user_index()];
-      data.ur = &average[cell->user_index()];
-      Vector<double> num_flux(nvar);
-      PDE::boundary_flux(left_state[q], //todo
-                         right_state[q],
-                         fe_face_values.normal_vector(q),
-                         data,
-                         num_flux);
-      for (unsigned int i = 0; i < n_face_dofs; ++i)
+      void face(const MatrixFree<dim, double> &mf,
+                LinearAlgebra::distributed::Vector<double> &dst,
+                const LinearAlgebra::distributed::Vector<double> &src,
+                const std::pair<unsigned int, unsigned int> &range) const
       {
-         const auto c = fe_face_values.get_fe().system_to_component_index(i).first;
-         cell_rhs(i) -= num_flux[c] *
-                        fe_face_values.shape_value_component(i, q, c) *
-                        fe_face_values.JxW(q);
+         FEFaceEvaluation<dim, degree, degree+1, nvar, double>
+            phi_m(mf, true), phi_p(mf, false);
+         for (auto face = range.first; face < range.second; ++face)
+         {
+            phi_m.reinit(face);
+            phi_p.reinit(face);
+            phi_m.gather_evaluate(src, EvaluationFlags::values);
+            phi_p.gather_evaluate(src, EvaluationFlags::values);
+
+            FluxData<dim, VectorizedArray<double>> flux_data;
+            unsigned int n_lanes = mf.n_active_entries_per_face_batch(face);
+            for (unsigned int lane = 0; lane < n_lanes; ++lane)
+            {
+               auto c_l = mf.get_face_iterator(face, lane, true).first->user_index();
+               auto c_r = mf.get_face_iterator(face, lane, false).first->user_index();
+               for (unsigned int c = 0; c < nvar; ++c)
+               {
+                 flux_data.ul[c][lane] = (*average)[c_l][c];
+                 flux_data.ur[c][lane] = (*average)[c_r][c];
+               }
+            }
+
+            for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+            {
+              auto ul = phi_m.get_value(q);
+              auto ur = phi_p.get_value(q);
+              auto n = phi_m.normal_vector(q);
+
+              flux_data.p = phi_m.quadrature_point(q);
+
+              typename PDE::NormalFlux<dim, VectorizedArray<double>>
+                  num_flux;
+              numerical_flux(param->flux_type, ul, ur, n, flux_data, num_flux);
+
+              phi_m.submit_value(-num_flux, q);
+              phi_p.submit_value(num_flux, q);
+            }
+            phi_m.integrate_scatter(EvaluationFlags::values, dst);
+            phi_p.integrate_scatter(EvaluationFlags::values, dst);
+         }
       }
-   }
-}
+
+      void boundary(const MatrixFree<dim, double> &mf,
+                    LinearAlgebra::distributed::Vector<double> &dst,
+                    const LinearAlgebra::distributed::Vector<double> &src,
+                    const std::pair<unsigned int, unsigned int> &range) const
+      {
+         FEFaceEvaluation<dim, degree, degree+1, nvar, double>
+            phi_m(mf, true);
+         for (auto face = range.first; face < range.second; ++face)
+         {
+            phi_m.reinit(face);
+            phi_m.gather_evaluate(src, EvaluationFlags::values);
+
+            FluxData<dim, VectorizedArray<double>> flux_data;
+            unsigned int n_lanes = mf.n_active_entries_per_face_batch(face);
+            Tensor<1, nvar, VectorizedArray<double>> avg_l;
+            for (unsigned int lane = 0; lane < n_lanes; ++lane)
+            {
+              auto cell_user_index =
+                  mf.get_face_iterator(face, lane, true).first->user_index();
+              for (unsigned int c = 0; c < nvar; ++c) 
+              {
+                flux_data.ur[c][lane] = (*average)[cell_user_index][c];
+                flux_data.ul[c][lane] = (*average)[cell_user_index][c];
+              }
+            }
+
+            for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+            {
+              auto ul = phi_m.get_value(q);
+              auto ur = ul;
+              auto n  = phi_m.normal_vector(q);
+
+              flux_data.p = phi_m.quadrature_point(q);
+
+              typename PDE::NormalFlux<dim, VectorizedArray<double>> num_flux;
+              boundary_flux(ul, ur, n, flux_data, num_flux);
+
+              phi_m.submit_value(-num_flux, q);
+            }
+            phi_m.integrate_scatter(EvaluationFlags::values, dst);
+         }
+      }
+
+   private:
+      const Parameter *param;
+      const std::vector<Tensor<1, nvar, double>> *average;
+      double time;
+   }; // class DGOperator
+} // namespace PDE
 
 //------------------------------------------------------------------------------
 // Assemble system rhs
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::assemble_rhs()
+DGSystem<dim,degree>::assemble_rhs()
 {
-   using Iterator = typename DoFHandler<dim>::active_cell_iterator;
+  solution.update_ghost_values();
+  rhs = 0.0;
+  PDE::DGOperator<dim, degree> op(param, &average, stage_time);
 
-   auto cell_worker =
-       [&](const Iterator &cell,
-           ScratchData<dim> &scratch_data,
-           CopyData &copy_data)
-   {
-      this->cell_worker(cell, scratch_data, copy_data);
-   };
+  matrix_free.loop(&PDE::DGOperator<dim, degree>::cell,
+                   &PDE::DGOperator<dim, degree>::face,
+                   &PDE::DGOperator<dim, degree>::boundary,
+                   &op,
+                   rhs,
+                   solution,
+                   false,
+                   MatrixFree<dim>::DataAccessOnFaces::values);
 
-   auto face_worker =
-       [&](const Iterator &cell,
-           const unsigned int f,
-           const unsigned int sf,
-           const Iterator &ncell,
-           const unsigned int nf,
-           const unsigned int nsf,
-           ScratchData<dim> &scratch_data,
-           CopyData &copy_data)
-   {
-      this->face_worker(cell, f, sf, ncell, nf, nsf, scratch_data, copy_data);
-   };
-
-   auto boundary_worker =
-       [&](const Iterator &cell,
-           const unsigned int f,
-           ScratchData<dim> &scratch_data,
-           CopyData &copy_data)
-   {
-      this->boundary_worker(cell, f, scratch_data, copy_data);
-   };
-
-   auto copier = [&](const CopyData &cd)
-   {
-      this->constraints.distribute_local_to_global(cd.cell_rhs,
-                                                   cd.local_dof_indices,
-                                                   this->rhs);
-      for (auto &cdf : cd.face_data)
-      {
-         this->constraints.distribute_local_to_global(cdf.cell_rhs,
-                                                      cdf.joint_dof_indices,
-                                                      this->rhs);
-      }
-   };
-
-   ScratchData<dim> scratch_data(mapping(),
-                                 fe,
-                                 cell_quadrature,
-                                 face_quadrature);
-
-   const auto iterator_range =
-        filter_iterators(dof_handler.active_cell_iterators(),
-                         IteratorFilters::LocallyOwnedCell());
-
-   rhs = 0.0;
-   MeshWorker::mesh_loop(iterator_range,
-                         cell_worker,
-                         copier,
-                         scratch_data,
-                         CopyData(),
-                         MeshWorker::assemble_own_cells |
-                         MeshWorker::assemble_boundary_faces |
-                         MeshWorker::assemble_own_interior_faces_once |
-                         MeshWorker::assemble_ghost_faces_once,
-                         boundary_worker,
-                         face_worker);
-
-   // Reduce over all MPI ranks
-   rhs.compress(VectorOperation::add);
-
-   // Multiply by inverse mass matrix
-   rhs.scale(imm);
+  rhs.compress(VectorOperation::add);
+  rhs.scale(imm);
 }
 
 //------------------------------------------------------------------------------
 // Compute cell average values
 //------------------------------------------------------------------------------
-template <int dim>
-void
-DGSystem<dim>::compute_averages()
-{
-   FEValues<dim> fe_values(mapping(), fe, cell_quadrature,
-                           update_JxW_values);
-   std::vector<types::global_dof_index> dof_indices(fe.dofs_per_cell);
-   const unsigned int n_q_points = cell_quadrature.size();
+template <int dim, int degree> void DGSystem<dim,degree>::compute_averages() {
+  FEEvaluation<dim, degree, degree+1, nvar, double> phi(matrix_free);
 
-   for(auto & cell : dof_handler.active_cell_iterators())
-   if(cell->is_locally_owned() || cell->is_ghost())
-   {
-      fe_values.reinit(cell);
-      cell->get_dof_indices(dof_indices);
-      const auto c = cell->user_index();
-      average[c] = 0.0;
-      double cell_measure = 0.0;
+  unsigned int total =
+      matrix_free.n_cell_batches() + matrix_free.n_ghost_cell_batches();
+  for (unsigned int cell = 0; cell < total; ++cell)
+  {
+    phi.reinit(cell);
+    phi.gather_evaluate(solution, EvaluationFlags::values);
 
-      for(unsigned int q = 0; q < n_q_points; ++q)
-      {
-         cell_measure += fe_values.JxW(q);
-         for(unsigned int i = 0; i < nvar; ++i)
-         {
-            auto idx = fe.component_to_system_index(i,q);
-            average[c][i] += solution(dof_indices[idx]) * fe_values.JxW(q);
-         }
-      }
+    Tensor<1, nvar, VectorizedArray<double>> cell_integral;
+    VectorizedArray<double> cell_volume = 0.0;
+    for (unsigned int q = 0; q < phi.n_q_points; ++q)
+    {
+      auto val     = phi.get_value(q);
+      auto JxW     = phi.JxW(q);
+      cell_volume += JxW;
+      for (unsigned int i = 0; i < nvar; ++i)
+        cell_integral[i] += val[i] * JxW;
+    }
 
-      average[c] /= cell_measure;
-   }
+    for (unsigned int i = 0; i < nvar; ++i)
+      cell_integral[i] /= cell_volume;
+
+    unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+    for (unsigned int lane = 0; lane < n_lanes; ++lane) {
+
+      auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+      auto idx     = cell_it->user_index();
+      for (unsigned int i = 0; i < nvar; ++i)
+        average[idx][i] = cell_integral[i][lane];
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
 // Apply TVD limiter: 2d case only
 // TODO: Make it work on locally refined grids
 //------------------------------------------------------------------------------
-template <>
+template <int dim, int degree>
 void
-DGSystem<2>::apply_TVD_limiter()
+DGSystem<dim,degree>::apply_TVD_limiter()
 {
-   if(param->degree == 0) return;
+   if constexpr (degree == 0) return;
    AssertThrow(false, ExcNotImplemented());
 }
 
 //------------------------------------------------------------------------------
 // Apply TVD limiter
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::apply_limiter()
+DGSystem<dim,degree>::apply_limiter()
 {
-   if(param->degree == 0 || param->limiter_type == LimiterType::none) return;
+   if constexpr (degree == 0) return;
+   if (param->limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
 }
 
 //------------------------------------------------------------------------------
 // Compute time step from cfl condition
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::compute_dt()
+DGSystem<dim,degree>::compute_dt()
 {
-   dt = 1.0e20;
+    dt = 1.0e20;
 
-   for(auto &cell : dof_handler.active_cell_iterators())
-   if(cell->is_locally_owned())
-   {
-      auto c = cell->user_index();
-      Tensor<1,dim> jac;
-      PDE::max_speed(average[c], cell->center(), jac);
-      double dtcell = cell->minimum_vertex_distance() / (jac.norm() + 1.0e-20);
-      dt = std::min(dt, dtcell);
-   }
+    for (unsigned int cell = 0; cell < matrix_free.n_cell_batches(); ++cell)
+    {
+       unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
-   dt *= param->cfl;
-   dt = Utilities::MPI::min(dt, mpi_comm);
+       Tensor<1, nvar, VectorizedArray<double>> avg;
+       Point<dim, VectorizedArray<double>>      center;
+       VectorizedArray<double>                  h;
+
+       for (unsigned int lane = 0; lane < n_lanes; ++lane)
+       {
+          auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+          auto c = cell_it->user_index();
+          auto cell_center = cell_it->center();
+          for (unsigned int i = 0; i < nvar; ++i)
+             avg[i][lane] = average[c][i];
+          for (unsigned int d = 0; d < dim; ++d)
+             center[d][lane] = cell_center[d];
+          h[lane] = cell_it->minimum_vertex_distance();
+       }
+
+       Tensor<1, dim, VectorizedArray<double>> jac;
+       PDE::max_speed(avg, center, jac);
+
+       VectorizedArray<double> dtcell = h / (jac.norm() + 1.0e-20);
+
+       for (unsigned int lane = 0; lane < n_lanes; ++lane)
+          dt = std::min(dt, dtcell[lane]);
+    }
+
+    dt *= param->cfl;
+    dt  = Utilities::MPI::min(dt, mpi_comm);
 
    if (time + dt > param->final_time)
    {
@@ -836,9 +703,9 @@ DGSystem<dim>::compute_dt()
 //------------------------------------------------------------------------------
 // Update solution by one stage of RK
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::update(const unsigned int rk_stage)
+DGSystem<dim,degree>::update(const unsigned int rk_stage)
 {
    // solution = solution + dt * rhs
    solution.add(dt, rhs);
@@ -852,8 +719,8 @@ DGSystem<dim>::update(const unsigned int rk_stage)
 //-----------------------------------------------------------------------------
 // Decide if solution needs to be saved
 //-----------------------------------------------------------------------------
-template <int dim>
-bool DGSystem<dim>::call_output()
+template <int dim, int degree>
+bool DGSystem<dim,degree>::call_output()
 {
    // Save initial condition
    if (time_step == 0)
@@ -881,9 +748,10 @@ bool DGSystem<dim>::call_output()
 //------------------------------------------------------------------------------
 // Save solution to file
 //------------------------------------------------------------------------------
-template <int dim>
+
+template <int dim, int degree>
 void
-DGSystem<dim>::output_results(const double time) const
+DGSystem<dim,degree>::output_results(const double time) const
 {
    static unsigned int counter = 0;
    static std::vector<XDMFEntry> xdmf_entries;
@@ -896,7 +764,7 @@ DGSystem<dim>::output_results(const double time) const
    DataOut<dim> data_out;
    PDE::Postprocessor<dim> postprocessor;
    data_out.add_data_vector(dof_handler, solution, postprocessor);
-   data_out.build_patches(mapping(), param->degree,
+   data_out.build_patches(mapping(), degree,
                           DataOut<dim>::curved_inner_cells);
 
    DataOutBase::DataOutFilter data_filter(DataOutBase::DataOutFilterFlags(true, true));
@@ -926,43 +794,45 @@ DGSystem<dim>::output_results(const double time) const
 //------------------------------------------------------------------------------
 // Start solving the problem
 //------------------------------------------------------------------------------
-template <int dim>
+template <int dim, int degree>
 void
-DGSystem<dim>::run()
+DGSystem<dim,degree>::run()
 {
-   pcout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
-   pcout << "Number of threads = " << MultithreadInfo::n_threads() << "\n";
+  pcout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
+  pcout << "Number of threads = " << MultithreadInfo::n_threads() << "\n";
 
-   if (Utilities::MPI::this_mpi_process(mpi_comm) == 0)
-      PDE::print_info();
-   make_grid_and_dofs();
-   assemble_mass_matrix();
-   initialize();
-   solution.update_ghost_values();
-   compute_averages();
-   output_results(0.0);
+  if (Utilities::MPI::this_mpi_process(mpi_comm) == 0)
+    PDE::print_info();
+  make_grid_and_dofs();
+  assemble_mass_matrix();
+  initialize();
+  solution.update_ghost_values();
+  compute_averages();
+  output_results(0.0);
 
-   while(time < param->final_time)
-   {
-      solution_old  = solution;
-      stage_time = time;
-      compute_dt();
+  while (time < param->final_time) 
+  {
+    solution_old = solution;
+    stage_time = time;
+    compute_dt();
 
-      for(unsigned int rk = 0; rk < n_rk_stages; ++rk)
-      {
-         assemble_rhs();
-         update(rk);
-         solution.update_ghost_values();
-         compute_averages();
-         apply_limiter();
-      }
+    for (unsigned int rk = 0; rk < n_rk_stages; ++rk) 
+    {
+      assemble_rhs();
+      update(rk);
+      solution.update_ghost_values();
+      compute_averages();
+      apply_limiter();
+    }
 
-      time += dt, ++time_step;
-      pcout << "Iter = " << time_step
-                << " dt = " << dt
-                << " time = " << time << std::endl;
-      if(call_output()) output_results(time);
-   }
+    time += dt, ++time_step;
+    pcout << "Iter = " << time_step 
+          << " dt = " << dt
+          << " time = " << time
+          << std::endl;
+    if (call_output())
+      output_results(time);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -1113,3 +983,4 @@ parse_parameters(const ParameterHandler& ph, Parameter& param)
 
    param.Mlim = ph.get_double("tvb parameter");
 }
+

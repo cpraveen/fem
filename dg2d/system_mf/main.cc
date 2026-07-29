@@ -43,8 +43,35 @@ main(int argc, char** argv)
       AssertThrow(false, ExcMessage("Unknown points"));
    }
 
-   DGSystem<2> solver(param, problem, quadrature_1d);
-   solver.run();
+   switch(param.degree)
+   {
+      case 0:
+      {
+         DGSystem<2, 0> solver(param, problem, quadrature_1d);
+         solver.run();
+         break;
+      }
+      case 1:
+      {
+         DGSystem<2, 1> solver(param, problem, quadrature_1d);
+         solver.run();
+         break;
+      }
+      case 2:
+      {
+         DGSystem<2, 2> solver(param, problem, quadrature_1d);
+         solver.run();
+         break;
+      }
+      case 3:
+      {
+         DGSystem<2, 3> solver(param, problem, quadrature_1d);
+         solver.run();
+         break;
+      }
+      default:
+         AssertThrow(false, ExcMessage("Degree > 3 not implemented"));
+   }
 
    return 0;
 }
