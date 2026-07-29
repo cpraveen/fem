@@ -357,7 +357,7 @@ DGSystem<dim,degree>::assemble_mass_matrix()
    for (unsigned int cell = 0; cell < matrix_free.n_cell_batches(); ++cell)
    {
       phi.reinit(cell);
-      unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+      const auto n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
       for (unsigned int lane = 0; lane < n_lanes; ++lane)
       {
          auto cell_it = matrix_free.get_cell_iterator(cell, lane);
@@ -365,10 +365,10 @@ DGSystem<dim,degree>::assemble_mass_matrix()
          cell_it->get_dof_indices(dof_indices);
          for (unsigned int q = 0; q < phi.n_q_points; ++q)
          {
-            double JxW = phi.JxW(q)[lane];
+            const auto JxW = phi.JxW(q)[lane];
             for (unsigned int c = 0; c < nvar; ++c)
             {
-               auto idx = fe.component_to_system_index(c, q);
+               const auto idx = fe.component_to_system_index(c, q);
                imm(dof_indices[idx]) += JxW;
             }
          }
@@ -394,7 +394,7 @@ DGSystem<dim,degree>::initialize()
    for (unsigned int cell = 0; cell < matrix_free.n_cell_batches(); ++cell)
    {
       phi.reinit(cell);
-      unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+      const auto n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
       for (unsigned int lane = 0; lane < n_lanes; ++lane)
       {
          auto cell_it = matrix_free.get_cell_iterator(cell, lane);
@@ -410,7 +410,7 @@ DGSystem<dim,degree>::initialize()
            problem->initial_value(p, initial_value);
            for (unsigned int i = 0; i < nvar; ++i)
            {
-             auto idx = fe.component_to_system_index(i, q);
+             const auto idx = fe.component_to_system_index(i, q);
              solution(dof_indices[idx]) = initial_value[i];
            }
          }
@@ -433,6 +433,7 @@ namespace PDE
                   const std::vector<Tensor<1, nvar, double>> *avg, double t = 0.0)
           : param(param), average(avg), time(t) {}
 
+      // Assembly over cells
       void cell(const MatrixFree<dim, double> &mf,
                 LinearAlgebra::distributed::Vector<double> &dst,
                 const LinearAlgebra::distributed::Vector<double> &src,
@@ -458,13 +459,14 @@ namespace PDE
             #endif
           }
           phi.integrate_scatter(EvaluationFlags::gradients
-          #if defined(ADD_SOURCE)
+                                #if defined(ADD_SOURCE)
                                 | EvaluationFlags::values
-          #endif
+                                #endif
                                 , dst);
         }
       }
 
+      // Assembly over interior faces
       void face(const MatrixFree<dim, double> &mf,
                 LinearAlgebra::distributed::Vector<double> &dst,
                 const LinearAlgebra::distributed::Vector<double> &src,
@@ -480,11 +482,11 @@ namespace PDE
             phi_p.gather_evaluate(src, EvaluationFlags::values);
 
             FluxData<dim, VectorizedArray<double>> flux_data;
-            unsigned int n_lanes = mf.n_active_entries_per_face_batch(face);
+            const auto n_lanes = mf.n_active_entries_per_face_batch(face);
             for (unsigned int lane = 0; lane < n_lanes; ++lane)
             {
-               auto c_l = mf.get_face_iterator(face, lane, true).first->user_index();
-               auto c_r = mf.get_face_iterator(face, lane, false).first->user_index();
+               const auto c_l = mf.get_face_iterator(face, lane, true).first->user_index();
+               const auto c_r = mf.get_face_iterator(face, lane, false).first->user_index();
                for (unsigned int c = 0; c < nvar; ++c)
                {
                  flux_data.ul[c][lane] = (*average)[c_l][c];
@@ -494,9 +496,9 @@ namespace PDE
 
             for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              auto ul = phi_m.get_value(q);
-              auto ur = phi_p.get_value(q);
-              auto n = phi_m.normal_vector(q);
+              const auto ul = phi_m.get_value(q);
+              const auto ur = phi_p.get_value(q);
+              const auto n = phi_m.normal_vector(q);
 
               flux_data.p = phi_m.quadrature_point(q);
 
@@ -512,6 +514,7 @@ namespace PDE
          }
       }
 
+      // Assembly over boundary faces
       void boundary(const MatrixFree<dim, double> &mf,
                     LinearAlgebra::distributed::Vector<double> &dst,
                     const LinearAlgebra::distributed::Vector<double> &src,
@@ -525,11 +528,11 @@ namespace PDE
             phi_m.gather_evaluate(src, EvaluationFlags::values);
 
             FluxData<dim, VectorizedArray<double>> flux_data;
-            unsigned int n_lanes = mf.n_active_entries_per_face_batch(face);
+            const auto n_lanes = mf.n_active_entries_per_face_batch(face);
             Tensor<1, nvar, VectorizedArray<double>> avg_l;
             for (unsigned int lane = 0; lane < n_lanes; ++lane)
             {
-              auto cell_user_index =
+              const auto cell_user_index =
                   mf.get_face_iterator(face, lane, true).first->user_index();
               for (unsigned int c = 0; c < nvar; ++c) 
               {
@@ -540,9 +543,9 @@ namespace PDE
 
             for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
             {
-              auto ul = phi_m.get_value(q);
-              auto ur = ul;
-              auto n  = phi_m.normal_vector(q);
+              const auto ul = phi_m.get_value(q);
+              const auto ur = ul;
+              const auto n  = phi_m.normal_vector(q);
 
               flux_data.p = phi_m.quadrature_point(q);
 
@@ -589,10 +592,11 @@ DGSystem<dim,degree>::assemble_rhs()
 //------------------------------------------------------------------------------
 // Compute cell average values
 //------------------------------------------------------------------------------
-template <int dim, int degree> void DGSystem<dim,degree>::compute_averages() {
+template <int dim, int degree> void DGSystem<dim,degree>::compute_averages()
+{
   FEEvaluation<dim, degree, degree+1, nvar, double> phi(matrix_free);
 
-  unsigned int total =
+  const auto total =
       matrix_free.n_cell_batches() + matrix_free.n_ghost_cell_batches();
   for (unsigned int cell = 0; cell < total; ++cell)
   {
@@ -603,8 +607,8 @@ template <int dim, int degree> void DGSystem<dim,degree>::compute_averages() {
     VectorizedArray<double> cell_volume = 0.0;
     for (unsigned int q = 0; q < phi.n_q_points; ++q)
     {
-      auto val     = phi.get_value(q);
-      auto JxW     = phi.JxW(q);
+      const auto val = phi.get_value(q);
+      const auto JxW = phi.JxW(q);
       cell_volume += JxW;
       for (unsigned int i = 0; i < nvar; ++i)
         cell_integral[i] += val[i] * JxW;
@@ -613,11 +617,11 @@ template <int dim, int degree> void DGSystem<dim,degree>::compute_averages() {
     for (unsigned int i = 0; i < nvar; ++i)
       cell_integral[i] /= cell_volume;
 
-    unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+    const auto n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
     for (unsigned int lane = 0; lane < n_lanes; ++lane) {
 
-      auto cell_it = matrix_free.get_cell_iterator(cell, lane);
-      auto idx     = cell_it->user_index();
+      const auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+      const auto idx     = cell_it->user_index();
       for (unsigned int i = 0; i < nvar; ++i)
         average[idx][i] = cell_integral[i][lane];
     }
@@ -667,9 +671,9 @@ DGSystem<dim,degree>::compute_dt()
 
        for (unsigned int lane = 0; lane < n_lanes; ++lane)
        {
-          auto cell_it = matrix_free.get_cell_iterator(cell, lane);
-          auto c = cell_it->user_index();
-          auto cell_center = cell_it->center();
+          const auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+          const auto c = cell_it->user_index();
+          const auto cell_center = cell_it->center();
           for (unsigned int i = 0; i < nvar; ++i)
              avg[i][lane] = average[c][i];
           for (unsigned int d = 0; d < dim; ++d)
