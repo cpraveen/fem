@@ -9,21 +9,13 @@ Available models:
 * `models/euler`: Compressible Euler equations
 * `models/linadv`: Linear advection
 
-## Build
-
-```shell
-cd fem/dg2d/system_mf
-cmake .
-make release
-make
-```
-
 ## Run Euler (isentropic vortex)
 
 ```shell
 cd fem/dg2d/system_mf
 ln -sf ./models/euler/pde.h
 ln -sf ./models/euler/isentropic_vortex/problem.h
+make release
 make
 cd models/euler/isentropic_vortex
 mpirun -np 4 ../../../main input.prm
@@ -35,6 +27,7 @@ mpirun -np 4 ../../../main input.prm
 cd fem/dg2d/system_mf
 ln -sf ./models/linadv/pde.h
 ln -sf ./models/linadv/rotate.h problem.h
+make release
 make
 cd models/linadv
 mpirun -np 4 ../../main input.prm
