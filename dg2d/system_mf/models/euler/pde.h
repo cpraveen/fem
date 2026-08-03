@@ -50,13 +50,12 @@ namespace ProblemData
 //------------------------------------------------------------------------------
 namespace PDE
 {
-
    const std::string name = "2D Euler equations";
    const double gamma = ProblemData::gamma;
 
-   const unsigned int irho = 0;
-   const unsigned int iE = nvar-1;
-   const unsigned int ipre = nvar-1;
+   constexpr unsigned int irho = 0;
+   constexpr unsigned int iE = nvar-1;
+   constexpr unsigned int ipre = nvar-1;
 
    template <int dim, typename Number>
    using FluxMatrix = Tensor<1, nvar, Tensor<1, dim, Number>>;

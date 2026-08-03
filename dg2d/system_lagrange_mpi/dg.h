@@ -115,20 +115,20 @@ struct ScratchData
                                                 update_gradients |
                                                 update_quadrature_points |
                                                 update_JxW_values,
-               const UpdateFlags interface_update_flags = update_values | 
+               const UpdateFlags interface_update_flags = update_values |
                                                           update_quadrature_points |
-                                                          update_JxW_values | 
+                                                          update_JxW_values |
                                                           update_normal_vectors)
-       : 
-       fe_values(mapping, fe, cell_quadrature, update_flags), 
-       face_value0(mapping,
-                   fe,
-                   face_quadrature,
-                   interface_update_flags),
-       face_value1(mapping,
-                   fe,
-                   face_quadrature,
-                   interface_update_flags),
+       :
+       fe_values(mapping, fe, cell_quadrature, update_flags),
+       fe_face_values0(mapping,
+                       fe,
+                       face_quadrature,
+                       interface_update_flags),
+       fe_face_values1(mapping,
+                       fe,
+                       face_quadrature,
+                       interface_update_flags),
       solution_values(cell_quadrature.size(), Vector<double>(nvar)),
       left_state(face_quadrature.size(), Vector<double>(nvar)),
       right_state(face_quadrature.size(), Vector<double>(nvar))
@@ -140,26 +140,26 @@ struct ScratchData
                    scratch_data.fe_values.get_fe(),
                    scratch_data.fe_values.get_quadrature(),
                    scratch_data.fe_values.get_update_flags()),
-         face_value0(scratch_data.face_value0.get_mapping(),
-                     scratch_data.face_value0.get_fe(),
-                     scratch_data.face_value0.get_quadrature(),
-                     scratch_data.face_value0.get_update_flags()),
-         face_value1(scratch_data.face_value1.get_mapping(),
-                     scratch_data.face_value1.get_fe(),
-                     scratch_data.face_value1.get_quadrature(),
-                     scratch_data.face_value1.get_update_flags()),
+         fe_face_values0(scratch_data.fe_face_values0.get_mapping(),
+                         scratch_data.fe_face_values0.get_fe(),
+                         scratch_data.fe_face_values0.get_quadrature(),
+                         scratch_data.fe_face_values0.get_update_flags()),
+         fe_face_values1(scratch_data.fe_face_values1.get_mapping(),
+                         scratch_data.fe_face_values1.get_fe(),
+                         scratch_data.fe_face_values1.get_quadrature(),
+                         scratch_data.fe_face_values1.get_update_flags()),
          solution_values(scratch_data.fe_values.get_quadrature().size(),
                          Vector<double>(nvar)),
-         left_state(scratch_data.face_value0.get_quadrature().size(),
+         left_state(scratch_data.fe_face_values0.get_quadrature().size(),
                     Vector<double>(nvar)),
-         right_state(scratch_data.face_value0.get_quadrature().size(),
+         right_state(scratch_data.fe_face_values0.get_quadrature().size(),
                      Vector<double>(nvar))
    {
    }
 
    FEValues<dim> fe_values;
-   FEFaceValues<dim> face_value0;
-   FEFaceValues<dim> face_value1;
+   FEFaceValues<dim> fe_face_values0;
+   FEFaceValues<dim> fe_face_values1;
    std::vector<Vector<double>> solution_values;
    std::vector<Vector<double>> left_state;
    std::vector<Vector<double>> right_state;
@@ -305,7 +305,7 @@ DGSystem<dim>::make_grid_and_dofs()
    else if(param->grid == "box")
    {
       pcout << "   Making grid using subdivided_hyper_rectangle ...\n";
-      pcout << "      Grid size = " << param->n_cells_x << " x " 
+      pcout << "      Grid size = " << param->n_cells_x << " x "
             << param->n_cells_y << "\n";
       const Point<dim> p1(problem->get_xmin(), problem->get_ymin());
       const Point<dim> p2(problem->get_xmax(), problem->get_ymax());
@@ -398,14 +398,14 @@ DGSystem<dim>::make_grid_and_dofs()
    pcout << "Mapping degree = " << param->mapping_degree << std::endl;
 
    // check support point order. We assume that the order of cell_quadrature
-   // points is same as the order of lagrange basis points. This allows us to 
+   // points is same as the order of lagrange basis points. This allows us to
    // directly get solution at quadrature points without using get_function_values.
    for(unsigned int i=0; i<fe.dofs_per_cell; ++i)
    {
       auto ind_i = fe.system_to_component_index(i).second;
       auto q_point = cell_quadrature.point(ind_i);
       auto value = fe.shape_value(i, q_point);
-      AssertThrow(fabs(value-1.0) < 1.0e-13, 
+      AssertThrow(fabs(value-1.0) < 1.0e-13,
                   ExcMessage("Support point order assumption wrong"));
    }
 }
@@ -563,7 +563,7 @@ void DGSystem<dim>::cell_worker(const Iterator &cell,
          for(unsigned int d=0; d<dim; ++d) tmp += shape_grad[d] * flux[c][d];
          cell_rhs(i) += tmp * fe_values.JxW(q);
          #if defined(ADD_SOURCE)
-         cell_rhs(i) += src[c] * 
+         cell_rhs(i) += src[c] *
                         fe_values.shape_value_component(i,q,c) *
                         fe_values.JxW(q);
          #endif
@@ -584,20 +584,20 @@ void DGSystem<dim>::face_worker(const Iterator &cell,
                                 ScratchData<dim> &scratch_data,
                                 CopyData &copy_data)
 {
-   FEFaceValues<dim> &face_value0 = scratch_data.face_value0;
-   FEFaceValues<dim> &face_value1 = scratch_data.face_value1;
-   face_value0.reinit(cell, f);
-   face_value1.reinit(ncell, nf);
+   auto &fe_face_values0 = scratch_data.fe_face_values0;
+   auto &fe_face_values1 = scratch_data.fe_face_values1;
+   fe_face_values0.reinit(cell, f);
+   fe_face_values1.reinit(ncell, nf);
 
-   const unsigned int n_cell_dofs = face_value0.get_fe().n_dofs_per_cell();
+   const unsigned int n_cell_dofs = fe_face_values0.get_fe().n_dofs_per_cell();
    const unsigned int n_face_dofs = 2 * n_cell_dofs;
-   const unsigned int n_q_points = face_value0.get_quadrature().size();
-   const auto &q_points = face_value0.get_quadrature_points();
+   const unsigned int n_q_points = fe_face_values0.get_quadrature().size();
+   const auto &q_points = fe_face_values0.get_quadrature_points();
 
    auto &left_state = scratch_data.left_state;
    auto &right_state = scratch_data.right_state;
-   face_value0.get_function_values(solution, left_state);
-   face_value1.get_function_values(solution, right_state);
+   fe_face_values0.get_function_values(solution, left_state);
+   fe_face_values1.get_function_values(solution, right_state);
 
    copy_data.face_data.emplace_back();
    CopyDataFace &copy_data_face = copy_data.face_data.back();
@@ -620,25 +620,25 @@ void DGSystem<dim>::face_worker(const Iterator &cell,
       data.ul = &average[cell->user_index()];
       data.ur = &average[ncell->user_index()];
       Vector<double> num_flux(nvar);
-      PDE::numerical_flux(param->flux_type, 
-                          left_state[q], 
-                          right_state[q], 
-                          face_value0.normal_vector(q),
+      PDE::numerical_flux(param->flux_type,
+                          left_state[q],
+                          right_state[q],
+                          fe_face_values0.normal_vector(q),
                           data,
                           num_flux);
       for (unsigned int i = 0; i < n_cell_dofs; ++i)
       {
-         const auto c = face_value0.get_fe().system_to_component_index(i).first;
+         const auto c = fe_face_values0.get_fe().system_to_component_index(i).first;
          cell_rhs(i) -= num_flux[c] *
-                        face_value0.shape_value_component(i, q, c) *
-                        face_value0.JxW(q);
+                        fe_face_values0.shape_value_component(i, q, c) *
+                        fe_face_values0.JxW(q);
       }
       for (unsigned int i = 0; i < n_cell_dofs; ++i)
       {
-         const auto c = face_value1.get_fe().system_to_component_index(i).first;
+         const auto c = fe_face_values1.get_fe().system_to_component_index(i).first;
          cell_rhs(i + n_cell_dofs) += num_flux[c] *
-                                      face_value1.shape_value_component(i, q, c) *
-                                      face_value0.JxW(q);
+                                      fe_face_values1.shape_value_component(i, q, c) *
+                                      fe_face_values0.JxW(q);
       }
    }
 }
@@ -651,16 +651,16 @@ void DGSystem<dim>::boundary_worker(const Iterator &cell,
                                     ScratchData<dim> &scratch_data,
                                     CopyData &copy_data)
 {
-   FEFaceValues<dim> &face_value0 = scratch_data.face_value0;
-   face_value0.reinit(cell, f);
+   auto &fe_face_values0 = scratch_data.fe_face_values0;
+   fe_face_values0.reinit(cell, f);
 
-   const unsigned int n_face_dofs = face_value0.get_fe().n_dofs_per_cell();
-   const unsigned int n_q_points = face_value0.get_quadrature().size();
-   const auto &q_points = face_value0.get_quadrature_points();
+   const unsigned int n_face_dofs = fe_face_values0.get_fe().n_dofs_per_cell();
+   const unsigned int n_q_points = fe_face_values0.get_quadrature().size();
+   const auto &q_points = fe_face_values0.get_quadrature_points();
 
    auto &left_state = scratch_data.left_state;
    auto &right_state = scratch_data.right_state;
-   face_value0.get_function_values(solution, left_state);
+   fe_face_values0.get_function_values(solution, left_state);
    auto &cell_rhs = copy_data.cell_rhs;
 
    for (unsigned int q = 0; q < n_q_points; ++q)
@@ -668,7 +668,7 @@ void DGSystem<dim>::boundary_worker(const Iterator &cell,
       problem->boundary_value(cell->face(f)->boundary_id(),
                               q_points[q],
                               stage_time,
-                              face_value0.normal_vector(q),
+                              fe_face_values0.normal_vector(q),
                               left_state[q],
                               right_state[q]);
       FluxData<dim> data;
@@ -679,15 +679,15 @@ void DGSystem<dim>::boundary_worker(const Iterator &cell,
       Vector<double> num_flux(nvar);
       PDE::boundary_flux(left_state[q], //todo
                          right_state[q],
-                         face_value0.normal_vector(q),
+                         fe_face_values0.normal_vector(q),
                          data,
                          num_flux);
       for (unsigned int i = 0; i < n_face_dofs; ++i)
       {
-         const auto c = face_value0.get_fe().system_to_component_index(i).first;
+         const auto c = fe_face_values0.get_fe().system_to_component_index(i).first;
          cell_rhs(i) -= num_flux[c] *
-                        face_value0.shape_value_component(i, q, c) *
-                        face_value0.JxW(q);
+                        fe_face_values0.shape_value_component(i, q, c) *
+                        fe_face_values0.JxW(q);
       }
    }
 }
@@ -979,30 +979,27 @@ DGSystem<dim>::run()
    compute_averages();
    output_results(0.0);
 
+   while(time < param->final_time)
    {
-      TimerOutput::Scope t(computing_timer, "time stepping");
-      while(time < param->final_time)
+      solution_old  = solution;
+      stage_time = time;
+      compute_dt();
+
+      for(unsigned int rk = 0; rk < n_rk_stages; ++rk)
       {
-         solution_old  = solution;
-         stage_time = time;
-         compute_dt();
-
-         for(unsigned int rk = 0; rk < n_rk_stages; ++rk)
-         {
-            assemble_rhs();
-            update(rk);
-            solution.update_ghost_values();
-            compute_averages();
-            apply_limiter();
-         }
-
-         time += dt, ++time_step;
-         pcout << "Iter = " << time_step
-                   << " dt = " << dt
-                   << " time = " << time << std::endl;
-         if(call_output()) output_results(time);
+         assemble_rhs();
+         update(rk);
+         solution.update_ghost_values();
+         compute_averages();
+         apply_limiter();
       }
-   }
+
+      time += dt, ++time_step;
+      pcout << "Iter = " << time_step
+            << " dt = " << dt
+            << " time = " << time << std::endl;
+      if(call_output()) output_results(time);
+      }
 
    computing_timer.print_summary();
 }
