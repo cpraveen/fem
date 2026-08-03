@@ -822,7 +822,10 @@ void
 DGSystem<dim,degree>::run()
 {
   pcout << "Solving " << PDE::name << " for " << problem->get_name() << "\n";
-  pcout << "Number of threads = " << MultithreadInfo::n_threads() << "\n";
+  pcout << "Number of threads   = " << MultithreadInfo::n_threads() << "\n";
+  pcout << "Number of ranks     = " << Utilities::MPI::n_mpi_processes(mpi_comm)
+                                    << "\n";
+  pcout << "Vectorization width = " << VectorizedArray<double>::size() << "\n";
 
   if (Utilities::MPI::this_mpi_process(mpi_comm) == 0)
     PDE::print_info();
