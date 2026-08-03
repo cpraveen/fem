@@ -25,6 +25,7 @@
 #include <deal.II/base/parameter_handler.h>
 #include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/table.h>
+#include <deal.II/base/timer.h>
 
 #include <deal.II/numerics/vector_tools.h>
 #include <deal.II/numerics/data_out.h>
@@ -141,6 +142,7 @@ private:
    unsigned int                         time_step;
    ProblemBase<dim>*                    problem;
    ConditionalOStream                   pcout;
+   mutable TimerOutput                  computing_timer;
    PTriangulation                       triangulation;
    FESystem<dim>                        fe;
    DoFHandler<dim>                      dof_handler;
@@ -159,16 +161,20 @@ private:
 // Constructor
 //------------------------------------------------------------------------------
 template <int dim, int degree>
-DGSystem<dim,degree>::DGSystem(Parameter&        param,
-                        ProblemBase<dim>& problem,
-                        Quadrature<1>&    quadrature_1d)
+DGSystem<dim, degree>::DGSystem(Parameter &param,
+                                ProblemBase<dim> &problem,
+                                Quadrature<1> &quadrature_1d)
    :
    mpi_comm(MPI_COMM_WORLD),
    param(&param),
    problem(&problem),
    pcout(std::cout, (Utilities::MPI::this_mpi_process(mpi_comm) == 0)),
+   computing_timer(mpi_comm,
+                     pcout,
+                     TimerOutput::summary,
+                     TimerOutput::wall_times),
    triangulation(mpi_comm),
-   fe(FE_DGQArbitraryNodes<dim>(quadrature_1d),nvar),
+   fe(FE_DGQArbitraryNodes<dim>(quadrature_1d), nvar),
    dof_handler(triangulation),
    cell_quadrature(quadrature_1d),
    face_quadrature(quadrature_1d)
@@ -187,6 +193,7 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::make_grid_and_dofs()
 {
+   TimerOutput::Scope t(computing_timer, "make grid and dofs");
    pcout << "Making initial grid ...\n";
    if(param->grid == "user")
    {
@@ -196,7 +203,7 @@ DGSystem<dim,degree>::make_grid_and_dofs()
    else if(param->grid == "box")
    {
       pcout << "   Making grid using subdivided_hyper_rectangle ...\n";
-      pcout << "      Grid size = " << param->n_cells_x << " x " 
+      pcout << "      Grid size = " << param->n_cells_x << " x "
             << param->n_cells_y << "\n";
       const Point<dim> p1(problem->get_xmin(), problem->get_ymin());
       const Point<dim> p2(problem->get_xmax(), problem->get_ymax());
@@ -349,6 +356,7 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::assemble_mass_matrix()
 {
+   TimerOutput::Scope t(computing_timer, "mass matrix");
    pcout << "Constructing mass matrix ...\n";
 
    FEEvaluation<dim, degree, degree+1, nvar, double> phi(matrix_free);
@@ -388,6 +396,7 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::initialize()
 {
+   TimerOutput::Scope t(computing_timer, "initialize");
    pcout << "Interpolating initial condition ...\n";
 
    FEEvaluation<dim, degree, degree+1, nvar, double> phi(matrix_free);
@@ -534,7 +543,7 @@ namespace PDE
             {
               const auto cell_user_index =
                   mf.get_face_iterator(face, lane, true).first->user_index();
-              for (unsigned int c = 0; c < nvar; ++c) 
+              for (unsigned int c = 0; c < nvar; ++c)
               {
                 flux_data.ur[c][lane] = (*average)[cell_user_index][c];
                 flux_data.ul[c][lane] = (*average)[cell_user_index][c];
@@ -572,59 +581,64 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::assemble_rhs()
 {
-  solution.update_ghost_values();
-  rhs = 0.0;
-  PDE::DGOperator<dim, degree> op(param, &average, stage_time);
+   TimerOutput::Scope t(computing_timer, "assemble rhs");
+   solution.update_ghost_values();
+   rhs = 0.0;
+   PDE::DGOperator<dim, degree> op(param, &average, stage_time);
 
-  matrix_free.loop(&PDE::DGOperator<dim, degree>::cell,
-                   &PDE::DGOperator<dim, degree>::face,
-                   &PDE::DGOperator<dim, degree>::boundary,
-                   &op,
-                   rhs,
-                   solution,
-                   false,
-                   MatrixFree<dim>::DataAccessOnFaces::values);
+   matrix_free.loop(&PDE::DGOperator<dim, degree>::cell,
+                    &PDE::DGOperator<dim, degree>::face,
+                    &PDE::DGOperator<dim, degree>::boundary,
+                    &op,
+                    rhs,
+                    solution,
+                    false,
+                    MatrixFree<dim>::DataAccessOnFaces::values);
 
-  rhs.compress(VectorOperation::add);
-  rhs.scale(imm);
+   rhs.compress(VectorOperation::add);
+   rhs.scale(imm);
 }
 
 //------------------------------------------------------------------------------
 // Compute cell average values
 //------------------------------------------------------------------------------
-template <int dim, int degree> void DGSystem<dim,degree>::compute_averages()
+template <int dim, int degree>
+void
+DGSystem<dim,degree>::compute_averages()
 {
-  FEEvaluation<dim, degree, degree+1, nvar, double> phi(matrix_free);
+   TimerOutput::Scope t(computing_timer, "compute averages");
+   FEEvaluation<dim, degree, degree + 1, nvar, double> phi(matrix_free);
 
-  const auto total =
-      matrix_free.n_cell_batches() + matrix_free.n_ghost_cell_batches();
-  for (unsigned int cell = 0; cell < total; ++cell)
-  {
-    phi.reinit(cell);
-    phi.gather_evaluate(solution, EvaluationFlags::values);
+   const auto total =
+       matrix_free.n_cell_batches() + matrix_free.n_ghost_cell_batches();
+   for (unsigned int cell = 0; cell < total; ++cell)
+   {
+      phi.reinit(cell);
+      phi.gather_evaluate(solution, EvaluationFlags::values);
 
-    Tensor<1, nvar, VectorizedArray<double>> cell_integral;
-    VectorizedArray<double> cell_volume = 0.0;
-    for (unsigned int q = 0; q < phi.n_q_points; ++q)
-    {
-      const auto val = phi.get_value(q);
-      const auto JxW = phi.JxW(q);
-      cell_volume += JxW;
+      Tensor<1, nvar, VectorizedArray<double>> cell_integral;
+      VectorizedArray<double> cell_volume = 0.0;
+      for (unsigned int q = 0; q < phi.n_q_points; ++q)
+      {
+         const auto val = phi.get_value(q);
+         const auto JxW = phi.JxW(q);
+         cell_volume += JxW;
+         for (unsigned int i = 0; i < nvar; ++i)
+            cell_integral[i] += val[i] * JxW;
+      }
+
       for (unsigned int i = 0; i < nvar; ++i)
-        cell_integral[i] += val[i] * JxW;
-    }
+         cell_integral[i] /= cell_volume;
 
-    for (unsigned int i = 0; i < nvar; ++i)
-      cell_integral[i] /= cell_volume;
+      const auto n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+      for (unsigned int lane = 0; lane < n_lanes; ++lane)
+      {
 
-    const auto n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
-    for (unsigned int lane = 0; lane < n_lanes; ++lane) {
-
-      const auto cell_it = matrix_free.get_cell_iterator(cell, lane);
-      const auto idx     = cell_it->user_index();
-      for (unsigned int i = 0; i < nvar; ++i)
-        average[idx][i] = cell_integral[i][lane];
-    }
+         const auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+         const auto idx = cell_it->user_index();
+         for (unsigned int i = 0; i < nvar; ++i)
+            average[idx][i] = cell_integral[i][lane];
+      }
   }
 }
 
@@ -647,6 +661,7 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::apply_limiter()
 {
+   TimerOutput::Scope t(computing_timer, "limiter");
    if constexpr (degree == 0) return;
    if (param->limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
@@ -659,36 +674,37 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::compute_dt()
 {
-    dt = 1.0e20;
+   TimerOutput::Scope t(computing_timer, "compute dt");
+   dt = 1.0e20;
 
-    for (unsigned int cell = 0; cell < matrix_free.n_cell_batches(); ++cell)
-    {
-       unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
+   for (unsigned int cell = 0; cell < matrix_free.n_cell_batches(); ++cell)
+   {
+      unsigned int n_lanes = matrix_free.n_active_entries_per_cell_batch(cell);
 
-       Tensor<1, nvar, VectorizedArray<double>> avg;
-       Point<dim, VectorizedArray<double>>      center;
-       VectorizedArray<double>                  h;
+      Tensor<1, nvar, VectorizedArray<double>> avg;
+      Point<dim, VectorizedArray<double>> center;
+      VectorizedArray<double> h;
 
-       for (unsigned int lane = 0; lane < n_lanes; ++lane)
-       {
-          const auto cell_it = matrix_free.get_cell_iterator(cell, lane);
-          const auto c = cell_it->user_index();
-          const auto cell_center = cell_it->center();
-          for (unsigned int i = 0; i < nvar; ++i)
-             avg[i][lane] = average[c][i];
-          for (unsigned int d = 0; d < dim; ++d)
-             center[d][lane] = cell_center[d];
-          h[lane] = cell_it->minimum_vertex_distance();
-       }
+      for (unsigned int lane = 0; lane < n_lanes; ++lane)
+      {
+         const auto cell_it = matrix_free.get_cell_iterator(cell, lane);
+         const auto c = cell_it->user_index();
+         const auto cell_center = cell_it->center();
+         for (unsigned int i = 0; i < nvar; ++i)
+            avg[i][lane] = average[c][i];
+         for (unsigned int d = 0; d < dim; ++d)
+            center[d][lane] = cell_center[d];
+         h[lane] = cell_it->minimum_vertex_distance();
+      }
 
-       Tensor<1, dim, VectorizedArray<double>> jac;
-       PDE::max_speed(avg, center, jac);
+      Tensor<1, dim, VectorizedArray<double>> jac;
+      PDE::max_speed(avg, center, jac);
 
-       VectorizedArray<double> dtcell = h / (jac.norm() + 1.0e-20);
+      VectorizedArray<double> dtcell = h / (jac.norm() + 1.0e-20);
 
-       for (unsigned int lane = 0; lane < n_lanes; ++lane)
-          dt = std::min(dt, dtcell[lane]);
-    }
+      for (unsigned int lane = 0; lane < n_lanes; ++lane)
+         dt = std::min(dt, dtcell[lane]);
+   }
 
     dt *= param->cfl;
     dt  = Utilities::MPI::min(dt, mpi_comm);
@@ -711,6 +727,7 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::update(const unsigned int rk_stage)
 {
+   TimerOutput::Scope t(computing_timer, "update");
    // solution = solution + dt * rhs
    solution.add(dt, rhs);
 
@@ -724,7 +741,8 @@ DGSystem<dim,degree>::update(const unsigned int rk_stage)
 // Decide if solution needs to be saved
 //-----------------------------------------------------------------------------
 template <int dim, int degree>
-bool DGSystem<dim,degree>::call_output()
+bool
+DGSystem<dim,degree>::call_output()
 {
    // Save initial condition
    if (time_step == 0)
@@ -757,6 +775,7 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::output_results(const double time) const
 {
+   TimerOutput::Scope t(computing_timer, "output results");
    static unsigned int counter = 0;
    static std::vector<XDMFEntry> xdmf_entries;
    std::string mesh_filename = "mesh.h5";
@@ -814,13 +833,13 @@ DGSystem<dim,degree>::run()
   compute_averages();
   output_results(0.0);
 
-  while (time < param->final_time) 
+  while (time < param->final_time)
   {
     solution_old = solution;
     stage_time = time;
     compute_dt();
 
-    for (unsigned int rk = 0; rk < n_rk_stages; ++rk) 
+    for (unsigned int rk = 0; rk < n_rk_stages; ++rk)
     {
       assemble_rhs();
       update(rk);
@@ -830,13 +849,15 @@ DGSystem<dim,degree>::run()
     }
 
     time += dt, ++time_step;
-    pcout << "Iter = " << time_step 
+    pcout << "Iter = " << time_step
           << " dt = " << dt
           << " time = " << time
           << std::endl;
     if (call_output())
       output_results(time);
   }
+
+  computing_timer.print_summary();
 }
 
 //------------------------------------------------------------------------------
