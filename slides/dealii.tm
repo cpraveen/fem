@@ -1,4 +1,4 @@
-<TeXmacs|2.1.4>
+<TeXmacs|2.1.5>
 
 <style|<tuple|course|old-dots|ice|framed-title|hanging-theorems|number-europe|schola-font>>
 
@@ -115,7 +115,7 @@
     </slide>
 
     <\slide>
-      <chapter*|Iterators>
+      <chapter|Iterators>
 
       <\cpp-code>
         <\verbatim>
@@ -167,7 +167,7 @@
     </slide>
 
     <\slide>
-      <chapter*|step-1>
+      <chapter|step-1>
 
       To remove comments from source file<\footnote>
         See <verbatim|make help>
@@ -226,7 +226,7 @@
     </slide>
 
     <\slide>
-      <chapter*|step-2>
+      <chapter|step-2>
 
       An FE solution is of the form
 
@@ -293,7 +293,7 @@
     </slide>
 
     <\slide>
-      <chapter*|dofs on an element>
+      <chapter|dofs on an element>
 
       On an element <math|K>, the FE solution is given by
 
@@ -339,7 +339,7 @@
     </slide>
 
     <\slide>
-      <chapter*|Evaluating an FE solution>
+      <chapter|Evaluating an FE solution>
 
       Computing the FE solution at any point is done using
       <verbatim|FEValues> via some <verbatim|Quadrature> formula.
@@ -417,7 +417,7 @@
     </slide>
 
     <\slide>
-      <chapter*|DG assembly>
+      <chapter|DG assembly>
 
       Cell integral
 
@@ -443,7 +443,7 @@
     </slide>
 
     <\slide>
-      <chapter*|Working with two dof handlers: dh1, dh2>
+      <chapter|Working with two dof handlers: dh1, dh2>
 
       Solution 1 (be careful in parallel)
 
@@ -500,7 +500,7 @@
     </slide>
 
     <\slide>
-      <chapter*|Parallel computing>
+      <chapter|Parallel computing>
 
       The main idea is <with|font-series|bold|divide-and-conquer>, i.e.,
       break a problem into smaller parts and solve them simultaneously on
@@ -844,7 +844,7 @@
     </slide>
 
     <\slide>
-      <chapter*|Sum factorization>
+      <chapter|Sum factorization>
 
       Computing sums
 
@@ -921,7 +921,7 @@
     </slide>
 
     <\slide>
-      <chapter*|Matrix-free method>
+      <chapter|Matrix-free method>
 
       Let
 
@@ -985,6 +985,64 @@
       <\equation*>
         A<rsub|K>=<wide|B|^><rsup|\<top\>>J<rsub|K><rsup|-1>D<rsub|K>J<rsub|K><rsup|-\<top\>><wide|B|^>
       </equation*>
+
+      <section*|Matrix-free: conservation law case>
+
+      When solving a conservation law, we compute integrals of the form
+
+      <\equation*>
+        <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x,<space|2em>\<alpha\>=1,\<ldots\>,dim,<space|1em>0\<leqslant\>i\<less\><text|<verbatim|dofs_per_cell>>
+      </equation*>
+
+      When we create <verbatim|FEValues>, it computes and stores shape
+      gradients on reference element
+
+      <\equation*>
+        <pd|\<phi\><rsub|i>|\<xi\><rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>
+      </equation*>
+
+      When we reinit <verbatim|FEValues> on a cell, it computes gradient wrt
+      real coordinates
+
+      <\equation*>
+        <pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>=<big|sum><rsub|\<beta\>=1><rsup|dim><pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)><pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>
+      </equation*>
+
+      Note that the above involves multiplying two matrices. Finally, when we
+      do quadrature, we multiply by a vector
+
+      <\equation*>
+        <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x\<approx\><big|sum><rsub|q><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>J<rsub|q>\<omega\><rsub|q>
+      </equation*>
+
+      In matrix-free, we avoid matrix-matrix multiplications, and do only
+      matrix-vector products to compute the integral. We do not explicitly
+      compute <math|<pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>>.\ 
+
+      The matrix-free object <verbatim|phi> computes and stores all values of
+
+      <\equation*>
+        <pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)>
+      </equation*>
+
+      When we do <verbatim|phi.reinit> on a cell, it computes
+
+      <\equation*>
+        <pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>,<space|1em>J<rsub|q>\<omega\><rsub|q>
+      </equation*>
+
+      When we do <verbatim|phi.submit_gradient>, it collects all values of
+      <math|f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>>. Finally, when we
+      do <verbatim|phi.integrate_scatter>, it computes the integral by doing
+      all the sums
+
+      <\equation*>
+        <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x\<approx\><big|sum><rsub|\<beta\>=1><rsup|dim><big|sum><rsub|q><pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)><pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>J<rsub|q>\<omega\><rsub|q>
+      </equation*>
+
+      There is more detail involved. Each <math|\<phi\><rsub|i>> is a product
+      of 1-D Lagrange polynomials, so the above sum can be factorized and
+      implemented as a sequence of mat-vec products. <todo|Add more details.>
 
       \;
     </slide>
@@ -1067,22 +1125,23 @@
 
 <\references>
   <\collection>
-    <associate|auto-1|<tuple|?|2>>
+    <associate|auto-1|<tuple|1|2>>
     <associate|auto-10|<tuple|1|12>>
     <associate|auto-11|<tuple|2|12>>
     <associate|auto-12|<tuple|3|13>>
     <associate|auto-13|<tuple|1|13>>
     <associate|auto-14|<tuple|1|15>>
-    <associate|auto-15|<tuple|<with|mode|<quote|math>|\<bullet\>>|17>>
-    <associate|auto-16|<tuple|<with|mode|<quote|math>|\<bullet\>>|?>>
-    <associate|auto-17|<tuple|<with|mode|<quote|math>|\<bullet\>>|?>>
-    <associate|auto-2|<tuple|?|3>>
-    <associate|auto-3|<tuple|2|4>>
-    <associate|auto-4|<tuple|3|6>>
-    <associate|auto-5|<tuple|3|7>>
-    <associate|auto-6|<tuple|3|9>>
-    <associate|auto-7|<tuple|3|10>>
-    <associate|auto-8|<tuple|3|11>>
+    <associate|auto-15|<tuple|9|17>>
+    <associate|auto-16|<tuple|9|17>>
+    <associate|auto-17|<tuple|10|19>>
+    <associate|auto-18|<tuple|10|?>>
+    <associate|auto-2|<tuple|2|3>>
+    <associate|auto-3|<tuple|3|4>>
+    <associate|auto-4|<tuple|4|6>>
+    <associate|auto-5|<tuple|5|7>>
+    <associate|auto-6|<tuple|6|9>>
+    <associate|auto-7|<tuple|7|10>>
+    <associate|auto-8|<tuple|8|11>>
     <associate|auto-9|<tuple|<with|mode|<quote|math>|\<bullet\>>|11>>
     <associate|footnote-1|<tuple|1|3>>
     <associate|footnote-2|<tuple|2|3>>
@@ -1152,9 +1211,17 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-14>>
 
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Sum
+      factorization> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-15><vspace|1fn>
+
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|Evaluating
+      solution> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-16><vspace|0.5fn>
+
       <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Matrix-free
       method> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
-      <no-break><pageref|auto-15><vspace|1fn>
+      <no-break><pageref|auto-17><vspace|1fn>
     </associate>
   </collection>
 </auxiliary>
