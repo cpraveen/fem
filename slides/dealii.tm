@@ -1001,15 +1001,16 @@
         <pd|\<phi\><rsub|i>|\<xi\><rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>
       </equation*>
 
-      When we reinit <verbatim|FEValues> on a cell, it computes gradient wrt
-      real coordinates
+      When we reinit <verbatim|FEValues> on a cell, it computes shape
+      gradient wrt real coordinates
 
       <\equation*>
         <pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>=<big|sum><rsub|\<beta\>=1><rsup|dim><pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)><pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>
       </equation*>
 
       Note that the above involves multiplying two matrices. Finally, when we
-      do quadrature, we multiply by a vector
+      do quadrature, we multiply by a vector containing flux values
+      <math|f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>>,
 
       <\equation*>
         <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x\<approx\><big|sum><rsub|q><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>J<rsub|q>\<omega\><rsub|q>
@@ -1019,7 +1020,8 @@
       matrix-vector products to compute the integral. We do not explicitly
       compute <math|<pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>>.\ 
 
-      The matrix-free object <verbatim|phi> computes and stores all values of
+      When it is created, the matrix-free object <verbatim|phi> computes and
+      stores all values of
 
       <\equation*>
         <pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)>
@@ -1134,7 +1136,7 @@
     <associate|auto-15|<tuple|9|17>>
     <associate|auto-16|<tuple|9|17>>
     <associate|auto-17|<tuple|10|19>>
-    <associate|auto-18|<tuple|10|?>>
+    <associate|auto-18|<tuple|10|20>>
     <associate|auto-2|<tuple|2|3>>
     <associate|auto-3|<tuple|3|4>>
     <associate|auto-4|<tuple|4|6>>
@@ -1155,35 +1157,35 @@
 <\auxiliary>
   <\collection>
     <\associate|toc>
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Iterators>
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|1<space|2spc>Iterators>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-1><vspace|1fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|step-1>
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|2<space|2spc>step-1>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-2><vspace|1fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|step-2>
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|3<space|2spc>step-2>
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-3><vspace|1fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|dofs
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|4<space|2spc>dofs
       on an element> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-4><vspace|1fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Evaluating
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|5<space|2spc>Evaluating
       an FE solution> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-5><vspace|1fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|DG
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|6<space|2spc>DG
       assembly> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-6><vspace|1fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Working
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|7<space|2spc>Working
       with two dof handlers: dh1, dh2> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-7><vspace|1fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Parallel
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|8<space|2spc>Parallel
       computing> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-8><vspace|1fn>
 
@@ -1211,7 +1213,7 @@
       <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-14>>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Sum
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|9<space|2spc>Sum
       factorization> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-15><vspace|1fn>
 
@@ -1219,9 +1221,13 @@
       solution> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-16><vspace|0.5fn>
 
-      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|Matrix-free
+      <vspace*|2fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|font-size|<quote|1.19>|10<space|2spc>Matrix-free
       method> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-17><vspace|1fn>
+
+      <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|Matrix-free:
+      conservation law case> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-18><vspace|0.5fn>
     </associate>
   </collection>
 </auxiliary>
