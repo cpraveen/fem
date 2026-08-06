@@ -43,7 +43,7 @@
 #include <iostream>
 
 #include "pde.h"
-#include "../models/problem_base.h"
+#include "models/problem_base.h"
 
 #define sign(a)   (((a) > 0.0) ? 1 : -1)
 
@@ -647,7 +647,7 @@ template <int dim, int degree>
 void
 DGSystem<dim,degree>::apply_TVD_limiter()
 {
-   if constexpr (degree == 0) return;
+   if (degree == 0) return;
    AssertThrow(false, ExcNotImplemented());
 }
 
@@ -659,7 +659,7 @@ void
 DGSystem<dim,degree>::apply_limiter()
 {
    TimerOutput::Scope t(computing_timer, "limiter");
-   if constexpr (degree == 0) return;
+   if (degree == 0) return;
    if (param->limiter_type == LimiterType::none) return;
    apply_TVD_limiter();
 }

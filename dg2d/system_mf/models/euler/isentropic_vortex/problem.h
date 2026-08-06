@@ -1,5 +1,7 @@
 // Isentropic vortex
 
+constexpr int dim = 2;
+
 //------------------------------------------------------------------------------
 namespace ProblemData
 {

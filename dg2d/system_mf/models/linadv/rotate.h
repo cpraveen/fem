@@ -1,5 +1,7 @@
 // Linear advection on circles
 
+constexpr int dim = 2;
+
 //------------------------------------------------------------------------------
 namespace ProblemData
 {
@@ -32,12 +34,12 @@ struct Problem : ProblemBase<dim>
    const double x0 = 0.5;
    const double y0 = 0.0;
 
-   void initial_value(const Point<dim> &p, Vector<double> &u) const override 
+   void initial_value(const Point<dim> &p, Vector<double> &u) const override
    {
      const double x = p[0] - x0;
      const double y = p[1] - y0;
      u[0] = 1.0 + exp(-alpha * (x * x + y * y));
-     if (x < 0.1 && x > -0.1) 
+     if (x < 0.1 && x > -0.1)
      {
        u[0] = 10.0;
      }

@@ -1,5 +1,7 @@
 // Linear advection on circles
 
+constexpr int dim = 2;
+
 //------------------------------------------------------------------------------
 namespace ProblemData
 {
