@@ -1,7 +1,6 @@
-
 //------------------------------------------------------------------------------
 // Solves system of PDE of the form
-//    u_t + div(f(u,x)) = 0
+//    u_t + div(f(u,x,t)) = s(u,x,t)
 //------------------------------------------------------------------------------
 #include <deal.II/grid/tria.h>
 #include <deal.II/grid/grid_generator.h>
@@ -432,147 +431,146 @@ DGSystem<dim,degree>::initialize()
 //------------------------------------------------------------------------------
 // DG operator for MatrixFree assembly
 //------------------------------------------------------------------------------
-namespace PDE
+template <int dim, int degree>
+class DGOperator
 {
-   template <int dim, int degree>
-   class DGOperator
+public:
+   DGOperator(const Parameter *param,
+               const std::vector<Tensor<1, nvar, double>> *avg,
+               double t = 0.0)
+         : param(param), average(avg), time(t)
+   {}
+
+   // Assembly over cells
+   void cell(const MatrixFree<dim, double> &mf,
+               LinearAlgebra::distributed::Vector<double> &dst,
+               const LinearAlgebra::distributed::Vector<double> &src,
+               const std::pair<unsigned int, unsigned int> &range) const
    {
-   public:
-      DGOperator(const Parameter *param,
-                  const std::vector<Tensor<1, nvar, double>> *avg, double t = 0.0)
-          : param(param), average(avg), time(t) {}
+      FEEvaluation<dim, degree, degree+1, nvar, double> phi(mf);
+      for (auto cell = range.first; cell < range.second; ++cell) {
+         phi.reinit(cell);
+         phi.gather_evaluate(src, EvaluationFlags::values);
+         for (unsigned int q = 0; q < phi.n_q_points; ++q) {
+         auto u = phi.get_value(q);
 
-      // Assembly over cells
-      void cell(const MatrixFree<dim, double> &mf,
-                LinearAlgebra::distributed::Vector<double> &dst,
-                const LinearAlgebra::distributed::Vector<double> &src,
-                const std::pair<unsigned int, unsigned int> &range) const
-      {
-        FEEvaluation<dim, degree, degree+1, nvar, double> phi(mf);
-        for (auto cell = range.first; cell < range.second; ++cell) {
-          phi.reinit(cell);
-          phi.gather_evaluate(src, EvaluationFlags::values);
-          for (unsigned int q = 0; q < phi.n_q_points; ++q) {
-            auto u = phi.get_value(q);
+         FluxData<dim, VectorizedArray<double>> flux_data;
+         flux_data.p = phi.quadrature_point(q);
 
-            FluxData<dim, VectorizedArray<double>> flux_data;
-            flux_data.p = phi.quadrature_point(q);
-
-            typename PDE::FluxMatrix<dim, VectorizedArray<double>> ft;
-            physical_flux<dim>(u, flux_data, ft);
-            phi.submit_gradient(ft, q);
-            #if defined(ADD_SOURCE)
-            Tensor<1, nvar, VectorizedArray<double>> src_val;
-            PDE::source(phi.quadrature_point(q), time, u, src_val);
-            phi.submit_value(src_val, q);
-            #endif
-          }
-          phi.integrate_scatter(EvaluationFlags::gradients
-                                #if defined(ADD_SOURCE)
-                                | EvaluationFlags::values
-                                #endif
-                                , dst);
-        }
-      }
-
-      // Assembly over interior faces
-      void face(const MatrixFree<dim, double> &mf,
-                LinearAlgebra::distributed::Vector<double> &dst,
-                const LinearAlgebra::distributed::Vector<double> &src,
-                const std::pair<unsigned int, unsigned int> &range) const
-      {
-         FEFaceEvaluation<dim, degree, degree+1, nvar, double>
-            phi_m(mf, true), phi_p(mf, false);
-         for (auto face = range.first; face < range.second; ++face)
-         {
-            phi_m.reinit(face);
-            phi_p.reinit(face);
-            phi_m.gather_evaluate(src, EvaluationFlags::values);
-            phi_p.gather_evaluate(src, EvaluationFlags::values);
-
-            FluxData<dim, VectorizedArray<double>> flux_data;
-            const auto n_lanes = mf.n_active_entries_per_face_batch(face);
-            for (unsigned int lane = 0; lane < n_lanes; ++lane)
-            {
-               const auto c_l = mf.get_face_iterator(face, lane, true).first->user_index();
-               const auto c_r = mf.get_face_iterator(face, lane, false).first->user_index();
-               for (unsigned int c = 0; c < nvar; ++c)
-               {
-                 flux_data.ul[c][lane] = (*average)[c_l][c];
-                 flux_data.ur[c][lane] = (*average)[c_r][c];
-               }
-            }
-
-            for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
-            {
-              const auto ul = phi_m.get_value(q);
-              const auto ur = phi_p.get_value(q);
-              const auto n = phi_m.normal_vector(q);
-
-              flux_data.p = phi_m.quadrature_point(q);
-
-              typename PDE::NormalFlux<dim, VectorizedArray<double>>
-                  num_flux;
-              numerical_flux(param->flux_type, ul, ur, n, flux_data, num_flux);
-
-              phi_m.submit_value(-num_flux, q);
-              phi_p.submit_value(num_flux, q);
-            }
-            phi_m.integrate_scatter(EvaluationFlags::values, dst);
-            phi_p.integrate_scatter(EvaluationFlags::values, dst);
+         typename PDE::FluxMatrix<dim, VectorizedArray<double>> ft;
+         PDE::physical_flux<dim>(u, flux_data, ft);
+         phi.submit_gradient(ft, q);
+         #if defined(ADD_SOURCE)
+         Tensor<1, nvar, VectorizedArray<double>> src_val;
+         PDE::source(phi.quadrature_point(q), time, u, src_val);
+         phi.submit_value(src_val, q);
+         #endif
          }
+         phi.integrate_scatter(EvaluationFlags::gradients
+                              #if defined(ADD_SOURCE)
+                              | EvaluationFlags::values
+                              #endif
+                              , dst);
       }
+   }
 
-      // Assembly over boundary faces
-      void boundary(const MatrixFree<dim, double> &mf,
-                    LinearAlgebra::distributed::Vector<double> &dst,
-                    const LinearAlgebra::distributed::Vector<double> &src,
-                    const std::pair<unsigned int, unsigned int> &range) const
+   // Assembly over interior faces
+   void face(const MatrixFree<dim, double> &mf,
+               LinearAlgebra::distributed::Vector<double> &dst,
+               const LinearAlgebra::distributed::Vector<double> &src,
+               const std::pair<unsigned int, unsigned int> &range) const
+   {
+      FEFaceEvaluation<dim, degree, degree+1, nvar, double>
+         phi_m(mf, true), phi_p(mf, false);
+      for (auto face = range.first; face < range.second; ++face)
       {
-         FEFaceEvaluation<dim, degree, degree+1, nvar, double>
-            phi_m(mf, true);
-         for (auto face = range.first; face < range.second; ++face)
+         phi_m.reinit(face);
+         phi_p.reinit(face);
+         phi_m.gather_evaluate(src, EvaluationFlags::values);
+         phi_p.gather_evaluate(src, EvaluationFlags::values);
+
+         FluxData<dim, VectorizedArray<double>> flux_data;
+         const auto n_lanes = mf.n_active_entries_per_face_batch(face);
+         for (unsigned int lane = 0; lane < n_lanes; ++lane)
          {
-            phi_m.reinit(face);
-            phi_m.gather_evaluate(src, EvaluationFlags::values);
-
-            FluxData<dim, VectorizedArray<double>> flux_data;
-            const auto n_lanes = mf.n_active_entries_per_face_batch(face);
-            Tensor<1, nvar, VectorizedArray<double>> avg_l;
-            for (unsigned int lane = 0; lane < n_lanes; ++lane)
+            const auto c_l = mf.get_face_iterator(face, lane, true).first->user_index();
+            const auto c_r = mf.get_face_iterator(face, lane, false).first->user_index();
+            for (unsigned int c = 0; c < nvar; ++c)
             {
-              const auto cell_user_index =
-                  mf.get_face_iterator(face, lane, true).first->user_index();
-              for (unsigned int c = 0; c < nvar; ++c)
-              {
-                flux_data.ur[c][lane] = (*average)[cell_user_index][c];
-                flux_data.ul[c][lane] = (*average)[cell_user_index][c];
-              }
+               flux_data.ul[c][lane] = (*average)[c_l][c];
+               flux_data.ur[c][lane] = (*average)[c_r][c];
             }
-
-            for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
-            {
-              const auto ul = phi_m.get_value(q);
-              const auto ur = ul;
-              const auto n  = phi_m.normal_vector(q);
-
-              flux_data.p = phi_m.quadrature_point(q);
-
-              typename PDE::NormalFlux<dim, VectorizedArray<double>> num_flux;
-              boundary_flux(ul, ur, n, flux_data, num_flux);
-
-              phi_m.submit_value(-num_flux, q);
-            }
-            phi_m.integrate_scatter(EvaluationFlags::values, dst);
          }
-      }
 
-   private:
-      const Parameter *param;
-      const std::vector<Tensor<1, nvar, double>> *average;
-      double time;
-   }; // class DGOperator
-} // namespace PDE
+         for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+         {
+            const auto ul = phi_m.get_value(q);
+            const auto ur = phi_p.get_value(q);
+            const auto n = phi_m.normal_vector(q);
+
+            flux_data.p = phi_m.quadrature_point(q);
+
+            typename PDE::NormalFlux<dim, VectorizedArray<double>>
+               num_flux;
+            PDE::numerical_flux(param->flux_type, ul, ur, n, flux_data, num_flux);
+
+            phi_m.submit_value(-num_flux, q);
+            phi_p.submit_value(num_flux, q);
+         }
+         phi_m.integrate_scatter(EvaluationFlags::values, dst);
+         phi_p.integrate_scatter(EvaluationFlags::values, dst);
+      }
+   }
+
+   // Assembly over boundary faces
+   void boundary(const MatrixFree<dim, double> &mf,
+                  LinearAlgebra::distributed::Vector<double> &dst,
+                  const LinearAlgebra::distributed::Vector<double> &src,
+                  const std::pair<unsigned int, unsigned int> &range) const
+   {
+      FEFaceEvaluation<dim, degree, degree+1, nvar, double>
+         phi_m(mf, true);
+      for (auto face = range.first; face < range.second; ++face)
+      {
+         phi_m.reinit(face);
+         phi_m.gather_evaluate(src, EvaluationFlags::values);
+
+         FluxData<dim, VectorizedArray<double>> flux_data;
+         const auto n_lanes = mf.n_active_entries_per_face_batch(face);
+         Tensor<1, nvar, VectorizedArray<double>> avg_l;
+         for (unsigned int lane = 0; lane < n_lanes; ++lane)
+         {
+            const auto cell_user_index =
+               mf.get_face_iterator(face, lane, true).first->user_index();
+            for (unsigned int c = 0; c < nvar; ++c)
+            {
+               flux_data.ur[c][lane] = (*average)[cell_user_index][c];
+               flux_data.ul[c][lane] = (*average)[cell_user_index][c];
+            }
+         }
+
+         for (unsigned int q = 0; q < phi_m.n_q_points; ++q)
+         {
+            const auto ul = phi_m.get_value(q);
+            const auto ur = ul;
+            const auto n  = phi_m.normal_vector(q);
+
+            flux_data.p = phi_m.quadrature_point(q);
+
+            typename PDE::NormalFlux<dim, VectorizedArray<double>> num_flux;
+            PDE::boundary_flux(ul, ur, n, flux_data, num_flux);
+
+            phi_m.submit_value(-num_flux, q);
+         }
+         phi_m.integrate_scatter(EvaluationFlags::values, dst);
+      }
+   }
+
+private:
+   const Parameter *param;
+   const std::vector<Tensor<1, nvar, double>> *average;
+   double time;
+}; // class DGOperator
 
 //------------------------------------------------------------------------------
 // Assemble system rhs
@@ -584,11 +582,11 @@ DGSystem<dim,degree>::assemble_rhs()
    TimerOutput::Scope t(computing_timer, "assemble rhs");
    solution.update_ghost_values();
    rhs = 0.0;
-   PDE::DGOperator<dim, degree> op(param, &average, stage_time);
+   DGOperator<dim, degree> op(param, &average, stage_time);
 
-   matrix_free.loop(&PDE::DGOperator<dim, degree>::cell,
-                    &PDE::DGOperator<dim, degree>::face,
-                    &PDE::DGOperator<dim, degree>::boundary,
+   matrix_free.loop(&DGOperator<dim, degree>::cell,
+                    &DGOperator<dim, degree>::face,
+                    &DGOperator<dim, degree>::boundary,
                     &op,
                     rhs,
                     solution,
@@ -643,8 +641,7 @@ DGSystem<dim,degree>::compute_averages()
 }
 
 //------------------------------------------------------------------------------
-// Apply TVD limiter: 2d case only
-// TODO: Make it work on locally refined grids
+// Apply TVD limiter
 //------------------------------------------------------------------------------
 template <int dim, int degree>
 void
@@ -655,7 +652,7 @@ DGSystem<dim,degree>::apply_TVD_limiter()
 }
 
 //------------------------------------------------------------------------------
-// Apply TVD limiter
+// Apply limiter
 //------------------------------------------------------------------------------
 template <int dim, int degree>
 void
@@ -728,6 +725,7 @@ void
 DGSystem<dim,degree>::update(const unsigned int rk_stage)
 {
    TimerOutput::Scope t(computing_timer, "update");
+
    // solution = solution + dt * rhs
    solution.add(dt, rhs);
 
