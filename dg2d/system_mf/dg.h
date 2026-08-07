@@ -284,6 +284,7 @@ DGSystem<dim,degree>::make_grid_and_dofs()
       triangulation.refine_global(param->n_refine);
    }
 
+   // Set an index for each cell, used to access cell averages
    unsigned int counter = 0;
    for(auto & cell : triangulation.active_cell_iterators())
       if(cell->is_locally_owned() || cell->is_ghost())
@@ -332,6 +333,7 @@ DGSystem<dim,degree>::make_grid_and_dofs()
     pcout << "Mapping type   = " << param->mapping << std::endl;
     pcout << "Mapping degree = " << param->mapping_degree << std::endl;
 
+    // TODO: This check is probably not needed in matrixfree code.
     // check support point order. We assume that the order of cell_quadrature
     // points is same as the order of lagrange basis points. This allows us to
     // directly get solution at quadrature points without using
@@ -461,16 +463,18 @@ class DGOperator
 {
 public:
    DGOperator(const Parameter *param,
-               const std::vector<Tensor<1, nvar, double>> *avg,
-               double t = 0.0)
-         : param(param), average(avg), time(t)
+              const std::vector<Tensor<1, nvar, double>> *average,
+              const double time)
+         : param(param), average(average), time(time)
    {}
 
+   //---------------------------------------------------------------------------
    // Assembly over cells
+   //---------------------------------------------------------------------------
    void cell(const MatrixFree<dim, double> &mf,
-               LinearAlgebra::distributed::Vector<double> &dst,
-               const LinearAlgebra::distributed::Vector<double> &src,
-               const std::pair<unsigned int, unsigned int> &range) const
+             LinearAlgebra::distributed::Vector<double> &dst,
+             const LinearAlgebra::distributed::Vector<double> &src,
+             const std::pair<unsigned int, unsigned int> &range) const
    {
       FEEvaluation<dim, degree, degree+1, nvar, double> phi(mf);
       for (auto cell = range.first; cell < range.second; ++cell) {
@@ -499,11 +503,13 @@ public:
       }
    }
 
+   //---------------------------------------------------------------------------
    // Assembly over interior faces
+   //---------------------------------------------------------------------------
    void face(const MatrixFree<dim, double> &mf,
-               LinearAlgebra::distributed::Vector<double> &dst,
-               const LinearAlgebra::distributed::Vector<double> &src,
-               const std::pair<unsigned int, unsigned int> &range) const
+             LinearAlgebra::distributed::Vector<double> &dst,
+             const LinearAlgebra::distributed::Vector<double> &src,
+             const std::pair<unsigned int, unsigned int> &range) const
    {
       FEFaceEvaluation<dim, degree, degree+1, nvar, double>
          phi_m(mf, true), phi_p(mf, false);
@@ -535,8 +541,7 @@ public:
 
             flux_data.p = phi_m.quadrature_point(q);
 
-            typename PDE::NormalFlux<dim, VectorizedArray<double>>
-               num_flux;
+            typename PDE::NormalFlux<dim, VectorizedArray<double>> num_flux;
             PDE::numerical_flux(param->flux_type, ul, ur, n, flux_data, num_flux);
 
             phi_m.submit_value(-num_flux, q);
@@ -547,11 +552,13 @@ public:
       }
    }
 
+   //---------------------------------------------------------------------------
    // Assembly over boundary faces
+   //---------------------------------------------------------------------------
    void boundary(const MatrixFree<dim, double> &mf,
-                  LinearAlgebra::distributed::Vector<double> &dst,
-                  const LinearAlgebra::distributed::Vector<double> &src,
-                  const std::pair<unsigned int, unsigned int> &range) const
+                 LinearAlgebra::distributed::Vector<double> &dst,
+                 const LinearAlgebra::distributed::Vector<double> &src,
+                 const std::pair<unsigned int, unsigned int> &range) const
    {
       FEFaceEvaluation<dim, degree, degree+1, nvar, double>
          phi_m(mf, true);
@@ -594,7 +601,7 @@ public:
 private:
    const Parameter *param;
    const std::vector<Tensor<1, nvar, double>> *average;
-   double time;
+   const double time;
 }; // class DGOperator
 
 //------------------------------------------------------------------------------
@@ -793,7 +800,6 @@ DGSystem<dim,degree>::call_output()
 //------------------------------------------------------------------------------
 // Save solution to file
 //------------------------------------------------------------------------------
-
 template <int dim, int degree>
 void
 DGSystem<dim,degree>::output_results(const double time) const

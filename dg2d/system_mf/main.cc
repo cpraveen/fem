@@ -8,7 +8,7 @@ int
 main(int argc, char** argv)
 {
    // Number of threads to use
-   unsigned int n_threads = 1;
+   const unsigned int n_threads = 1;
    Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, n_threads);
 
    ParameterHandler ph;
@@ -69,8 +69,14 @@ main(int argc, char** argv)
          solver.run();
          break;
       }
+      case 4:
+      {
+         DGSystem<dim, 4> solver(param, problem, quadrature_1d);
+         solver.run();
+         break;
+      }
       default:
-         AssertThrow(false, ExcMessage("Degree > 3 not implemented"));
+         AssertThrow(false, ExcMessage("Degree > 4 not implemented"));
    }
 
    return 0;
