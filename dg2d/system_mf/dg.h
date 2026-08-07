@@ -69,7 +69,7 @@ struct Parameter
    double       cfl;
    double       final_time;
    std::string  grid;
-   unsigned int n_cells_x, n_cells_y;
+   unsigned int n_cells_x, n_cells_y, n_cells_z;
    unsigned int n_refine;
    unsigned int output_step;
    unsigned int output_number;
@@ -143,7 +143,7 @@ private:
    ConditionalOStream                   pcout;
    mutable TimerOutput                  computing_timer;
    PTriangulation                       triangulation;
-   FESystem<dim>                        fe;
+   const FESystem<dim>                  fe;
    DoFHandler<dim>                      dof_handler;
    AffineConstraints<double>            constraints;
    const Quadrature<dim>                cell_quadrature;
@@ -178,8 +178,6 @@ DGSystem<dim, degree>::DGSystem(Parameter &param,
    cell_quadrature(quadrature_1d),
    face_quadrature(quadrature_1d)
 {
-   AssertThrow(dim == 2, ExcIndexRange(dim, 0, 2));
-
    time = 0.0;
    time_step = 0;
    next_output_time = param.output_interval;
@@ -199,15 +197,33 @@ DGSystem<dim,degree>::make_grid_and_dofs()
       pcout << "   User specified code for grid generation ...\n";
       problem->make_grid(triangulation);
    }
-   else if(param->grid == "box")
+   else if(dim == 2 && param->grid == "box")
    {
       pcout << "   Making grid using subdivided_hyper_rectangle ...\n";
       pcout << "      Grid size = " << param->n_cells_x << " x "
             << param->n_cells_y << "\n";
       const Point<dim> p1(problem->get_xmin(), problem->get_ymin());
       const Point<dim> p2(problem->get_xmax(), problem->get_ymax());
-      std::vector<unsigned int> ncells2d({param->n_cells_x,param->n_cells_y});
-      GridGenerator::subdivided_hyper_rectangle(triangulation, ncells2d,
+      std::vector<unsigned int> ncells({param->n_cells_x,param->n_cells_y});
+      GridGenerator::subdivided_hyper_rectangle(triangulation, ncells,
+                                                p1, p2, true);
+   }
+   else if(dim == 3 && param->grid == "box")
+   {
+      pcout << "   Making grid using subdivided_hyper_rectangle ...\n";
+      pcout << "      Grid size = " << param->n_cells_x << " x "
+            << param->n_cells_y << " x "
+            << param->n_cells_z << "\n";
+      const Point<dim> p1(problem->get_xmin(),
+                          problem->get_ymin(),
+                          problem->get_zmin());
+      const Point<dim> p2(problem->get_xmax(),
+                          problem->get_ymax(),
+                          problem->get_zmax());
+      std::vector<unsigned int> ncells({param->n_cells_x,
+                                        param->n_cells_y,
+                                        param->n_cells_z});
+      GridGenerator::subdivided_hyper_rectangle(triangulation, ncells,
                                                 p1, p2, true);
    }
    else
@@ -240,6 +256,15 @@ DGSystem<dim,degree>::make_grid_and_dofs()
                                           2,
                                           3,
                                           1,
+                                          periodicity_vector);
+      }
+      if(dim == 3 && problem->get_periodic_z())
+      {
+         pcout << "   Applying periodic in z\n";
+         GridTools::collect_periodic_faces(triangulation,
+                                          4,
+                                          5,
+                                          2,
                                           periodicity_vector);
       }
       triangulation.add_periodicity(periodicity_vector);

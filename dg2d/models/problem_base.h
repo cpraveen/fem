@@ -60,47 +60,47 @@ struct ProblemBase
       s = 0.0;
    }    
 
-   virtual std::string get_name()
+   std::string get_name()
    {
       return ProblemData::name;
    }
 
-   virtual double get_xmin()
+   double get_xmin()
    {
       return ProblemData::xmin;
    }
 
-   virtual double get_xmax()
+   double get_xmax()
    {
       return ProblemData::xmax;
    }
 
-   virtual double get_ymin()
+   double get_ymin()
    {
       return ProblemData::ymin;
    }
 
-   virtual double get_ymax()
+   double get_ymax()
    {
       return ProblemData::ymax;
    }
 
-   virtual bool get_periodic_x()
+   bool get_periodic_x()
    {
       return ProblemData::periodic_x;
    }
 
-   virtual bool get_periodic_y()
+   bool get_periodic_y()
    {
       return ProblemData::periodic_y;
    }
 
-   virtual bool get_periodic()
+   bool get_periodic()
    {
       return (ProblemData::periodic_x && ProblemData::periodic_y);
    }
 
-   virtual double get_final_time()
+   double get_final_time()
    {
       return ProblemData::final_time;
    }

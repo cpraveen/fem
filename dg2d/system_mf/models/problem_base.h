@@ -8,9 +8,12 @@ namespace ProblemData
    extern const double xmax;
    extern const double ymin;
    extern const double ymax;
+   extern const double zmin;
+   extern const double zmax;
    extern const double final_time;
    extern const bool periodic_x;
    extern const bool periodic_y;
+   extern const bool periodic_z;
 }
 
 //------------------------------------------------------------------------------
@@ -25,7 +28,7 @@ struct ProblemBase
       DEAL_II_NOT_IMPLEMENTED();
    }
 
-   // Transform grid but cells must remain rectangular if you are using FE_DGP. 
+   // Transform grid but cells must remain rectangular if you are using FE_DGP.
    // E.g., you can do some local grid refinement.
    virtual void transform_grid(Triangulation<dim>& /*triangulation*/) const
    {
@@ -58,49 +61,67 @@ struct ProblemBase
                        Vector<double>&   s) const
    {
       s = 0.0;
-   }    
+   }
 
-   virtual std::string get_name()
+   std::string get_name()
    {
       return ProblemData::name;
    }
 
-   virtual double get_xmin()
+   double get_xmin()
    {
       return ProblemData::xmin;
    }
 
-   virtual double get_xmax()
+   double get_xmax()
    {
       return ProblemData::xmax;
    }
 
-   virtual double get_ymin()
+   double get_ymin()
    {
       return ProblemData::ymin;
    }
 
-   virtual double get_ymax()
+   double get_ymax()
    {
       return ProblemData::ymax;
    }
 
-   virtual bool get_periodic_x()
+   double get_zmin()
+   {
+      return ProblemData::zmin;
+   }
+
+   double get_zmax()
+   {
+      return ProblemData::zmax;
+   }
+
+   bool get_periodic_x()
    {
       return ProblemData::periodic_x;
    }
 
-   virtual bool get_periodic_y()
+   bool get_periodic_y()
    {
       return ProblemData::periodic_y;
    }
 
-   virtual bool get_periodic()
+   bool get_periodic_z()
    {
-      return (ProblemData::periodic_x && ProblemData::periodic_y);
+      return ProblemData::periodic_z;
    }
 
-   virtual double get_final_time()
+   bool get_periodic()
+   {
+      auto val = (ProblemData::periodic_x && ProblemData::periodic_y);
+      if (dim == 3)
+         val = val && ProblemData::periodic_z;
+      return val;
+   }
+
+   double get_final_time()
    {
       return ProblemData::final_time;
    }
