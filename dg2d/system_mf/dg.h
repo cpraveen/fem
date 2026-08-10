@@ -477,23 +477,23 @@ public:
              const std::pair<unsigned int, unsigned int> &range) const
    {
       FEEvaluation<dim, degree, degree+1, nvar, double> phi(mf);
-      for (auto cell = range.first; cell < range.second; ++cell) {
+      for (auto cell = range.first; cell < range.second; ++cell)
+      {
          phi.reinit(cell);
          phi.gather_evaluate(src, EvaluationFlags::values);
-         for (unsigned int q = 0; q < phi.n_q_points; ++q) {
-         auto u = phi.get_value(q);
-
-         FluxData<dim, VectorizedArray<double>> flux_data;
-         flux_data.p = phi.quadrature_point(q);
-
-         typename PDE::FluxMatrix<dim, VectorizedArray<double>> ft;
-         PDE::physical_flux<dim>(u, flux_data, ft);
-         phi.submit_gradient(ft, q);
-         #if defined(ADD_SOURCE)
-         Tensor<1, nvar, VectorizedArray<double>> src_val;
-         PDE::source(phi.quadrature_point(q), time, u, src_val);
-         phi.submit_value(src_val, q);
-         #endif
+         for (unsigned int q = 0; q < phi.n_q_points; ++q)
+         {
+            auto u = phi.get_value(q);
+            FluxData<dim, VectorizedArray<double>> flux_data;
+            flux_data.p = phi.quadrature_point(q);
+            typename PDE::FluxMatrix<dim, VectorizedArray<double>> f;
+            PDE::physical_flux<dim>(u, flux_data, f);
+            phi.submit_gradient(f, q);
+            #if defined(ADD_SOURCE)
+            Tensor<1, nvar, VectorizedArray<double>> src_val;
+            PDE::source(phi.quadrature_point(q), time, u, src_val);
+            phi.submit_value(src_val, q);
+            #endif
          }
          phi.integrate_scatter(EvaluationFlags::gradients
                               #if defined(ADD_SOURCE)
@@ -560,8 +560,7 @@ public:
                  const LinearAlgebra::distributed::Vector<double> &src,
                  const std::pair<unsigned int, unsigned int> &range) const
    {
-      FEFaceEvaluation<dim, degree, degree+1, nvar, double>
-         phi_m(mf, true);
+      FEFaceEvaluation<dim, degree, degree+1, nvar, double> phi_m(mf, true);
       for (auto face = range.first; face < range.second; ++face)
       {
          phi_m.reinit(face);

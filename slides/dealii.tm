@@ -994,8 +994,8 @@
         <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x,<space|2em>\<alpha\>=1,\<ldots\>,dim,<space|1em>0\<leqslant\>i\<less\><text|<verbatim|dofs_per_cell>>
       </equation*>
 
-      When we create <verbatim|FEValues>, it computes and stores shape
-      gradients on reference element
+      <paragraph|Standard approach.>When we create <verbatim|FEValues>, it
+      computes and stores shape gradients on reference element
 
       <\equation*>
         <pd|\<phi\><rsub|i>|\<xi\><rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>
@@ -1016,12 +1016,13 @@
         <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x\<approx\><big|sum><rsub|q><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>J<rsub|q>\<omega\><rsub|q>
       </equation*>
 
-      In matrix-free, we avoid matrix-matrix multiplications, and do only
-      matrix-vector products to compute the integral. We do not explicitly
-      compute <math|<pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>>.\ 
+      <paragraph|Matrix-free approach.>In matrix-free, we avoid matrix-matrix
+      multiplications, and do only matrix-vector products to compute the
+      integral. We do not explicitly compute
+      <math|<pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>>.\ 
 
-      When it is created, the matrix-free object <verbatim|phi> computes and
-      stores all values of
+      When it is created, the <verbatim|FEEvaluation> object <verbatim|phi>
+      computes and stores all values of
 
       <\equation*>
         <pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)>
@@ -1035,8 +1036,8 @@
 
       When we do <verbatim|phi.submit_gradient>, it collects all values of
       <math|f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>>. Finally, when we
-      do <verbatim|phi.integrate_scatter>, it computes the integral by doing
-      all the sums
+      do <verbatim|phi.integrate>, it computes the integral by doing all the
+      sums
 
       <\equation*>
         <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x\<approx\><big|sum><rsub|\<beta\>=1><rsup|dim><big|sum><rsub|q><pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)><pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>J<rsub|q>\<omega\><rsub|q>
@@ -1137,7 +1138,9 @@
     <associate|auto-16|<tuple|9|17>>
     <associate|auto-17|<tuple|10|19>>
     <associate|auto-18|<tuple|10|20>>
+    <associate|auto-19|<tuple|1|?>>
     <associate|auto-2|<tuple|2|3>>
+    <associate|auto-20|<tuple|2|?>>
     <associate|auto-3|<tuple|3|4>>
     <associate|auto-4|<tuple|4|6>>
     <associate|auto-5|<tuple|5|7>>
