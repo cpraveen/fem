@@ -991,21 +991,22 @@
       When solving a conservation law, we compute integrals of the form
 
       <\equation*>
-        <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x,<space|2em>\<alpha\>=1,\<ldots\>,dim,<space|1em>0\<leqslant\>i\<less\><text|<verbatim|dofs_per_cell>>
+        <big|int><rsub|K>f<around*|(|u|)>\<cdot\>\<nabla\><rsub|x>\<phi\><rsub|i>
+        \<mathd\>x,<space|2em>\<alpha\>=1,\<ldots\>,dim,<space|1em>0\<leqslant\>i\<less\><text|<verbatim|dofs_per_cell>>
       </equation*>
 
       <paragraph|Standard approach.>When we create <verbatim|FEValues>, it
       computes and stores shape gradients on reference element
 
       <\equation*>
-        <pd|\<phi\><rsub|i>|\<xi\><rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>
+        \<nabla\><rsub|\<xi\>>\<phi\><rsub|i><around*|(|\<xi\><rsub|q>|)>=<around*|[|<pd|\<phi\><rsub|i>|\<xi\><rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>|]>
       </equation*>
 
       When we reinit <verbatim|FEValues> on a cell, it computes shape
       gradient wrt real coordinates
 
       <\equation*>
-        <pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>=<big|sum><rsub|\<beta\>=1><rsup|dim><pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)><pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>
+        <pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>=<big|sum><rsub|\<beta\>=1><rsup|dim><pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)><pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>,<space|2em>\<nabla\><rsub|x>\<phi\><rsub|i><around*|(|\<xi\><rsub|q>|)>=J<rsub|K><rsup|-\<top\>><around*|(|\<xi\><rsub|q>|)>\<nabla\><rsub|\<xi\>>\<phi\><rsub|i><around*|(|\<xi\><rsub|q>|)>,<space|2em>J<rsub|K>=<pd|x|\<xi\>>
       </equation*>
 
       Note that the above involves multiplying two matrices. Finally, when we
@@ -1013,25 +1014,27 @@
       <math|f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>>,
 
       <\equation*>
-        <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x\<approx\><big|sum><rsub|q><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>J<rsub|q>\<omega\><rsub|q>
+        <big|int><rsub|K>f<around*|(|u|)>\<cdot\>\<nabla\><rsub|x>\<phi\><rsub|i>
+        \<mathd\>x\<approx\><big|sum><rsub|q>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>\<cdot\>\<nabla\><rsub|x>\<phi\><rsub|i><around*|(|\<xi\><rsub|q>|)>
+        <around*|\||J<rsub|K><around*|(|\<xi\><rsub|q>|)>|\|>\<omega\><rsub|q>
       </equation*>
 
       <paragraph|Matrix-free approach.>In matrix-free, we avoid matrix-matrix
       multiplications, and do only matrix-vector products to compute the
       integral. We do not explicitly compute
-      <math|<pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>>.\ 
+      <math|\<nabla\><rsub|x>\<phi\><rsub|i>>.
 
       When it is created, the <verbatim|FEEvaluation> object <verbatim|phi>
       computes and stores all values of
 
       <\equation*>
-        <pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)>
+        \<nabla\><rsub|\<xi\>>\<phi\><rsub|i><around*|(|\<xi\><rsub|q>|)>
       </equation*>
 
       When we do <verbatim|phi.reinit> on a cell, it computes
 
       <\equation*>
-        <pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>,<space|1em>J<rsub|q>\<omega\><rsub|q>
+        J<rsub|K><around*|(|\<xi\><rsub|q>|)>,<space|1em><around*|\||J<rsub|K><around*|(|\<xi\><rsub|q>|)>|\|>\<omega\><rsub|q>
       </equation*>
 
       When we do <verbatim|phi.submit_gradient>, it collects all values of
@@ -1040,7 +1043,9 @@
       sums
 
       <\equation*>
-        <big|int><rsub|K>f<around*|(|u|)><pd|\<phi\><rsub|i>|x<rsup|\<alpha\>>>\<mathd\>x\<approx\><big|sum><rsub|\<beta\>=1><rsup|dim><big|sum><rsub|q><pd|\<phi\><rsub|i>|\<xi\><rsup|\<beta\>>><around*|(|\<xi\><rsub|q>|)><pd|\<xi\><rsup|\<beta\>>|x<rsup|\<alpha\>>><around*|(|\<xi\><rsub|q>|)>f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>J<rsub|q>\<omega\><rsub|q>
+        <big|int><rsub|K>f<around*|(|u|)>\<cdot\>\<nabla\><rsub|x>\<phi\><rsub|i>
+        \<mathd\>x\<approx\><big|sum><rsub|q><around*|[|J<rsub|K><rsup|-\<top\>><around*|(|\<xi\><rsub|q>|)>\<nabla\><rsub|\<xi\>>\<phi\><rsub|i><around*|(|\<xi\><rsub|q>|)>|\<nobracket\>><around*|\<nobracket\>|f<around*|(|u<around*|(|\<xi\><rsub|q>|)>|)>|]>
+        <around*|\||J<rsub|K><around*|(|\<xi\><rsub|q>|)>|\|>\<omega\><rsub|q>
       </equation*>
 
       There is more detail involved. Each <math|\<phi\><rsub|i>> is a product
@@ -1138,9 +1143,9 @@
     <associate|auto-16|<tuple|9|17>>
     <associate|auto-17|<tuple|10|19>>
     <associate|auto-18|<tuple|10|20>>
-    <associate|auto-19|<tuple|1|?>>
+    <associate|auto-19|<tuple|1|20>>
     <associate|auto-2|<tuple|2|3>>
-    <associate|auto-20|<tuple|2|?>>
+    <associate|auto-20|<tuple|2|21>>
     <associate|auto-3|<tuple|3|4>>
     <associate|auto-4|<tuple|4|6>>
     <associate|auto-5|<tuple|5|7>>
@@ -1231,6 +1236,14 @@
       <vspace*|1fn><with|font-series|<quote|bold>|math-font-series|<quote|bold>|Matrix-free:
       conservation law case> <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
       <no-break><pageref|auto-18><vspace|0.5fn>
+
+      <with|par-left|<quote|3tab>|Standard approach.
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-19>>
+
+      <with|par-left|<quote|3tab>|Matrix-free approach.
+      <datoms|<macro|x|<repeat|<arg|x>|<with|font-series|medium|<with|font-size|1|<space|0.2fn>.<space|0.2fn>>>>>|<htab|5mm>>
+      <no-break><pageref|auto-20>>
     </associate>
   </collection>
 </auxiliary>
