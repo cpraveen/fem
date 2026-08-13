@@ -87,10 +87,10 @@ namespace PDE
    //---------------------------------------------------------------------------
    template <int dim, typename Number>
    inline void
-   prim2con(const Number                        rho,
-            const Tensor<1, dim, Number>&       vel,
-            const Number                        pre,
-            Tensor<1, nvar, Number>&            u)
+   prim2con(const Number                  rho,
+            const Tensor<1, dim, Number>& vel,
+            const Number                  pre,
+            Tensor<1, nvar, Number>&      u)
    {
       u[0] = rho;
       u[dim+1] = pre/(gamma - 1.0) + 0.5 * rho * vel.norm_square();
@@ -161,7 +161,7 @@ namespace PDE
    inline DEAL_II_ALWAYS_INLINE void
    physical_flux(const Tensor<1, nvar, Number>& q,
                  const Tensor<1, dim, Number>&  normal,
-                 NormalFlux<dim, Number>&        flux)
+                 NormalFlux<dim, Number>&       flux)
    {
       Number vn = 0.0, v2 = 0.0;
       for(unsigned int d = 0; d < dim; ++d)
@@ -208,7 +208,7 @@ namespace PDE
    rusanov_flux(const Tensor<1, nvar, Number>& ul,
                 const Tensor<1, nvar, Number>& ur,
                 const Tensor<1, dim, Number>&  normal,
-                const FluxData<dim, Number>& data,
+                const FluxData<dim, Number>&   data,
                 NormalFlux<dim, Number>&       flux)
    {
       Tensor<1, nvar, Number> ql, qr;
@@ -239,7 +239,7 @@ namespace PDE
    roe_flux(const Tensor<1, nvar, Number>& ul,
             const Tensor<1, nvar, Number>& ur,
             const Tensor<1, dim, Number>&  normal,
-            NormalFlux<dim, Number>&        flux)
+            NormalFlux<dim, Number>&       flux)
    {
       Number rho_l, rho_r, p_l, p_r;
       Tensor<1, dim, Number> v_l, v_r;
@@ -332,7 +332,7 @@ namespace PDE
    steger_warming_flux(const Tensor<1, nvar, Number>& ul,
                        const Tensor<1, nvar, Number>& ur,
                        const Tensor<1, dim, Number>&  normal,
-                       NormalFlux<dim, Number>&        flux)
+                       NormalFlux<dim, Number>&       flux)
    {
       Number rho_l, rho_r, pre_l, pre_r;
       Tensor<1, dim, Number> vel_l, vel_r;
@@ -386,8 +386,8 @@ namespace PDE
    template <int dim, typename Number>
    void
    max_speed(const Tensor<1, nvar, Number>& u,
-             const Point<dim, Number>&       /*p*/,
-             Tensor<1, dim, Number>&         speed)
+             const Point<dim, Number>&      /*p*/,
+             Tensor<1, dim, Number>&        speed)
    {
       Number rho, pre;
       Tensor<1, dim, Number> vel;
@@ -414,8 +414,8 @@ namespace PDE
    template <int dim, typename Number>
    inline DEAL_II_ALWAYS_INLINE void
    physical_flux(const Tensor<1, nvar, Number>& u,
-                 const FluxData<dim, Number>&           /*data*/,
-                 FluxMatrix<dim, Number>&               flux)
+                 const FluxData<dim, Number>&   /*data*/,
+                 FluxMatrix<dim, Number>&       flux)
    {
       Number rho, pre;
       Tensor<1, dim, Number> vel;
@@ -443,12 +443,12 @@ namespace PDE
    //---------------------------------------------------------------------------
    template <int dim, typename Number>
    inline DEAL_II_ALWAYS_INLINE void
-   numerical_flux(const FluxType                        flux_type,
-                  const Tensor<1, nvar, Number>&        ul,
-                  const Tensor<1, nvar, Number>&        ur,
-                  const Tensor<1, dim, Number>&         normal,
-                  const FluxData<dim, Number>& data,
-                  NormalFlux<dim, Number>&               flux)
+   numerical_flux(const FluxType                 flux_type,
+                  const Tensor<1, nvar, Number>& ul,
+                  const Tensor<1, nvar, Number>& ur,
+                  const Tensor<1, dim, Number>&  normal,
+                  const FluxData<dim, Number>&   data,
+                  NormalFlux<dim, Number>&       flux)
    {
       switch(flux_type)
       {
@@ -472,11 +472,11 @@ namespace PDE
    //---------------------------------------------------------------------------
    template <int dim, typename Number>
    void
-   boundary_flux(const Tensor<1, nvar, Number>&        ul,
-                 const Tensor<1, nvar, Number>&        ur,
-                 const Tensor<1, dim, Number>&         normal,
-                 const FluxData<dim, Number>&                  /*data*/,
-                 NormalFlux<dim, Number>&               flux)
+   boundary_flux(const Tensor<1, nvar, Number>& ul,
+                 const Tensor<1, nvar, Number>& ur,
+                 const Tensor<1, dim, Number>&  normal,
+                 const FluxData<dim, Number>&   /*data*/,
+                 NormalFlux<dim, Number>&       flux)
    {
       steger_warming_flux(ul, ur, normal, flux);
    }
