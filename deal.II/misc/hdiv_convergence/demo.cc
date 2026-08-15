@@ -1,3 +1,5 @@
+// Convergence of RT interpolation on Cartesian and quadrilateral grids
+// Initial code generated with Google Gemini and then modified
 #include <deal.II/base/quadrature_lib.h>
 #include <deal.II/base/function.h>
 #include <deal.II/base/logstream.h>
