@@ -1,5 +1,9 @@
 # Interpolation error for RT(N) space
 
+On Cartesian grids, this space is essentially RT(N) = $Q_{N+1,N} \times Q_{N,N+1}$.
+
+The quadrilateral grid is obtained by randomly perturbing the vertices of a Cartesian grid.
+
 ## Cartesian grid
 
 ```math

@@ -2,40 +2,40 @@
 
 Laplace equation
 
-$$
+```math
 -\Delta p = f
-$$
+```
 
 is written as first order system
 
-$$
+```math
 J = \nabla p, \qquad \nabla \cdot J = -f
-$$
+```
 
 **Dirichlet problem**: weakly imposed
 
-$$
+```math
 p = 0 \quad \textrm{on} \quad \partial\Omega
-$$
+```
 
 **Neumann problem**: strongly imposed
 
-$$
+```math
 J \cdot n = 0 \quad \textrm{on} \quad \partial\Omega
-$$
+```
 
 together with constraint
 
-$$
+```math
 \int_{\partial\Omega}p ds = 0
-$$
+```
 
 **Weak formulation**: in either case it is
 
-$$
+```math
 (J, \tilde{J}) + (\nabla\cdot\tilde{J},p) = 0, \qquad
 (\nabla\cdot J, \tilde{p}) = -(f, \tilde{p})
-$$
+```
 
 The FE spaces are: RT(k) for $J$ and DG(k) for $p$ where $k \ge 0$. On Cartesian grids, RT(k) = Q(k+1,k) x Q(k,k+1).
 
