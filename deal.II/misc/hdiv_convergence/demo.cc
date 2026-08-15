@@ -27,29 +27,29 @@ class ExactVectorField : public Function<dim>
 public:
   ExactVectorField() : Function<dim>(dim) {}
 
-  virtual double value(const Point<dim> &p,
-                       const unsigned int component = 0) const override
+  double value(const Point<dim> &p,
+               const unsigned int component = 0) const override
   {
     return std::sin(numbers::PI * p[component]);
   }
 
-  virtual void vector_value(const Point<dim> &p,
-                            Vector<double>   &values) const override
+  void vector_value(const Point<dim> &p,
+                    Vector<double>   &values) const override
   {
     for (unsigned int d = 0; d < dim; ++d)
       values[d] = std::sin(numbers::PI * p[d]);
   }
 
-  virtual Tensor<1, dim> gradient(const Point<dim> &p,
-                                  const unsigned int component = 0) const override
+  Tensor<1, dim> gradient(const Point<dim> &p,
+                          const unsigned int component = 0) const override
   {
     Tensor<1, dim> grad;
     grad[component] = numbers::PI * std::cos(numbers::PI * p[component]);
     return grad;
   }
 
-  virtual void vector_gradient(const Point<dim> &p,
-                               std::vector<Tensor<1, dim>> &gradients) const override
+  void vector_gradient(const Point<dim> &p,
+                       std::vector<Tensor<1, dim>> &gradients) const override
   {
     for (unsigned int d = 0; d < dim; ++d)
       {
@@ -144,7 +144,7 @@ void RTInterpolationTest<dim>::perturb_grid(const double perturb,
 {
   if(perturb <= 0.0) return;
 
-  // Randomly perturb the grid
+  // Uniform mesh size: domain = [0,1]x[0,1]
   const auto h = 1.0 / pow(2, refine);
   auto v = triangulation.begin_vertex();
   for (; v < triangulation.end_vertex(); ++v)
@@ -204,12 +204,14 @@ int main()
       const unsigned int n_cycles = 5;
       const double perturb = 0.1;
 
+      // Cartesian grid
       for(unsigned int degree = 0; degree <= 1; ++degree)
       {
          RTInterpolationTest<dim> test(degree);
          test.run(initial_refine, n_cycles, 0.0);
       }
 
+      // Quad grid
       for(unsigned int degree = 0; degree <= 1; ++degree)
       {
          RTInterpolationTest<dim> test(degree);
