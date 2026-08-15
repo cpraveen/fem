@@ -3,11 +3,11 @@
 ## Cartesian grid
 
 ```math
-\| u - u_h\|_{L^2} = O(h^{N+2}), \qquad
+\| u - u_h\|_{L^2} = O(h^{N+1}), \qquad
 \| div(u) - div(u_h)\|_{L^2} = O(h^{N+1})
 ```
 
-We observe superconvergence of errors.
+We observe superconvergence of divergence errors.
 
 ## Quadrilateral grid
 

@@ -27,35 +27,25 @@ class ExactVectorField : public Function<dim>
 public:
   ExactVectorField() : Function<dim>(dim) {}
 
-  double value(const Point<dim> &p,
-               const unsigned int component = 0) const override
-  {
-    return std::sin(numbers::PI * p[component]);
-  }
-
   void vector_value(const Point<dim> &p,
                     Vector<double>   &values) const override
   {
-    for (unsigned int d = 0; d < dim; ++d)
-      values[d] = std::sin(numbers::PI * p[d]);
-  }
-
-  Tensor<1, dim> gradient(const Point<dim> &p,
-                          const unsigned int component = 0) const override
-  {
-    Tensor<1, dim> grad;
-    grad[component] = numbers::PI * std::cos(numbers::PI * p[component]);
-    return grad;
+     const auto x = p[0];
+     const auto y = p[1];
+     values[0] = sin(M_PI * x) * cos(M_PI * y);
+     values[1] = cos(M_PI * x) * sin(M_PI * y);
   }
 
   void vector_gradient(const Point<dim> &p,
-                       std::vector<Tensor<1, dim>> &gradients) const override
+                       std::vector<Tensor<1, dim>> &gradient) const override
   {
-    for (unsigned int d = 0; d < dim; ++d)
-      {
-        gradients[d] = 0;
-        gradients[d][d] = numbers::PI * std::cos(numbers::PI * p[d]);
-      }
+     const auto x = p[0];
+     const auto y = p[1];
+     gradient[0][0] =  M_PI * cos(M_PI * x) * cos(M_PI * y);
+     gradient[0][1] = -M_PI * sin(M_PI * x) * sin(M_PI * y);
+
+     gradient[1][0] = -M_PI * sin(M_PI * x) * sin(M_PI * y);
+     gradient[1][1] =  M_PI * cos(M_PI * x) * cos(M_PI * y);
   }
 };
 
