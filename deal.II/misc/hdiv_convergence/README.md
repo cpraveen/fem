@@ -1,6 +1,6 @@
-# Interpolation error for RT space
+# Interpolation error for RT(N) space
 
-## Cartesian grid, RT(N)
+## Cartesian grid
 
 ```math
 \| u - u_h\|_{L^2} = O(h^{N+2}), \qquad
@@ -9,14 +9,16 @@
 
 We observe superconvergence of errors.
 
-## Quadrilateral grid, RT(N)
+## Quadrilateral grid
 
 ```math
 \| u - u_h\|_{L^2} = O(h^{N+1}), \qquad
 \| div(u) - div(u_h)\|_{L^2} = O(h^{N})
 ```
 
-For $N=0$, the L2 error is optimal but we do not observe any convergence in divergence.
+For $N=0$, the L2 error is optimal but we do not observe any convergence in divergence. See
+
+> Pavel B. Bochev and Denis Ridzal, Rehabilitation of the lowest-order Raviart–Thomas element on quadrilateral grids, SIAM J. Numer. Anal. Vol. 47, No. 1, pp. 487–507. https://doi.org/10.1137/070704265
 
 ```text
 ==============================================================
