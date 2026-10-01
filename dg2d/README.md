@@ -5,6 +5,7 @@
 * `system_legendre_mpi`: System PDE using Legendre basis on Cartesian grids with mpi
 * `system_lagrange_mpi`: System PDE using Lagrange basis on Cartesian and quadrilateral (curved) grids with mpi
 * `models`: PDE and test cases, use these together with the code in `system_*` directories
+* `system_mf`: similar to `system_lagrange_mpi` but based on matrix-free framework. This is superfast code !!!
 
 ## Exercise: Using triangular grids
 

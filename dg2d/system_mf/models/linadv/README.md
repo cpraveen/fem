@@ -11,8 +11,6 @@ set mapping = cartesian
 set grid    = 100,100
 ```
 
-You can use the code in `system_legendre` or `system_legendre_mpi` or `system_lagrange_mpi` for this problem.
-
 ## rotate_annulus.h: rotating gaussian profile
 
 Solve in annular domain, can be used with lagrange DG code.
@@ -30,5 +28,3 @@ set basis   = gl
 set mapping = q
 set grid    = annulus.msh
 ```
-
-You can use the code in `system_lagrange_mpi` for this problem.
