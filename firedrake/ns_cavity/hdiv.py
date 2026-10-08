@@ -32,13 +32,13 @@ def ojump(v, n):
 
 # Parabolic terms
 def a(v, vt):
-    form = mu * inner(grad(v), grad(vt))*dx           \
-           - mu * inner(ojump(vt,n), avg(grad(v)))*dS \
-           - mu * inner(ojump(v,n), avg(grad(vt)))*dS \
-           + (Cip/hf) * inner(jump(v), jump(vt))*dS   \
-           - mu*inner(outer(vt,  n), grad(v))*ds      \
-           - mu*inner(outer(v-vb,n), grad(vt))*ds     \
-           + (Cip/hf) * inner(v-vb, vt)*ds
+    form =   mu * inner(grad(v), grad(vt))*dx            \
+           - mu * inner(ojump(vt,n), avg(grad(v)))*dS  \
+           - mu * inner(ojump(v,n), avg(grad(vt)))*dS  \
+           + (Cip*mu/hf) * inner(jump(v), jump(vt))*dS \
+           - mu * inner(outer(vt,  n), grad(v))*ds       \
+           - mu * inner(outer(v-vb,n), grad(vt))*ds      \
+           + (Cip*mu/hf) * inner(v-vb, vt)*ds
     return form
 
 # Divergence condition
