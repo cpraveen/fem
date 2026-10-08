@@ -9,10 +9,6 @@ Cip = 100.0  # Interior penalty parameter
 Cip = Constant(Cip)
 mu = Constant(1.0/Re)
 
-# Boundary ids
-left, right = 1, 2
-bottom, top = 3, 4
-
 mesh = UnitSquareMesh(n,n,"crossed")
 
 BDM = FunctionSpace(mesh, "BDM", 1)
@@ -32,12 +28,12 @@ def ojump(v, n):
 
 # Parabolic terms
 def a(v, vt):
-    form =   mu * inner(grad(v), grad(vt))*dx            \
+    form =   mu * inner(grad(v), grad(vt))*dx          \
            - mu * inner(ojump(vt,n), avg(grad(v)))*dS  \
            - mu * inner(ojump(v,n), avg(grad(vt)))*dS  \
            + (Cip*mu/hf) * inner(jump(v), jump(vt))*dS \
-           - mu * inner(outer(vt,  n), grad(v))*ds       \
-           - mu * inner(outer(v-vb,n), grad(vt))*ds      \
+           - mu * inner(outer(vt,  n), grad(v))*ds     \
+           - mu * inner(outer(v-vb,n), grad(vt))*ds    \
            + (Cip*mu/hf) * inner(v-vb, vt)*ds
     return form
 
@@ -48,8 +44,8 @@ def b(v, pt):
 
 # Convective terms
 def c(w, v, vt):
-    form = -inner(outer(v,w), grad(vt))*dx                \
-           + inner(avg(outer(v,w)), ojump(vt,n))*dS            \
+    form = -inner(outer(v,w), grad(vt))*dx                          \
+           + inner(avg(outer(v,w)), ojump(vt,n))*dS                 \
            + 0.5*abs(dot(w('+'),n('+')))*inner(jump(v),jump(vt))*dS \
            + dot(vb,vt)*dot(w,n)*ds
     return form
